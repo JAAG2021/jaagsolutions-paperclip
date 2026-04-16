@@ -76,6 +76,16 @@ const plans = [
 export default function PricingSection() {
   const { ref, visible } = useScrollReveal();
   const [billing, setBilling] = useState<BillingCycle>("monthly");
+  const [priceVisible, setPriceVisible] = useState(true);
+
+  function handleBillingChange(cycle: BillingCycle) {
+    if (cycle === billing) return;
+    setPriceVisible(false);
+    setTimeout(() => {
+      setBilling(cycle);
+      setPriceVisible(true);
+    }, 150);
+  }
 
   return (
     <section
@@ -104,14 +114,14 @@ export default function PricingSection() {
         {/* Billing toggle */}
         <div className={`flex items-center justify-center gap-3 mb-10 transition-all duration-700 delay-100 ${visible ? "opacity-100" : "opacity-0"}`}>
           <button
-            onClick={() => setBilling("monthly")}
+            onClick={() => handleBillingChange("monthly")}
             className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${billing === "monthly" ? "bg-white text-brand-900 shadow" : "text-blue-300 hover:text-white"}`}
           >
             Mensual
           </button>
           <div
             className="w-12 h-6 bg-white/10 rounded-full relative cursor-pointer border border-white/20"
-            onClick={() => setBilling(billing === "monthly" ? "annual" : "monthly")}
+            onClick={() => handleBillingChange(billing === "monthly" ? "annual" : "monthly")}
             role="switch"
             aria-checked={billing === "annual"}
           >
@@ -120,7 +130,7 @@ export default function PricingSection() {
             />
           </div>
           <button
-            onClick={() => setBilling("annual")}
+            onClick={() => handleBillingChange("annual")}
             className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${billing === "annual" ? "bg-white text-brand-900 shadow" : "text-blue-300 hover:text-white"}`}
           >
             Anual
@@ -143,7 +153,7 @@ export default function PricingSection() {
                   ? "0 0 60px rgba(37,99,235,0.35), 0 0 0 1px rgba(99,102,241,0.3)"
                   : undefined,
               }}
-              className={`transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"} relative flex flex-col rounded-2xl border ${plan.color} ${plan.highlight ? "bg-brand-800/80 backdrop-blur-sm" : "bg-white/5"} p-7`}
+              className={`transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"} relative flex flex-col rounded-2xl border ${plan.color} ${plan.highlight ? "bg-brand-800/80 backdrop-blur-sm before:absolute before:-inset-[2px] before:rounded-2xl before:z-[-1] before:content-[''] animate-gradient-border" : "bg-white/5"} p-7`}
             >
               {plan.badge && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-600 text-white text-xs font-bold px-4 py-1 rounded-full">
@@ -155,7 +165,7 @@ export default function PricingSection() {
                 <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
                 <p className="text-blue-300/70 text-sm mb-4">{plan.tagline}</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-3xl font-extrabold text-white transition-opacity duration-200">
+                  <span className={`text-3xl font-extrabold text-white transition-opacity duration-200 ${priceVisible ? "opacity-100" : "opacity-0"}`}>
                     {billing === "monthly" ? plan.priceMonthly : plan.priceAnnual}
                   </span>
                   {plan.period && (
