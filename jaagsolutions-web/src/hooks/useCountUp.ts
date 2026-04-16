@@ -3,6 +3,10 @@ import { useEffect, useRef, useState } from "react";
 /**
  * Animates a number from 0 to `target` when the returned ref element
  * enters the viewport. Uses IntersectionObserver + rAF loop.
+ *
+ * @param target - The target number to animate to (should be a positive integer)
+ * @param duration - Animation duration in milliseconds (default: 1000)
+ * @returns { ref } — attach to the container element; { count } — current animated value
  */
 export function useCountUp(target: number, duration = 1000) {
   const ref = useRef<HTMLElement | null>(null);
@@ -11,6 +15,12 @@ export function useCountUp(target: number, duration = 1000) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+
+    if (duration <= 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setCount(target);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
