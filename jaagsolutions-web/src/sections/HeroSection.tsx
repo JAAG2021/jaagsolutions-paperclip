@@ -8,6 +8,10 @@ export default function HeroSection() {
       <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-brand-600 opacity-20 blur-[120px] pointer-events-none" />
       {/* Glow orb bottom-right */}
       <div className="absolute -bottom-32 -right-20 w-[500px] h-[500px] rounded-full bg-violet-600 opacity-15 blur-[100px] pointer-events-none" />
+      {/* Aurora orb 1 — drifts slowly */}
+      <div className="absolute top-1/4 right-1/3 w-[400px] h-[400px] rounded-full bg-brand-500 opacity-10 blur-[100px] pointer-events-none animate-aurora-1" />
+      {/* Aurora orb 2 — drifts slowly */}
+      <div className="absolute bottom-1/3 left-1/4 w-[350px] h-[350px] rounded-full bg-violet-500 opacity-10 blur-[90px] pointer-events-none animate-aurora-2" />
       {/* Horizontal separator glow */}
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-500/50 to-transparent" />
 
