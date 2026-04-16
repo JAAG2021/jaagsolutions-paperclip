@@ -1,5 +1,7 @@
 import TopNav from "./sections/TopNav.tsx";
 import HeroSection from "./sections/HeroSection.tsx";
+import StatsSection from "./sections/StatsSection.tsx";
+import ToolsSection from "./sections/ToolsSection.tsx";
 import BenefitsSection from "./sections/BenefitsSection.tsx";
 import ServicesSection from "./sections/ServicesSection.tsx";
 import ProcessSection from "./sections/ProcessSection.tsx";
@@ -16,6 +18,8 @@ export default function App() {
       <TopNav />
       <main>
         <HeroSection />
+        <StatsSection />
+        <ToolsSection />
         <BenefitsSection />
         <ServicesSection />
         <ProcessSection />
