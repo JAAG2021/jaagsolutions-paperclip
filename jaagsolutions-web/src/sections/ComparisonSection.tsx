@@ -1,80 +1,125 @@
-import SectionHeader from "../components/SectionHeader.tsx";
+import { CheckCircle2, X, Minus } from "lucide-react";
+import { useScrollReveal } from "../hooks/useScrollReveal.ts";
 import CTAButton from "../components/CTAButton.tsx";
 
+type CellValue = "yes" | "no" | "partial";
+
+const features: {
+  label: string;
+  jaagsolutions: CellValue;
+  solo: CellValue;
+  agency: CellValue;
+}[] = [
+  { label: "Implementación < 4 semanas",        jaagsolutions: "yes", solo: "no",      agency: "no"      },
+  { label: "Precio accesible para PYME",         jaagsolutions: "yes", solo: "partial", agency: "no"      },
+  { label: "Soporte post-entrega",               jaagsolutions: "yes", solo: "no",      agency: "partial" },
+  { label: "Capacitación al equipo",             jaagsolutions: "yes", solo: "no",      agency: "partial" },
+  { label: "Automatización + SaaS integrado",    jaagsolutions: "yes", solo: "no",      agency: "no"      },
+  { label: "Sin contrato de permanencia",        jaagsolutions: "yes", solo: "yes",     agency: "no"      },
+  { label: "Diagnóstico gratuito",               jaagsolutions: "yes", solo: "no",      agency: "no"      },
+];
+
+function Cell({ value }: { value: CellValue }) {
+  if (value === "yes")     return <CheckCircle2 className="w-5 h-5 text-green-500 mx-auto" />;
+  if (value === "no")      return <X            className="w-5 h-5 text-red-400/60 mx-auto" />;
+  return                          <Minus        className="w-5 h-5 text-yellow-500 mx-auto" />;
+}
+
 export default function ComparisonSection() {
+  const { ref, visible } = useScrollReveal();
+
   return (
-    <section id="comparativa" className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionHeader
-          title="No compiten entre si: se complementan"
-          subtitle="Cada solucion tiene su momento ideal. La clave esta en elegir la ruta correcta segun tu etapa."
-        />
+    <section
+      id="comparativa"
+      ref={ref as React.RefObject<HTMLElement>}
+      className="py-20 bg-gray-50"
+    >
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className={`text-center mb-12 transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+          <span className="inline-block mb-3 px-4 py-1 text-xs font-bold tracking-widest uppercase text-brand-600 bg-brand-50 rounded-full border border-brand-100">
+            Comparativa
+          </span>
+          <h2 className="text-4xl font-extrabold text-gray-900 mt-2 mb-4">
+            ¿Por qué{" "}
+            <span className="gradient-text">JAAGSOLUTIONS?</span>
+          </h2>
+          <p className="text-gray-500 max-w-xl mx-auto">
+            Compara las opciones disponibles para tu PYME y elige con información.
+          </p>
+        </div>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-6">
-          {/* Automatizacion */}
-          <div className="bg-white rounded-2xl border border-blue-200 p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-brand-600 flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900">Automatizacion</h3>
-            </div>
-            <p className="text-gray-600 mb-5">
-              Ideal para resolver cuellos de botella puntuales con impacto rapido y menor inversion inicial.
-            </p>
-            <ul className="space-y-2 text-sm text-gray-700">
-              {["Rapida implementacion (1-4 semanas)", "Impacto puntual y medible", "Menor inversion inicial", "Ideal cuando hay un dolor claro e inmediato"].map((item) => (
-                <li key={item} className="flex items-start gap-2">
-                  <span className="text-brand-600 mt-0.5">✓</span>
-                  {item}
-                </li>
+        {/* Table */}
+        <div className={`transition-all duration-700 delay-200 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"} overflow-hidden rounded-2xl border border-gray-200 shadow-sm`}>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="p-4 text-left text-sm font-semibold text-gray-500 bg-gray-50 w-1/2">
+                  Característica
+                </th>
+                <th className="p-4 text-center text-sm font-bold text-white bg-brand-900 w-[calc(50%/3)]">
+                  JAAGSOLUTIONS
+                </th>
+                <th className="p-4 text-center text-xs font-semibold text-gray-500 bg-gray-50 w-[calc(50%/3)]">
+                  Hacerlo solo
+                </th>
+                <th className="p-4 text-center text-xs font-semibold text-gray-500 bg-gray-50 w-[calc(50%/3)]">
+                  Agencia grande
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white">
+              {features.map((f, i) => (
+                <tr
+                  key={f.label}
+                  className={`border-t border-gray-100 ${i % 2 === 0 ? "" : "bg-gray-50/50"}`}
+                >
+                  <td className="p-4 text-sm text-gray-700 font-medium">{f.label}</td>
+                  <td className="p-4 bg-brand-50/40">
+                    <Cell value={f.jaagsolutions} />
+                  </td>
+                  <td className="p-4">
+                    <Cell value={f.solo} />
+                  </td>
+                  <td className="p-4">
+                    <Cell value={f.agency} />
+                  </td>
+                </tr>
               ))}
-            </ul>
-          </div>
+            </tbody>
+          </table>
+        </div>
 
-          {/* SaaS */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900">SaaS</h3>
-            </div>
-            <p className="text-gray-600 mb-5">
-              Ideal para estandarizar, escalar y gobernar procesos de forma integral en el largo plazo.
-            </p>
-            <ul className="space-y-2 text-sm text-gray-700">
-              {["Plataforma integral para un area de negocio", "Escalabilidad con usuarios y roles", "Mayor control y trazabilidad", "Ideal cuando el proceso ya esta validado"].map((item) => (
-                <li key={item} className="flex items-start gap-2">
-                  <span className="text-gray-500 mt-0.5">✓</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-6 mt-4 text-xs text-gray-400">
+          <span className="flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> Incluido
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Minus className="w-3.5 h-3.5 text-yellow-500" /> Parcial
+          </span>
+          <span className="flex items-center gap-1.5">
+            <X className="w-3.5 h-3.5 text-red-400/60" /> No disponible
+          </span>
         </div>
 
         {/* Ruta recomendada */}
-        <div className="bg-brand-700 text-white rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+        <div className="bg-brand-700 text-white rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 mt-8">
           <div>
             <p className="text-sm font-medium text-blue-200 mb-1">Ruta recomendada JAAGSOLUTIONS</p>
             <div className="flex items-center gap-3 text-lg font-bold flex-wrap">
-              <span>Automatizacion</span>
+              <span>Automatización</span>
               <span className="text-blue-300">→</span>
-              <span>Medicion</span>
+              <span>Medición</span>
               <span className="text-blue-300">→</span>
               <span>Escalado SaaS</span>
             </div>
           </div>
         </div>
 
-        <div className="text-center">
+        <div className="text-center mt-8">
           <CTAButton href="#contacto" variant="primary">
-            Solicitar diagnostico
+            Solicitar diagnóstico
           </CTAButton>
         </div>
       </div>
