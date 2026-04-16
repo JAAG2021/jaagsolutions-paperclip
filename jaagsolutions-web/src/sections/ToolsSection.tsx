@@ -1,12 +1,22 @@
-const tools = [
-  { name: "n8n", emoji: "🔄", desc: "Automatización" },
-  { name: "Make", emoji: "⚙️", desc: "Workflows" },
-  { name: "Zapier", emoji: "⚡", desc: "Integraciones" },
-  { name: "Notion", emoji: "📋", desc: "Gestión" },
-  { name: "Airtable", emoji: "🗄️", desc: "Base de datos" },
-  { name: "WhatsApp API", emoji: "💬", desc: "Mensajería" },
-  { name: "OpenAI", emoji: "🤖", desc: "IA generativa" },
-  { name: "Supabase", emoji: "🐘", desc: "Backend" },
+import { Workflow, Database, MessageCircle, Brain, GitBranch } from "lucide-react";
+
+type Tool = {
+  name: string;
+  desc: string;
+  accentClass: string;
+  CategoryIcon: React.ElementType;
+  iconColor: string;
+};
+
+const tools: Tool[] = [
+  { name: "n8n", desc: "Automatización", accentClass: "border-l-orange-400", CategoryIcon: Workflow, iconColor: "text-orange-300" },
+  { name: "Make", desc: "Workflows", accentClass: "border-l-violet-400", CategoryIcon: GitBranch, iconColor: "text-violet-300" },
+  { name: "Zapier", desc: "Integraciones", accentClass: "border-l-brand-400", CategoryIcon: Workflow, iconColor: "text-brand-400" },
+  { name: "Notion", desc: "Gestión", accentClass: "border-l-gray-400", CategoryIcon: Database, iconColor: "text-gray-400" },
+  { name: "Airtable", desc: "Base de datos", accentClass: "border-l-teal-400", CategoryIcon: Database, iconColor: "text-teal-400" },
+  { name: "WhatsApp API", desc: "Mensajería", accentClass: "border-l-green-400", CategoryIcon: MessageCircle, iconColor: "text-green-400" },
+  { name: "OpenAI", desc: "IA generativa", accentClass: "border-l-emerald-400", CategoryIcon: Brain, iconColor: "text-emerald-400" },
+  { name: "Supabase", desc: "Backend", accentClass: "border-l-green-500", CategoryIcon: Database, iconColor: "text-green-500" },
 ];
 
 export default function ToolsSection() {
@@ -16,17 +26,17 @@ export default function ToolsSection() {
         <p className="text-center text-sm font-bold text-gray-400 uppercase tracking-widest mb-10">
           Tecnologías y herramientas que utilizamos
         </p>
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
           {tools.map((t) => (
             <div
               key={t.name}
-              className="card-hover flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-100 bg-gray-50 group cursor-default"
+              className={`card-hover flex flex-col gap-2 p-3 rounded-xl border border-gray-100 bg-white border-l-4 ${t.accentClass} group cursor-default`}
             >
-              <span className="text-2xl group-hover:scale-110 transition-transform duration-200">{t.emoji}</span>
-              <div className="text-center">
+              <div className="flex items-center justify-between">
                 <p className="text-xs font-bold text-gray-700 leading-tight">{t.name}</p>
-                <p className="text-xs text-gray-400">{t.desc}</p>
+                <t.CategoryIcon className={`w-3.5 h-3.5 ${t.iconColor} opacity-60 flex-shrink-0`} />
               </div>
+              <p className="text-xs text-gray-400">{t.desc}</p>
             </div>
           ))}
         </div>
