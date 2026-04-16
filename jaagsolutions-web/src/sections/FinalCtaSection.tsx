@@ -1,3 +1,1 @@
-export function FinalCtaSection() {
-  return <section id="final-cta">{/* TODO */}</section>;
-}
+export default function FinalCtaSection() { return <section />; }

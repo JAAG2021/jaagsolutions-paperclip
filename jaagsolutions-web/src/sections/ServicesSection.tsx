@@ -1,3 +1,1 @@
-export function ServicesSection() {
-  return <section id="services">{/* TODO */}</section>;
-}
+export default function ServicesSection() { return <section id="servicios" />; }

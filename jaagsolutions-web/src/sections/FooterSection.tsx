@@ -1,3 +1,1 @@
-export function FooterSection() {
-  return <section id="footer">{/* TODO */}</section>;
-}
+export default function FooterSection() { return <footer />; }

@@ -1,3 +1,1 @@
-export function ProcessSection() {
-  return <section id="process">{/* TODO */}</section>;
-}
+export default function ProcessSection() { return <section id="proceso" />; }

@@ -1,3 +1,1 @@
-export function FaqSection() {
-  return <section id="faq">{/* TODO */}</section>;
-}
+export default function FaqSection() { return <section id="faq" />; }

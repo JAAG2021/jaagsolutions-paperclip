@@ -1,3 +1,1 @@
-export function ComparisonSection() {
-  return <section id="comparison">{/* TODO */}</section>;
-}
+export default function ComparisonSection() { return <section id="comparativa" />; }

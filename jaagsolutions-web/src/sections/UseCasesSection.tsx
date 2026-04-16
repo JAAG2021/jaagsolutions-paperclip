@@ -1,3 +1,1 @@
-export function UseCasesSection() {
-  return <section id="use-cases">{/* TODO */}</section>;
-}
+export default function UseCasesSection() { return <section id="casos" />; }

@@ -1,3 +1,1 @@
-export function ContactFormSection() {
-  return <section id="contact">{/* TODO */}</section>;
-}
+export default function ContactFormSection() { return <section id="contacto" />; }
