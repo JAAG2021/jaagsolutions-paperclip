@@ -45,6 +45,11 @@
     background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px);
     background-size: 28px 28px;
   }
+
+  .animate-connector {
+    animation: connectorGrow 1.2s ease-out 0.3s both;
+    transform-origin: left center;
+  }
 }
 
 @keyframes fadeInUp {
@@ -55,4 +60,9 @@
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(-12px); }
+}
+
+@keyframes connectorGrow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
 }
