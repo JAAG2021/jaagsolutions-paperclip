@@ -1,19 +1,20 @@
+import { CheckCircle2, Zap, Monitor } from "lucide-react";
 import CTAButton from "../components/CTAButton.tsx";
 
 const pillarA = [
-  { icon: "🎯", text: "Captación, calificación y seguimiento de leads" },
-  { icon: "📄", text: "Cotización, aprobación y cierre comercial" },
-  { icon: "🎫", text: "Tickets de soporte y SLA" },
-  { icon: "📑", text: "Automatización documental (facturas, contratos)" },
-  { icon: "💳", text: "Cobranza automatizada y alertas de cartera" },
+  "Captación, calificación y seguimiento de leads",
+  "Cotización, aprobación y cierre comercial",
+  "Tickets de soporte y SLA",
+  "Automatización documental (facturas, contratos)",
+  "Cobranza automatizada y alertas de cartera",
 ];
 
 const pillarB = [
-  { icon: "📊", text: "SaaS comercial (pipeline, seguimiento, reportes)" },
-  { icon: "⚙️", text: "SaaS operativo (tareas, aprobaciones, flujos)" },
-  { icon: "🛠️", text: "SaaS de soporte (tickets, base de conocimiento)" },
-  { icon: "💰", text: "SaaS financiero ligero (facturación, cobranza)" },
-  { icon: "🧩", text: "Módulos a medida según proceso y madurez" },
+  "SaaS comercial (pipeline, seguimiento, reportes)",
+  "SaaS operativo (tareas, aprobaciones, flujos)",
+  "SaaS de soporte (tickets, base de conocimiento)",
+  "SaaS financiero ligero (facturación, cobranza)",
+  "Módulos a medida según proceso y madurez",
 ];
 
 export default function ServicesSection() {
@@ -39,7 +40,9 @@ export default function ServicesSection() {
           <div className="card-hover animate-fade-in-up-d1 bg-brand-900 text-white rounded-2xl overflow-hidden shadow-lg">
             <div className="bg-dot-pattern px-8 pt-8 pb-6 border-b border-white/10">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-brand-600 flex items-center justify-center text-lg">⚡</div>
+                <div className="w-10 h-10 rounded-lg bg-brand-600 flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-white" />
+                </div>
                 <span className="text-sm font-bold text-brand-200 uppercase tracking-widest">Línea A</span>
               </div>
               <h3 className="text-2xl font-extrabold mb-2">Automatización de Procesos</h3>
@@ -48,10 +51,10 @@ export default function ServicesSection() {
               </p>
             </div>
             <ul className="px-8 py-6 space-y-3">
-              {pillarA.map((item) => (
-                <li key={item.text} className="flex items-start gap-3">
-                  <span className="text-lg flex-shrink-0">{item.icon}</span>
-                  <span className="text-sm text-blue-100 leading-snug">{item.text}</span>
+              {pillarA.map((text) => (
+                <li key={text} className="flex items-start gap-3">
+                  <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-blue-100 leading-snug">{text}</span>
                 </li>
               ))}
             </ul>
@@ -61,7 +64,9 @@ export default function ServicesSection() {
           <div className="card-hover animate-fade-in-up-d2 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-8 pt-8 pb-6 border-b border-gray-100 bg-gradient-to-br from-gray-50 to-white">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center text-lg">🖥️</div>
+                <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center">
+                  <Monitor className="w-5 h-5 text-white" />
+                </div>
                 <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">Línea B</span>
               </div>
               <h3 className="text-2xl font-extrabold text-gray-900 mb-2">Desarrollo SaaS para PYMEs</h3>
@@ -70,10 +75,10 @@ export default function ServicesSection() {
               </p>
             </div>
             <ul className="px-8 py-6 space-y-3">
-              {pillarB.map((item) => (
-                <li key={item.text} className="flex items-start gap-3">
-                  <span className="text-lg flex-shrink-0">{item.icon}</span>
-                  <span className="text-sm text-gray-600 leading-snug">{item.text}</span>
+              {pillarB.map((text) => (
+                <li key={text} className="flex items-start gap-3">
+                  <CheckCircle2 className="w-4 h-4 text-brand-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-gray-600 leading-snug">{text}</span>
                 </li>
               ))}
             </ul>

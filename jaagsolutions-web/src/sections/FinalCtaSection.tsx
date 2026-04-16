@@ -1,3 +1,5 @@
+import { Zap, Target, ShieldCheck } from "lucide-react";
+
 export default function FinalCtaSection() {
   return (
     <section className="relative py-28 bg-brand-900 text-white overflow-hidden">
@@ -41,15 +43,16 @@ export default function FinalCtaSection() {
           </a>
         </div>
 
-        {/* Mini trust row */}
+        {/* Mini trust row — Lucide icons */}
         <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-blue-300/70">
           {[
-            { icon: "⚡", text: "MVP en 1–4 semanas" },
-            { icon: "🎯", text: "Diagnóstico sin costo" },
-            { icon: "🔒", text: "Sin compromiso" },
-          ].map(({ icon, text }) => (
+            { Icon: Zap, text: "MVP en 1–4 semanas" },
+            { Icon: Target, text: "Diagnóstico sin costo" },
+            { Icon: ShieldCheck, text: "Sin compromiso" },
+          ].map(({ Icon, text }) => (
             <span key={text} className="flex items-center gap-2">
-              <span>{icon}</span>{text}
+              <Icon className="w-4 h-4 text-blue-400" />
+              {text}
             </span>
           ))}
         </div>
