@@ -1,10 +1,14 @@
+import { useState } from "react";
 import { useScrollReveal } from "../hooks/useScrollReveal.ts";
+
+type BillingCycle = "monthly" | "annual";
 
 const plans = [
   {
     name: "Starter",
     tagline: "Para negocios que quieren empezar a automatizar",
-    price: "Desde $499",
+    priceMonthly: "Desde $499",
+    priceAnnual: "Desde $399",
     period: "/ proyecto",
     highlight: false,
     color: "border-white/10",
@@ -27,7 +31,8 @@ const plans = [
   {
     name: "Growth",
     tagline: "El paquete más popular para PYMEs en crecimiento",
-    price: "Desde $1,299",
+    priceMonthly: "Desde $1,299",
+    priceAnnual: "Desde $1,039",
     period: "/ proyecto",
     highlight: true,
     color: "border-brand-500",
@@ -40,16 +45,15 @@ const plans = [
       "Soporte por 60 días",
       "Entrega en 2–3 semanas",
     ],
-    missing: [
-      "SaaS personalizado",
-    ],
+    missing: ["SaaS personalizado"],
     cta: "Hablar con un especialista",
     ctaStyle: "bg-white text-brand-900 hover:bg-blue-50 btn-glow",
   },
   {
     name: "Scale",
     tagline: "Solución completa con SaaS a medida",
-    price: "Personalizado",
+    priceMonthly: "Personalizado",
+    priceAnnual: "Personalizado",
     period: "",
     highlight: false,
     color: "border-violet-500/40",
@@ -71,6 +75,7 @@ const plans = [
 
 export default function PricingSection() {
   const { ref, visible } = useScrollReveal();
+  const [billing, setBilling] = useState<BillingCycle>("monthly");
 
   return (
     <section
@@ -83,7 +88,7 @@ export default function PricingSection() {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className={`text-center mb-16 transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+        <div className={`text-center mb-10 transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
           <span className="inline-block mb-3 px-4 py-1 text-xs font-bold tracking-widest uppercase text-brand-400 bg-brand-800 rounded-full border border-brand-700">
             Planes y precios
           </span>
@@ -96,13 +101,49 @@ export default function PricingSection() {
           </p>
         </div>
 
+        {/* Billing toggle */}
+        <div className={`flex items-center justify-center gap-3 mb-10 transition-all duration-700 delay-100 ${visible ? "opacity-100" : "opacity-0"}`}>
+          <button
+            onClick={() => setBilling("monthly")}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${billing === "monthly" ? "bg-white text-brand-900 shadow" : "text-blue-300 hover:text-white"}`}
+          >
+            Mensual
+          </button>
+          <div
+            className="w-12 h-6 bg-white/10 rounded-full relative cursor-pointer border border-white/20"
+            onClick={() => setBilling(billing === "monthly" ? "annual" : "monthly")}
+            role="switch"
+            aria-checked={billing === "annual"}
+          >
+            <div
+              className={`absolute top-1 w-4 h-4 bg-brand-400 rounded-full transition-all duration-200 ${billing === "annual" ? "left-7" : "left-1"}`}
+            />
+          </div>
+          <button
+            onClick={() => setBilling("annual")}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${billing === "annual" ? "bg-white text-brand-900 shadow" : "text-blue-300 hover:text-white"}`}
+          >
+            Anual
+          </button>
+          {billing === "annual" && (
+            <span className="bg-green-500/20 text-green-400 text-xs font-bold px-2.5 py-1 rounded-full border border-green-500/30 animate-fade-in-up">
+              Ahorra 20%
+            </span>
+          )}
+        </div>
+
         {/* Cards */}
         <div className="grid md:grid-cols-3 gap-6 items-stretch">
           {plans.map((plan, i) => (
             <div
               key={plan.name}
-              style={{ transitionDelay: `${i * 120}ms` }}
-              className={`transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"} relative flex flex-col rounded-2xl border ${plan.color} ${plan.highlight ? "bg-brand-800/80 shadow-[0_0_40px_rgba(37,99,235,0.25)]" : "bg-white/5"} p-7 backdrop-blur-sm`}
+              style={{
+                transitionDelay: `${i * 120}ms`,
+                boxShadow: plan.highlight
+                  ? "0 0 60px rgba(37,99,235,0.35), 0 0 0 1px rgba(99,102,241,0.3)"
+                  : undefined,
+              }}
+              className={`transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"} relative flex flex-col rounded-2xl border ${plan.color} ${plan.highlight ? "bg-brand-800/80 backdrop-blur-sm" : "bg-white/5"} p-7`}
             >
               {plan.badge && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-600 text-white text-xs font-bold px-4 py-1 rounded-full">
@@ -114,8 +155,12 @@ export default function PricingSection() {
                 <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
                 <p className="text-blue-300/70 text-sm mb-4">{plan.tagline}</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-3xl font-extrabold text-white">{plan.price}</span>
-                  {plan.period && <span className="text-blue-300/60 text-sm mb-1">{plan.period}</span>}
+                  <span className="text-3xl font-extrabold text-white transition-opacity duration-200">
+                    {billing === "monthly" ? plan.priceMonthly : plan.priceAnnual}
+                  </span>
+                  {plan.period && (
+                    <span className="text-blue-300/60 text-sm mb-1">{plan.period}</span>
+                  )}
                 </div>
               </div>
 
@@ -151,7 +196,6 @@ export default function PricingSection() {
           ))}
         </div>
 
-        {/* Bottom note */}
         <p className={`text-center text-sm text-blue-300/50 mt-10 transition-all duration-700 delay-500 ${visible ? "opacity-100" : "opacity-0"}`}>
           Todos los proyectos incluyen diagnóstico gratuito · Sin contratos de permanencia · Garantía de satisfacción
         </p>
