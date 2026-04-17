@@ -35,7 +35,7 @@ const plans = [
     priceAnnual: "Desde $1,039",
     period: "/ proyecto",
     highlight: true,
-    color: "border-brand-500",
+    color: "border-transparent",
     badge: "Más popular",
     features: [
       "Hasta 4 flujos de automatización",

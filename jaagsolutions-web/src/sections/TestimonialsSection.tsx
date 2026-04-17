@@ -85,7 +85,7 @@ export default function TestimonialsSection() {
             <div
               key={t.name}
               style={{ transitionDelay: `${i * 120}ms` }}
-              className={`card-hover transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"} relative bg-white/8 border border-white/15 rounded-2xl p-7 backdrop-blur-md flex flex-col gap-5`}
+              className={`card-hover transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"} relative bg-white/10 border border-white/15 rounded-2xl p-7 backdrop-blur-md flex flex-col gap-5`}
             >
               {/* Subtle gradient overlay */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
