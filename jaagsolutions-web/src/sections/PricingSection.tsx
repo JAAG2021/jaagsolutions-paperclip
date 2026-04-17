@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useScrollReveal } from "../hooks/useScrollReveal.ts";
 
 type BillingCycle = "monthly" | "annual";
@@ -77,15 +77,22 @@ export default function PricingSection() {
   const { ref, visible } = useScrollReveal();
   const [billing, setBilling] = useState<BillingCycle>("monthly");
   const [priceVisible, setPriceVisible] = useState(true);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function handleBillingChange(cycle: BillingCycle) {
     if (cycle === billing) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
     setPriceVisible(false);
-    setTimeout(() => {
+    timerRef.current = setTimeout(() => {
       setBilling(cycle);
       setPriceVisible(true);
-    }, 150);
+      timerRef.current = null;
+    }, 200);
   }
+
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  }, []);
 
   return (
     <section
@@ -122,8 +129,15 @@ export default function PricingSection() {
           <div
             className="w-12 h-6 bg-white/10 rounded-full relative cursor-pointer border border-white/20"
             onClick={() => handleBillingChange(billing === "monthly" ? "annual" : "monthly")}
+            onKeyDown={(e) => {
+              if (e.key === " " || e.key === "Enter") {
+                e.preventDefault();
+                handleBillingChange(billing === "monthly" ? "annual" : "monthly");
+              }
+            }}
             role="switch"
             aria-checked={billing === "annual"}
+            tabIndex={0}
           >
             <div
               className={`absolute top-1 w-4 h-4 bg-brand-400 rounded-full transition-all duration-200 ${billing === "annual" ? "left-7" : "left-1"}`}
@@ -153,7 +167,7 @@ export default function PricingSection() {
                   ? "0 0 60px rgba(37,99,235,0.35), 0 0 0 1px rgba(99,102,241,0.3)"
                   : undefined,
               }}
-              className={`transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"} relative flex flex-col rounded-2xl border ${plan.color} ${plan.highlight ? "bg-brand-800/80 backdrop-blur-sm before:absolute before:-inset-[2px] before:rounded-2xl before:z-[-1] before:content-[''] animate-gradient-border" : "bg-white/5"} p-7`}
+              className={`transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"} relative flex flex-col rounded-2xl border ${plan.color} ${plan.highlight ? "bg-brand-800/80 backdrop-blur-sm animate-gradient-border" : "bg-white/5"} p-7`}
             >
               {plan.badge && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-600 text-white text-xs font-bold px-4 py-1 rounded-full">
