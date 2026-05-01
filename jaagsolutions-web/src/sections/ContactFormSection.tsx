@@ -83,13 +83,10 @@ export default function ContactFormSection() {
         throw new Error("missing VITE_FORMSPREE_ID");
       }
       if (formId) {
-        const body = new URLSearchParams();
-        for (const [key, value] of Object.entries(payload)) {
-          body.append(key, String(value));
-        }
-        const res = await fetch(`https://formspree.io/f/${formId}`, {
+        const res = await fetch("/api/lead", {
           method: "POST",
-          body,
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error("form error");
       }

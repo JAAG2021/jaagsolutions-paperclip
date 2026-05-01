@@ -4,6 +4,8 @@
 
 Objetivo: que el formulario de contacto envíe datos reales a Formspree desde un deployment en `*.vercel.app` mientras el VPS (Paperclip/n8n) queda para después. **No hace falta** webhook ni dominio propio en esta fase.
 
+**Implementación:** el navegador envía el lead a **`POST /api/lead`** (mismo origen, sin CORS). Esa función en `api/lead.js` reenvía el JSON a `https://formspree.io/f/{VITE_FORMSPREE_ID}` desde el servidor de Vercel. En local, `vite dev` incluye un proxy equivalente en `vite.config.ts`.
+
 ### 1. Formspree
 
 1. Creá cuenta en [formspree.io](https://formspree.io) y un **nuevo formulario**.
@@ -27,7 +29,7 @@ Objetivo: que el formulario de contacto envíe datos reales a Formspree desde un
 
 1. Abrí la URL del deployment (Preview o Production).
 2. Completá el formulario de contacto (3 pasos) y enviá.
-3. En DevTools → **Network**, verificá `POST https://formspree.io/f/...` con **200** (o la respuesta que documente Formspree).
+3. En DevTools → **Network**, verificá **`POST` a `/api/lead`** con **200** (o el código que devuelva Formspree vía proxy). No debería aparecer CORS bloqueando el envío.
 4. En el panel de Formspree, confirmá la **submission** nueva y el email de notificación si lo activaste.
 
 ### Qué dejás para después
