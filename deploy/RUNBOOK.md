@@ -24,7 +24,7 @@ Comprobar propagación: `dig +short paperclip.tudominio.com`
 
 ## 2. Primera vez en el VPS
 
-1. Clonar el repo privado JAAG ([Genesis-fenix/jaagsolutions-paperclip](https://github.com/Genesis-fenix/jaagsolutions-paperclip), rama acordada p. ej. `feature/jaagsolutions`) o copiar el árbol del proyecto.
+1. Clonar el repo privado JAAG ([JAAG2021/jaagsolutions-paperclip](https://github.com/JAAG2021/jaagsolutions-paperclip), rama acordada p. ej. `feature/jaagsolutions`) o copiar el árbol del proyecto.
 2. `cd deploy && cp .env.production.example .env`
 3. Completar **todos** los valores en `.env` (secretos, `DOMAIN`, `PAPERCLIP_PUBLIC_URL`, rutas de datos).
 4. Opcional: `bash setup.sh` (instala Docker, clona si configuraste `REPO_URL`, levanta compose). Si ya tenés el repo en el servidor, podés hacer sólo `docker compose --env-file .env up -d`.

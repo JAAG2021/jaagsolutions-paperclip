@@ -15,14 +15,14 @@ Referencia: [2026-04-30-jaagsolutions-produccion-design.md](./2026-04-30-jaagsol
 | `jaagsolutions-web/DEPLOY-VERCEL.md` | Hecho — guía *Preview + Formspree sin VPS* + checklist producción |
 | `deploy/RUNBOOK.md` | Hecho — activación ordenada + nota DNS apex/www |
 | `.gitignore` (`deploy/.env`) | Hecho |
-| Repo canónico (privado) | [github.com/Genesis-fenix/jaagsolutions-paperclip](https://github.com/Genesis-fenix/jaagsolutions-paperclip) — `deploy/setup.sh` usa este remoto y rama `feature/jaagsolutions` por defecto |
+| Repo canónico (privado) | [github.com/JAAG2021/jaagsolutions-paperclip](https://github.com/JAAG2021/jaagsolutions-paperclip) — `deploy/setup.sh` usa este remoto y rama `feature/jaagsolutions` por defecto |
 
 ## Pendiente (requiere tu entorno / cuentas)
 
 ### Fase A — Preview web + Formspree (sin VPS)
 
 - [ ] Formspree: formulario creado + `VITE_FORMSPREE_ID` en Vercel (**Preview** y/o **Production**)
-- [ ] Vercel: import **Genesis-fenix/jaagsolutions-paperclip**, root `jaagsolutions-web`, rama `feature/jaagsolutions` si aplica; redeploy y prueba de envío (ver `jaagsolutions-web/DEPLOY-VERCEL.md`)
+- [ ] Vercel: import **JAAG2021/jaagsolutions-paperclip**, root `jaagsolutions-web`, rama `feature/jaagsolutions` si aplica; redeploy y prueba de envío (ver `jaagsolutions-web/DEPLOY-VERCEL.md`)
 
 ### Fase B — VPS + automatización (después)
 

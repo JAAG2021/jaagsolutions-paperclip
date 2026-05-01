@@ -13,7 +13,7 @@ Objetivo: que el formulario de contacto envíe datos reales a Formspree desde un
 
 ### 2. Vercel
 
-1. **Add New… → Project** e importá el monorepo donde vive esta carpeta. Repo canónico JAAGSOLUTIONS (**privado**): [github.com/Genesis-fenix/jaagsolutions-paperclip](https://github.com/Genesis-fenix/jaagsolutions-paperclip). Conectá GitHub y autorizá a Vercel a ese repo (Projects → Git → reconnect si hace falta).
+1. **Add New… → Project** e importá el monorepo donde vive esta carpeta. Repo canónico JAAGSOLUTIONS (**privado**): [github.com/JAAG2021/jaagsolutions-paperclip](https://github.com/JAAG2021/jaagsolutions-paperclip). Conectá GitHub y autorizá a Vercel a ese repo (Projects → Git → reconnect si hace falta).
 2. **Root Directory:** `jaagsolutions-web` (no el repo entero).
 3. **Production Branch / ramas:** si el trabajo está en `feature/jaagsolutions`, usá esa rama para Preview o cambiá la rama de producción del proyecto en Vercel para que el deploy no intente solo `main` sin tu código.
 4. Build: dejá lo que detecte o lo que ya define `vercel.json` (`pnpm run build`, `dist`, `pnpm install --ignore-workspace`).

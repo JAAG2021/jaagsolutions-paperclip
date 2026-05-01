@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-REPO_URL="${REPO_URL:-https://github.com/Genesis-fenix/jaagsolutions-paperclip.git}"
+REPO_URL="${REPO_URL:-https://github.com/JAAG2021/jaagsolutions-paperclip.git}"
 REPO_BRANCH="${REPO_BRANCH:-feature/jaagsolutions}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/jaagsolutions/repo}"
 DATA_PAPERCLIP="${DATA_PAPERCLIP:-/opt/jaagsolutions/paperclip-data}"
