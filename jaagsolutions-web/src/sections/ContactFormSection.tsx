@@ -53,7 +53,7 @@ export default function ContactFormSection() {
   const [submitError, setSubmitError] = useState(false);
 
   useEffect(() => {
-    if (import.meta.env.PROD && !FORMSPREE_ID) {
+    if (import.meta.env.PROD && !FORMSPREE_ID?.trim()) {
       console.error(
         "[contact] Falta VITE_FORMSPREE_ID: configura el ID en Vercel para recibir leads.",
       );
@@ -78,11 +78,18 @@ export default function ContactFormSection() {
         tipo_solicitud: "diagnostico_multipaso",
       };
 
-      if (FORMSPREE_ID) {
-        const res = await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
+      const formId = FORMSPREE_ID?.trim();
+      if (import.meta.env.PROD && !formId) {
+        throw new Error("missing VITE_FORMSPREE_ID");
+      }
+      if (formId) {
+        const body = new URLSearchParams();
+        for (const [key, value] of Object.entries(payload)) {
+          body.append(key, String(value));
+        }
+        const res = await fetch(`https://formspree.io/f/${formId}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify(payload),
+          body,
         });
         if (!res.ok) throw new Error("form error");
       }
@@ -97,8 +104,9 @@ export default function ContactFormSection() {
 
       reset();
       setStepIndex(0);
-    } catch {
+    } catch (err) {
       setSubmitError(true);
+      throw err;
     }
   }
 
@@ -326,7 +334,11 @@ export default function ContactFormSection() {
                 </div>
 
                 {submitError && (
-                  <p className="text-sm text-red-600">Ocurrió un error al enviar. Intentá de nuevo o escribinos por WhatsApp.</p>
+                  <p className="text-sm text-red-600">
+                    {import.meta.env.PROD && !FORMSPREE_ID?.trim()
+                      ? "El envío no está configurado en el servidor (falta ID de formulario). Volvé a intentar más tarde o escribinos por WhatsApp."
+                      : "Ocurrió un error al enviar. Intentá de nuevo o escribinos por WhatsApp."}
+                  </p>
                 )}
 
                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between sm:items-center pt-2">

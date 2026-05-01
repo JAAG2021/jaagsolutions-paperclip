@@ -2,7 +2,11 @@
 
 Referencia: [2026-04-30-jaagsolutions-produccion-design.md](./2026-04-30-jaagsolutions-produccion-design.md) y plan detallado en `docs/superpowers/plans/2026-04-30-jaagsolutions-produccion.md`.
 
+**Disciplina:** al completar un paso operativo (cuentas, env vars, deploy), actualizar enseguida este archivo (y checklists relacionados). Regla del proyecto: `.cursor/rules/jaagsolutions-checklist-sync.mdc`.
+
 ## Entregables en repo (sin VPS / dominio / Formspree)
+
+Aquí **Hecho** significa: el **archivo o guía está en el repo** y cubre lo previsto en el diseño. **No** significa que el deploy en Vercel, el enlace GitHub o el import del monorepo ya funcionen sin fricción; eso se trackea en **Pendiente** (Fase A, Vercel).
 
 | Archivo | Estado |
 |---------|--------|
@@ -21,8 +25,18 @@ Referencia: [2026-04-30-jaagsolutions-produccion-design.md](./2026-04-30-jaagsol
 
 ### Fase A — Preview web + Formspree (sin VPS)
 
-- [ ] Formspree: formulario creado + `VITE_FORMSPREE_ID` en Vercel (**Preview** y/o **Production**)
-- [ ] Vercel: import **JAAG2021/jaagsolutions-paperclip**, root `jaagsolutions-web`, rama `feature/jaagsolutions` si aplica; redeploy y prueba de envío (ver `jaagsolutions-web/DEPLOY-VERCEL.md`)
+**Formspree (panel + formulario)**
+
+- [x] Cuenta Formspree y formulario **JAAGSOLUTIONS — diagnóstico multipaso** creados (Integration → endpoint).
+- [x] **Form ID** anotado para Vercel: `VITE_FORMSPREE_ID` = `xpqbzolp` (`https://formspree.io/f/xpqbzolp`).
+- **Diferido (Fase B):** webhook Formspree → n8n — no configurar en Fase A; ver `deploy/RUNBOOK.md`.
+- [ ] *Opcional:* Workflow (email de aviso por submission), Rules, o restricción de dominio compatible con `*.vercel.app` si tu plan lo exige.
+
+**Vercel + prueba de envío**
+
+- [ ] **1 — Proyecto:** import **JAAG2021/jaagsolutions-paperclip**, **Root Directory** `jaagsolutions-web`, rama `feature/jaagsolutions` si aplica (ver `jaagsolutions-web/DEPLOY-VERCEL.md`). Esperá un primer deploy (aunque falle o el form no envíe hasta tener la variable).
+- [ ] **2 — Variable:** `VITE_FORMSPREE_ID` = `xpqbzolp` en **Settings → Environment Variables**; marcá **Preview** (y **Production** si usás esa rama). Luego **Redeploy** del último deployment (las `VITE_*` se inyectan en build).
+- [ ] **3 — Prueba:** abrí la URL del deploy → completá el formulario → en DevTools **Network** verificá `POST` a `formspree.io` OK → en Formspree **Submissions** debe aparecer la entrada.
 
 ### Fase B — VPS + automatización (después)
 
