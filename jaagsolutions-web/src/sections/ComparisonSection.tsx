@@ -12,7 +12,7 @@ const features: {
 }[] = [
   { label: "Implementación < 4 semanas",        jaagsolutions: "yes", solo: "no",      agency: "no"      },
   { label: "Precio accesible para PYME",         jaagsolutions: "yes", solo: "partial", agency: "no"      },
-  { label: "Soporte post-entrega",               jaagsolutions: "yes", solo: "no",      agency: "partial" },
+  { label: "Soporte post-entrega con plan de mantenimiento / evolución claro", jaagsolutions: "yes", solo: "no", agency: "partial" },
   { label: "Capacitación al equipo",             jaagsolutions: "yes", solo: "no",      agency: "partial" },
   { label: "Automatización + SaaS integrado",    jaagsolutions: "yes", solo: "no",      agency: "no"      },
   { label: "Sin contrato de permanencia",        jaagsolutions: "yes", solo: "yes",     agency: "no"      },

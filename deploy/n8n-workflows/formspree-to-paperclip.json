@@ -1,0 +1,140 @@
+{
+  "name": "Formspree Lead → Paperclip Issue",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "formspree-lead",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-formspree",
+      "name": "Webhook Formspree",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "webhookId": "formspree-lead"
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\n\nfunction lowerKeyMap(obj) {\n  const out = {};\n  if (!obj || typeof obj !== 'object') return out;\n  for (const [k, v] of Object.entries(obj)) {\n    const val = Array.isArray(v) ? v[0] : v;\n    out[String(k).toLowerCase()] = val != null ? String(val) : '';\n  }\n  return out;\n}\n\nfunction timingSafeEqualStr(a, b) {\n  const x = Buffer.from(String(a), 'utf8');\n  const y = Buffer.from(String(b), 'utf8');\n  if (x.length !== y.length) return false;\n  try {\n    return crypto.timingSafeEqual(x, y);\n  } catch {\n    return false;\n  }\n}\n\nconst item = $input.first().json;\nconst headers = lowerKeyMap(item.headers);\nconst secret = (process.env.FORMSPREE_WEBHOOK_SECRET || '').trim();\nconst formExpected = (process.env.FORMSPREE_FORM_HASHID || '').trim();\n\nconst root = item.body && typeof item.body === 'object' ? item.body : item;\nconst formId = root.form != null ? String(root.form) : '';\n\nif (formExpected && formId !== formExpected) {\n  throw new Error('[webhook] FORMSPREE_FORM_HASHID no coincide con payload.form');\n}\n\nif (secret.length === 0) {\n  console.warn('[webhook] FORMSPREE_WEBHOOK_SECRET vacío — no se valida token (solo desarrollo)');\n  return [{ json: item }];\n}\n\nlet ok = false;\n\nfor (const hn of ['x-paperclip-webhook-token', 'x-formspree-signature', 'x-webhook-secret']) {\n  const v = headers[hn];\n  if (v && timingSafeEqualStr(v.trim(), secret)) {\n    ok = true;\n    break;\n  }\n}\n\nconst hub = headers['x-hub-signature-256'] || headers['x-formspree-signature-sha256'];\nif (!ok && hub) {\n  const hex = hub.replace(/^sha256=/i, '').trim();\n  const bodyForSig = item.body !== undefined ? item.body : item;\n  const payload = typeof bodyForSig === 'string' ? bodyForSig : JSON.stringify(bodyForSig);\n  const expected = crypto.createHmac('sha256', secret).update(payload, 'utf8').digest('hex');\n  if (timingSafeEqualStr(hex, expected)) ok = true;\n}\n\nconst q = item.query && typeof item.query === 'object' ? item.query : {};\nconst qtok = q.token ?? q.secret;\nconst qval = Array.isArray(qtok) ? qtok[0] : qtok;\nif (!ok && qval != null && timingSafeEqualStr(String(qval).trim(), secret)) ok = true;\n\nif (!ok) {\n  throw new Error('[webhook] Secreto o firma inválidos (revisá cabeceras, HMAC del cuerpo o ?token= en la URL)');\n}\n\nreturn [{ json: item }];"
+      },
+      "id": "verify-webhook",
+      "name": "Validar webhook (secreto / firma)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst raw = item.body ?? item;\nconst body =\n  raw && typeof raw.submission === 'object' && raw.submission !== null\n    ? raw.submission\n    : raw && raw.fields\n      ? raw.fields\n      : raw;\n\nconst nombre = String(body.nombre ?? 'Sin nombre');\nconst email = String(body.email ?? '');\nconst empresa = String(body.empresa ?? 'Sin empresa');\nconst tamano = String(body.tamano_equipo ?? 'No indicado');\nconst dolor = String(body.dolor_proceso ?? 'No especificado');\nconst herramientas = String(body.herramientas_actual ?? 'No indicado');\nconst presupuesto = String(body.presupuesto ?? 'No indicado');\nconst timeline = String(body.timeline ?? 'No indicado');\nconst whatsapp = String(body.whatsapp ?? 'No proporcionado');\nconst recurso = body.recurso_pdf != null ? String(body.recurso_pdf) : 'No';\nconst sitioWeb = String(body.sitio_web ?? 'No proporcionado');\n\nconst priority = timeline === 'inmediato' ? 'high' : 'medium';\nconst title = `Lead: ${nombre} — ${empresa}`;\nconst description = [\n  '## Lead calificado desde formulario web',\n  '',\n  `**Contacto:** ${nombre}`,\n  `**Email:** ${email}`,\n  `**WhatsApp:** ${whatsapp}`,\n  `**Empresa:** ${empresa}`,\n  `**Sitio web:** ${sitioWeb}`,\n  `**Tamaño equipo:** ${tamano}`,\n  '',\n  `**Dolor principal:** ${dolor}`,\n  `**Herramientas actuales:** ${herramientas}`,\n  '',\n  `**Presupuesto estimado:** ${presupuesto}`,\n  `**Urgencia / Timeline:** ${timeline}`,\n  `**PDF lead magnet:** ${recurso}`,\n  '',\n  '---',\n  '_Issue automático — jaagsolutions.com_',\n].join('\\n');\n\nconst env = process.env;\nconst issueBody = {\n  title,\n  description,\n  priority,\n  status: 'backlog',\n  assigneeAgentId: env.PAPERCLIP_A3_AGENT_ID || null,\n  projectId: env.PAPERCLIP_P2_PROJECT_ID || null,\n  goalId: env.PAPERCLIP_G2_GOAL_ID || null,\n};\n\nconst base = (env.PAPERCLIP_URL || 'http://paperclip:3100').replace(/\\/$/, '');\nconst companyId = env.PAPERCLIP_COMPANY_ID || '';\nconst requestUrl = `${base}/api/companies/${companyId}/issues`;\n\nreturn [{ json: { issueBody, requestUrl } }];"
+      },
+      "id": "build-issue",
+      "name": "Construir issue Paperclip",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.requestUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.PAPERCLIP_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.issueBody) }}",
+        "options": {}
+      },
+      "id": "http-create-issue",
+      "name": "POST Paperclip issue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-id",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-created",
+      "name": "¿Issue creado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nconsole.log('[n8n] Issue OK:', j.id, j.identifier ?? '');\nreturn $input.all();"
+      },
+      "id": "log-ok",
+      "name": "Log éxito",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1420, 220]
+    },
+    {
+      "parameters": {
+        "jsCode": "console.error('[n8n] Error creando issue:', JSON.stringify($input.first().json));\nreturn $input.all();"
+      },
+      "id": "log-fail",
+      "name": "Log error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1420, 380]
+    }
+  ],
+  "connections": {
+    "Webhook Formspree": {
+      "main": [[{ "node": "Validar webhook (secreto / firma)", "type": "main", "index": 0 }]]
+    },
+    "Validar webhook (secreto / firma)": {
+      "main": [[{ "node": "Construir issue Paperclip", "type": "main", "index": 0 }]]
+    },
+    "Construir issue Paperclip": {
+      "main": [[{ "node": "POST Paperclip issue", "type": "main", "index": 0 }]]
+    },
+    "POST Paperclip issue": {
+      "main": [[{ "node": "¿Issue creado?", "type": "main", "index": 0 }]]
+    },
+    "¿Issue creado?": {
+      "main": [
+        [{ "node": "Log éxito", "type": "main", "index": 0 }],
+        [{ "node": "Log error", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "templateCredsSetupCompleted": true },
+  "tags": ["jaagsolutions", "leads"]
+}

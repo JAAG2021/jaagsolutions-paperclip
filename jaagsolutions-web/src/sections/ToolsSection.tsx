@@ -23,8 +23,11 @@ export default function ToolsSection() {
   return (
     <section className="py-16 bg-white border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p className="text-center text-sm font-bold text-gray-400 uppercase tracking-widest mb-10">
+        <p className="text-center text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">
           Tecnologías y herramientas que utilizamos
+        </p>
+        <p className="text-center text-gray-600 max-w-3xl mx-auto text-sm sm:text-base mb-10 leading-relaxed">
+          No te vendemos licencias sueltas: integramos tu operación con las mejores piezas del mercado y te dejamos una arquitectura clara — <span className="font-semibold text-gray-800">consultoría primero, implementación después</span>.
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
           {tools.map((t) => (

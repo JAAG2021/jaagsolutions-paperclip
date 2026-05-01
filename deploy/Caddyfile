@@ -1,0 +1,25 @@
+# SSL automático (Let's Encrypt). Los registros DNS de paperclip.* y n8n.* deben apuntar al VPS antes del primer arranque.
+
+{
+	email {$LETSENCRYPT_EMAIL}
+}
+
+paperclip.{$DOMAIN} {
+	reverse_proxy paperclip:3100
+	encode gzip
+	log {
+		output stderr
+	}
+}
+
+n8n.{$DOMAIN} {
+	reverse_proxy n8n:5678
+	encode gzip
+	log {
+		output stderr
+	}
+}
+
+{$DOMAIN} {
+	redir https://www.{$DOMAIN}{uri} permanent
+}

@@ -52,5 +52,8 @@ tests/release-smoke/playwright-report/
 .superset/
 .claude/worktrees/
 
+# Producción VPS (no subir secretos)
+deploy/.env
+
 # Git worktrees
 .worktrees/

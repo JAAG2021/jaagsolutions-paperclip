@@ -1,45 +1,62 @@
+import { useState } from "react";
+import HeroAutomationHubIllustration from "../components/HeroAutomationHubIllustration.tsx";
+
+const TECH_BADGES = [
+  "Make",
+  "n8n",
+  "OpenAI",
+  "Google Workspace",
+  "Zapier",
+  "WhatsApp API",
+];
+
+const HERO_VIDEO_FILENAME = "hero-automation-hub.mp4";
+
+/** Descripción del vídeo / arte del hero (accesibilidad y respaldo SVG). Marco 448×600 (56:75); exporta en esa proporción p. ej. 896×1200. object-cover evita huecos si el mp4 es 9:16. */
+const HERO_VISUAL_ALT =
+  "Dashboard digital isométrico en 3D: hub luminoso tipo CPU, líneas tipo circuito en cian hasta iconos WhatsApp, correo Gmail, Google y centro estilo IA OpenAI; paneles cristal con gráficas y datos en tiempo real. Estilo B2B azul tecnológico.";
+
+function heroVideoSrc(): string {
+  const base = import.meta.env.BASE_URL.endsWith("/")
+    ? import.meta.env.BASE_URL
+    : `${import.meta.env.BASE_URL}/`;
+  return `${base}${HERO_VIDEO_FILENAME}`;
+}
+
 export default function HeroSection() {
+  const [hubVideoFailed, setHubVideoFailed] = useState(false);
+
   return (
-    <section id="inicio" className="relative bg-brand-900 text-white overflow-hidden min-h-[92vh] flex items-center">
+    <section
+      id="inicio"
+      className="relative bg-brand-900 text-white overflow-hidden lg:min-h-[calc(100svh-4rem)] lg:flex lg:items-center"
+    >
       {/* ── Decorative background ── */}
-      {/* Dot grid */}
       <div className="absolute inset-0 bg-dot-pattern opacity-60" />
-      {/* Glow orb top-left */}
       <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-brand-600 opacity-20 blur-[120px] pointer-events-none" />
-      {/* Glow orb bottom-right */}
       <div className="absolute -bottom-32 -right-20 w-[500px] h-[500px] rounded-full bg-violet-600 opacity-15 blur-[100px] pointer-events-none" />
-      {/* Aurora orb 1 — drifts slowly */}
       <div className="absolute top-1/4 right-1/3 w-[400px] h-[400px] rounded-full bg-brand-500 opacity-10 blur-[100px] pointer-events-none animate-aurora-1" />
-      {/* Aurora orb 2 — drifts slowly */}
       <div className="absolute bottom-1/3 left-1/4 w-[350px] h-[350px] rounded-full bg-violet-500 opacity-10 blur-[90px] pointer-events-none animate-aurora-2" />
-      {/* Horizontal separator glow */}
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-500/50 to-transparent" />
 
-      <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-
+      <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 lg:py-8 xl:py-10">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-10 xl:gap-14 items-center">
           {/* ── Left: Copy ── */}
           <div className="animate-fade-in-up">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-brand-600/25 border border-brand-500/35 rounded-full px-4 py-1.5 text-sm font-semibold mb-8 backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 bg-brand-600/25 border border-brand-500/35 rounded-full px-4 py-1.5 text-sm font-semibold mb-6 lg:mb-5 backdrop-blur-sm">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse flex-shrink-0" />
               Automatización + SaaS para PYMEs
             </div>
 
-            {/* Headline */}
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-[1.05] tracking-tight mb-6">
-              Automatiza hoy.{" "}
-              <br />
-              <span className="gradient-text">Lidera mañana.</span>
+            <h1 className="text-5xl sm:text-6xl lg:text-5xl xl:text-6xl font-extrabold leading-[1.05] tracking-tight mb-5 lg:mb-4">
+              Liberamos a tu equipo de las tareas manuales para que te enfoques en escalar.
             </h1>
 
-            {/* Sub */}
-            <p className="text-xl text-blue-200 mb-10 leading-relaxed max-w-lg">
-              Optimizamos los procesos de tu PYME con automatizaciones de flujo y desarrollo SaaS — para operar mejor hoy y escalar con control.
+            <p className="text-lg sm:text-xl text-blue-100 mb-7 lg:mb-5 leading-relaxed max-w-xl">
+              Optimizamos tu PYME con flujos inteligentes y SaaS a medida. Recupera el control del tiempo operativo y reduce costos desde el primer mes — sin cambiar tus herramientas por un “software genérico”.
             </p>
 
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-10">
+            <div className="flex flex-col sm:flex-row gap-4 mb-6 lg:mb-5">
               <a
                 href="#contacto"
                 className="btn-glow inline-flex items-center justify-center gap-2 bg-white text-brand-900 font-bold px-8 py-4 rounded-xl text-base hover:bg-blue-50 transition-colors shadow-lg"
@@ -50,18 +67,36 @@ export default function HeroSection() {
                 </svg>
               </a>
               <a
-                href="#servicios"
-                className="inline-flex items-center justify-center gap-2 border border-white/30 text-white font-semibold px-8 py-4 rounded-xl text-base hover:bg-white/10 transition-colors backdrop-blur-sm"
+                href="#calculadora-roi"
+                className="inline-flex items-center justify-center gap-2 border border-white/35 text-white font-semibold px-8 py-4 rounded-xl text-base hover:bg-white/10 transition-colors backdrop-blur-sm"
               >
-                Ver servicios
+                Descubre tu potencial de ahorro
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </a>
             </div>
 
-            {/* Trust line */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-blue-300/80">
+            <div className="mb-6 lg:mb-5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-blue-300/70 mb-3">
+                Integraciones y stack habitual
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                {TECH_BADGES.map((name) => (
+                  <span
+                    key={name}
+                    className="rounded-md border border-white/15 bg-white/5 px-2.5 py-1 text-[0.6875rem] font-semibold tracking-wide text-gray-300 grayscale hover:grayscale-0 transition-[filter,color] duration-300"
+                  >
+                    {name}
+                  </span>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-blue-300/60 max-w-lg">
+                Trabajamos con las herramientas que ya usas · Sin lock-in mágico
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 text-sm text-blue-200/90">
               <span className="flex items-center gap-1.5">
                 <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -85,76 +120,31 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {/* ── Right: Visual dashboard mockup ── */}
-          <div className="hidden lg:block animate-fade-in-up-d2">
-            <div className="relative">
-              {/* Main card */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm overflow-hidden shadow-2xl">
-                {/* Browser bar */}
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 bg-white/5">
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-400/60" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-400/60" />
-                    <div className="w-3 h-3 rounded-full bg-green-400/60" />
-                  </div>
-                  <div className="flex-1 mx-4 bg-white/10 rounded-md px-3 py-1 text-xs text-blue-200/50 text-center">
-                    app.jaagsolutions.com/dashboard
-                  </div>
+          {/* ── Right: marco original 448×600 (más ancho que 360×640); 56:75 = export vídeo 896×1200 etc. ── */}
+          <div className="hidden lg:flex animate-fade-in-up-d2 w-full justify-center xl:justify-end min-h-0">
+            <div className="relative w-[448px] h-[600px] shrink-0 overflow-hidden rounded-2xl border border-white/12 bg-black shadow-2xl ring-1 ring-white/10">
+              {!hubVideoFailed ? (
+                <video
+                  src={heroVideoSrc()}
+                  className="absolute inset-0 h-full w-full object-cover object-center"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  aria-label={HERO_VISUAL_ALT}
+                  onError={() => setHubVideoFailed(true)}
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center min-h-0 bg-brand-950/50 p-2">
+                  <HeroAutomationHubIllustration
+                    aria-hidden
+                    className="max-h-full max-w-full w-auto h-auto text-white"
+                  />
                 </div>
-
-                {/* Dashboard content */}
-                <div className="p-6">
-                  <p className="text-xs text-blue-300/60 font-semibold uppercase tracking-widest mb-4">Panel de operaciones</p>
-
-                  {/* KPI row */}
-                  <div className="grid grid-cols-3 gap-3 mb-5">
-                    {[
-                      { label: "Leads este mes", value: "142", delta: "+18%", color: "text-green-400" },
-                      { label: "Tareas auto.", value: "3,820", delta: "+60%", color: "text-blue-400" },
-                      { label: "Tiempo ahorrado", value: "96 h", delta: "este mes", color: "text-violet-400" },
-                    ].map((kpi) => (
-                      <div key={kpi.label} className="bg-white/5 rounded-xl p-3 border border-white/10">
-                        <div className="text-xl font-extrabold text-white">{kpi.value}</div>
-                        <div className={`text-xs font-semibold ${kpi.color}`}>{kpi.delta}</div>
-                        <div className="text-xs text-blue-300/50 mt-0.5">{kpi.label}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Mini flow diagram */}
-                  <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                    <p className="text-xs text-blue-300/60 mb-3 font-medium">Flujo activo: Captación → CRM</p>
-                    <div className="flex items-center gap-2">
-                      {[
-                        { icon: "📥", label: "Lead", bg: "bg-blue-500/20" },
-                        { icon: "🤖", label: "IA score", bg: "bg-violet-500/20" },
-                        { icon: "📅", label: "Agenda", bg: "bg-emerald-500/20" },
-                        { icon: "✅", label: "CRM", bg: "bg-green-500/20" },
-                      ].map((step, i) => (
-                        <div key={step.label} className="flex items-center gap-2 flex-1">
-                          <div className={`${step.bg} rounded-lg p-2 flex flex-col items-center flex-1`}>
-                            <span className="text-sm">{step.icon}</span>
-                            <span className="text-xs text-blue-200/70 mt-0.5">{step.label}</span>
-                          </div>
-                          {i < 3 && <span className="text-blue-400/50 text-xs flex-shrink-0">→</span>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Floating badge */}
-              <div className="absolute -top-4 -right-4 bg-green-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-float">
-                ✓ Activo 24/7
-              </div>
-              {/* Floating stat */}
-              <div className="absolute -bottom-4 -left-4 bg-brand-700 border border-brand-500/40 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-lg backdrop-blur animate-float-slow">
-                ⚡ 3,820 tareas automatizadas
-              </div>
+              )}
             </div>
           </div>
-
         </div>
       </div>
     </section>

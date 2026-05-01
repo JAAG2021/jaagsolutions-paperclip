@@ -1,102 +1,103 @@
 const benefits = [
   {
-    icon: "⏰",
-    before: "Procesos manuales lentos y propensos a errores",
-    after: "Flujos automatizados que corren 24/7 sin intervención humana",
+    icon: "⏱",
+    eyebrow: "Operaciones",
+    tag: "El ladrón de tiempo",
+    before: "Procesos manuales lentos y propensos a errores humanos que frenan tu crecimiento.",
+    after: "Flujos autónomos que trabajan 24/7. Tu operación no duerme cuando tú descansas.",
     stat: "−80%",
-    statLabel: "tiempo operativo",
-    color: "from-red-50 to-orange-50",
-    accentColor: "text-red-500",
+    statLabel: "carga operativa típica",
+    color: "from-red-50/90 to-orange-50/95",
+    accentColor: "text-red-600",
+    accentBorder: "border-red-100/70",
+    glassFoot: true,
   },
   {
     icon: "💸",
-    before: "Costos elevados por trabajo repetitivo y reprocesos",
-    after: "Reducción de costos con menos dependencia de tareas manuales",
-    stat: "−60%",
-    statLabel: "costo por tarea",
-    color: "from-yellow-50 to-amber-50",
-    accentColor: "text-yellow-600",
+    eyebrow: "Costos",
+    tag: "La fuga de dinero",
+    before: "Pagar nomina cara para trabajo repetitivo que una máquina hace más rápido y sin errores.",
+    after: "Escala sin inflar tu nómina en tareas repetitivas. Crece manteniendo rentabilidad.",
+    stat: "~60%",
+    statLabel: "ahorro efectivo típico en ejecución",
+    color: "from-amber-50/90 to-yellow-50/95",
+    accentColor: "text-amber-700",
+    accentBorder: "border-amber-100/80",
+    glassFoot: true,
   },
   {
     icon: "📊",
-    before: "Decisiones basadas en datos dispersos o desactualizados",
-    after: "Dashboards en tiempo real con métricas clave centralizadas",
+    eyebrow: "Visibilidad",
+    tag: "Vuelo a ciegas",
+    before: "Decisiones guiadas por intuición o datos viejos dispersos entre hojas y correos.",
+    after: "Métricas en tiempo real. El pulso de tu negocio en el celular cuando lo necesites.",
     stat: "3×",
-    statLabel: "mejor visibilidad",
-    color: "from-blue-50 to-indigo-50",
-    accentColor: "text-blue-500",
-  },
-  {
-    icon: "🚀",
-    before: "Equipos atrapados en tareas de bajo valor",
-    after: "Tu equipo enfocado en crecimiento, innovación y clientes",
-    stat: "+40%",
-    statLabel: "productividad",
-    color: "from-purple-50 to-violet-50",
-    accentColor: "text-purple-500",
+    statLabel: "claridad de KPIs típica post-implementación",
+    color: "from-blue-50/90 to-indigo-50/95",
+    accentColor: "text-blue-600",
+    accentBorder: "border-blue-100/80",
+    glassFoot: true,
   },
 ];
 
 export default function BenefitsSection() {
   return (
-    <section id="beneficios" className="py-24 bg-white">
+    <section id="beneficios" className="py-24 bg-gray-50/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16 animate-fade-in-up">
-          <span className="inline-block mb-3 px-4 py-1 text-xs font-bold tracking-widest uppercase text-brand-600 bg-brand-50 rounded-full border border-brand-100">
-            Por qué automatizar
+          <span className="inline-block mb-3 px-4 py-1 text-xs font-bold tracking-widest uppercase text-brand-600 bg-white rounded-full border border-brand-100 shadow-sm">
+            De la fricción al resultado
           </span>
           <h2 className="text-4xl font-extrabold text-gray-900 mt-2 mb-4">
-            De la fricción al{" "}
-            <span className="gradient-text">resultado medible</span>
+            Tiempo y dinero de vuelta a{" "}
+            <span className="gradient-text">tu negocio</span>
           </h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Cada proceso manual es una oportunidad de mejora. Así transformamos las operaciones de nuestros clientes.
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            El dueño no busca “automatizar” por tecnología — busca horas recuperables y márgenes sanos.
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-3 gap-7">
           {benefits.map((b, i) => (
             <div
-              key={b.stat + i}
-              className={`card-hover animate-fade-in-up-d${Math.min(i + 1, 4)} relative rounded-2xl overflow-hidden border border-gray-100 shadow-sm`}
+              key={b.stat + b.eyebrow}
+              className={`card-hover animate-fade-in-up-d${Math.min(i + 1, 4)} rounded-3xl overflow-hidden flex flex-col border border-gray-200/90 bg-white/85 backdrop-blur-sm shadow-[0_8px_30px_-12px_rgba(37,99,235,0.08)]`}
             >
-              {/* Stat badge */}
-              <div className="absolute top-4 right-4 bg-gray-900 text-white text-xs font-extrabold px-2.5 py-1 rounded-full shadow">
-                {b.stat}
-              </div>
+              <div className={`bg-gradient-to-br ${b.color} p-7 pb-5 border-b ${b.accentBorder} relative`}>
+                <div className="absolute inset-px rounded-[1.375rem] border border-white/50 pointer-events-none" />
 
-              <div className={`bg-gradient-to-br ${b.color} p-6 pb-4`}>
-                <div className="text-3xl mb-3">{b.icon}</div>
-
-                {/* BEFORE */}
-                <div className="mb-4">
-                  <div className={`text-xs font-bold uppercase tracking-widest ${b.accentColor} mb-1`}>
-                    ✗ Antes
+                <div className="flex items-start justify-between gap-2 mb-3 relative">
+                  <div>
+                    <p className={`text-[0.6875rem] font-bold uppercase tracking-widest ${b.accentColor}`}>{b.eyebrow}</p>
+                    <p className="text-sm font-semibold text-gray-800">{b.tag}</p>
                   </div>
-                  <p className="text-sm text-gray-600 leading-snug">{b.before}</p>
+                  <div className="text-3xl drop-shadow-sm">{b.icon}</div>
                 </div>
 
-                {/* Arrow */}
-                <div className="flex items-center justify-center my-3">
-                  <div className="flex-1 h-px bg-gray-200" />
-                  <div className="mx-3 w-7 h-7 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs font-bold shadow-md">
+                <div className="mb-4 rounded-xl bg-white/65 backdrop-blur-sm border border-white/80 p-4 shadow-inner">
+                  <div className="text-[0.65rem] font-bold uppercase tracking-wide text-gray-400 mb-1">Antes</div>
+                  <p className="text-sm text-gray-700 leading-snug">{b.before}</p>
+                </div>
+
+                <div className="flex items-center justify-center my-1 relative">
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300/80 to-transparent" />
+                  <div className="mx-3 w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs font-black shadow-lg">
                     ↓
                   </div>
-                  <div className="flex-1 h-px bg-gray-200" />
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300/80 to-transparent" />
                 </div>
 
-                {/* AFTER */}
-                <div className="bg-white rounded-xl p-3 border border-green-100">
-                  <div className="text-xs font-bold uppercase tracking-widest text-green-600 mb-1">
-                    ✓ Después
+                <div className="mt-4 rounded-xl bg-emerald-50/95 border border-emerald-100 p-4 shadow-sm relative">
+                  <div className="text-[0.65rem] font-bold uppercase tracking-wide text-emerald-600 mb-1">Después</div>
+                  <p className="text-sm text-gray-800 leading-snug font-medium">{b.after}</p>
+                </div>
+
+                {b.glassFoot && (
+                  <div className="mt-5 inline-flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-xl px-4 py-2 bg-white/70 backdrop-blur-md border border-white/90 shadow-sm">
+                    <span className="text-[0.7rem] text-gray-500 font-medium leading-tight">{b.statLabel}</span>
+                    <span className="text-3xl font-extrabold text-brand-700 tabular-nums">{b.stat}</span>
                   </div>
-                  <p className="text-sm text-gray-700 leading-snug font-medium">{b.after}</p>
-                </div>
-              </div>
-
-              <div className="bg-white px-5 py-3 border-t border-gray-100 flex items-center justify-between">
-                <span className="text-xs text-gray-400">{b.statLabel}</span>
-                <span className="text-base font-extrabold text-brand-600">{b.stat}</span>
+                )}
               </div>
             </div>
           ))}

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ejemplos — vídeo del hero (contain vs cover)</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, Segoe UI, sans-serif;
+        background: #020617;
+        color: #e2e8f0;
+        padding: 1.5rem;
+        line-height: 1.5;
+      }
+      h1 {
+        font-size: 1.25rem;
+        margin: 0 0 0.5rem;
+      }
+      p.intro {
+        color: #94a3b8;
+        max-width: 52rem;
+        margin: 0 0 1.5rem;
+        font-size: 0.95rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.25rem;
+        max-width: 900px;
+      }
+      figure {
+        margin: 0;
+        padding: 1rem;
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 12px;
+      }
+      figcaption {
+        margin-top: 0.75rem;
+        font-size: 0.8rem;
+        color: #94a3b8;
+      }
+      figcaption strong {
+        display: block;
+        color: #f1f5f9;
+        margin-bottom: 0.35rem;
+        font-size: 0.875rem;
+      }
+      .hint {
+        margin-top: 2rem;
+        padding: 1rem;
+        background: #172554;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: #bfdbfe;
+        max-width: 52rem;
+      }
+      code {
+        background: #1e293b;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+        font-size: 0.85em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Ejemplos gráficos: cómo encaja el vídeo en el marco del hero</h1>
+    <p class="intro">
+      Marco de referencia (como en la web): <strong>448×600 px</strong>, proporción
+      <strong>56:75</strong>. Los tres dibujos usan la misma forma de “marco” para comparar.
+    </p>
+
+    <div class="grid">
+      <figure>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="100%" height="auto" aria-labelledby="t-a">
+          <title id="t-a">Opción A</title>
+          <defs>
+            <linearGradient id="vid" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#06b6d4" />
+              <stop offset="100%" stop-color="#6366f1" />
+            </linearGradient>
+          </defs>
+          <rect x="10" y="10" width="180" height="210" rx="8" fill="#0f172a" stroke="#64748b" stroke-width="2" />
+          <rect x="18" y="18" width="164" height="194" rx="5" fill="url(#vid)" />
+        </svg>
+        <figcaption>
+          <strong>A — Misma proporción (56:75) + object-contain</strong>
+          El vídeo llena el marco. No hay franjas ni recorte.
+        </figcaption>
+      </figure>
+
+      <figure>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="100%" height="auto" aria-labelledby="t-b">
+          <title id="t-b">Opción B</title>
+          <defs>
+            <linearGradient id="vid2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#06b6d4" />
+              <stop offset="100%" stop-color="#6366f1" />
+            </linearGradient>
+          </defs>
+          <rect x="10" y="10" width="180" height="210" rx="8" fill="#0f172a" stroke="#64748b" stroke-width="2" />
+          <rect x="10" y="18" width="32" height="194" fill="#334155" />
+          <rect x="158" y="18" width="32" height="194" fill="#334155" />
+          <rect x="46" y="18" width="108" height="194" rx="4" fill="url(#vid2)" />
+        </svg>
+        <figcaption>
+          <strong>B — Vídeo 9:16 + object-contain</strong>
+          Se ve todo el vídeo; sobran franjas oscuras a los lados (letterbox).
+        </figcaption>
+      </figure>
+
+      <figure>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="100%" height="auto" aria-labelledby="t-c">
+          <title id="t-c">Opción C</title>
+          <defs>
+            <linearGradient id="vid3" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#06b6d4" />
+              <stop offset="100%" stop-color="#6366f1" />
+            </linearGradient>
+            <clipPath id="marco-hero">
+              <rect x="10" y="10" width="180" height="210" rx="8" />
+            </clipPath>
+          </defs>
+          <!-- Vídeo 9:16 escalado: más alto que el marco; clip simula object-cover -->
+          <g clip-path="url(#marco-hero)">
+            <rect x="44" y="-28" width="112" height="286" rx="4" fill="url(#vid3)" opacity="0.95" />
+          </g>
+          <rect x="10" y="10" width="180" height="210" rx="8" fill="none" stroke="#64748b" stroke-width="2" />
+        </svg>
+        <figcaption>
+          <strong>C — Vídeo 9:16 + object-cover</strong>
+          El mismo vídeo se escala hasta cubrir el marco; la parte superior e inferior (fuera del rectángulo) se recorta.
+        </figcaption>
+      </figure>
+    </div>
+
+    <div class="hint">
+      <strong>Cómo ver esta página</strong><br />
+      Con el proyecto <code>jaagsolutions-web</code> en marcha (<code>pnpm dev</code>), abre:
+      <br />
+      <a href="/ejemplos-video-hero.html" style="color: #7dd3fc">/ejemplos-video-hero.html</a>
+      (por ejemplo <code>http://localhost:5173/ejemplos-video-hero.html</code>).<br /><br />
+      También puedes abrir este archivo directamente desde el explorador (doble clic en
+      <code>public/ejemplos-video-hero.html</code>).
+    </div>
+  </body>
+</html>

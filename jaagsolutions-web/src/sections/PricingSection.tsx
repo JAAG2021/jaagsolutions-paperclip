@@ -6,10 +6,10 @@ type BillingCycle = "monthly" | "annual";
 const plans = [
   {
     name: "Starter",
-    tagline: "Para negocios que quieren empezar a automatizar",
-    priceMonthly: "Desde $499",
-    priceAnnual: "Desde $399",
-    period: "/ proyecto",
+    tagline: "Negocios que quieren su primer flujo con cero sorpresas de precio base",
+    priceMonthly: "$499",
+    priceAnnual: "$399",
+    period: "/ proyecto (base fija publicada)",
     highlight: false,
     color: "border-white/10",
     badge: null,
@@ -17,7 +17,8 @@ const plans = [
       "1 flujo de automatización",
       "Integración con 2 herramientas",
       "Documentación del proceso",
-      "Soporte por 30 días",
+      "Soporte inicial 30 días",
+      "Mantenimiento opcional mensual después del soporte (no obligatorio)",
       "Entrega en 1–2 semanas",
     ],
     missing: [
@@ -30,19 +31,20 @@ const plans = [
   },
   {
     name: "Growth",
-    tagline: "El paquete más popular para PYMEs en crecimiento",
-    priceMonthly: "Desde $1,299",
-    priceAnnual: "Desde $1,039",
-    period: "/ proyecto",
+    tagline: "Equipo en crecimiento que quiere varios flujos coordinados",
+    priceMonthly: "$1.299",
+    priceAnnual: "$1.039",
+    period: "/ proyecto (orientativo · se ajusta al alcance)",
     highlight: true,
     color: "border-transparent",
-    badge: "Más popular",
+    badge: "Mejor valor · Recomendado PYME",
     features: [
       "Hasta 4 flujos de automatización",
       "Integración con herramientas ilimitadas",
       "Dashboard de monitoreo básico",
       "Documentación + capacitación al equipo",
-      "Soporte por 60 días",
+      "Soporte 60 días + plan de handover claro",
+      "Mantenimiento evolutivo opcional (retainer) al cerrar fase activa",
       "Entrega en 2–3 semanas",
     ],
     missing: ["SaaS personalizado"],
@@ -66,6 +68,7 @@ const plans = [
       "Soporte dedicado 6 meses",
       "Entrega en 3–6 semanas",
       "Consultoría estratégica incluida",
+      "Mantenimiento integral / evolución opcional bajo contrato",
     ],
     missing: [],
     cta: "Cotizar solución",
@@ -113,7 +116,7 @@ export default function PricingSection() {
             Inversión clara,{" "}
             <span className="gradient-text">resultados medibles</span>
           </h2>
-          <p className="text-blue-200/70 max-w-xl mx-auto">
+          <p className="text-blue-100/95 max-w-xl mx-auto">
             Sin costos ocultos. Sin contratos largos. Empezamos con un diagnóstico gratuito.
           </p>
         </div>
@@ -122,7 +125,7 @@ export default function PricingSection() {
         <div className={`flex items-center justify-center gap-3 mb-10 transition-all duration-700 delay-100 ${visible ? "opacity-100" : "opacity-0"}`}>
           <button
             onClick={() => handleBillingChange("monthly")}
-            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${billing === "monthly" ? "bg-white text-brand-900 shadow" : "text-blue-300 hover:text-white"}`}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${billing === "monthly" ? "bg-white text-brand-900 shadow" : "text-blue-100 hover:text-white"}`}
           >
             Mensual
           </button>
@@ -145,7 +148,7 @@ export default function PricingSection() {
           </div>
           <button
             onClick={() => handleBillingChange("annual")}
-            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${billing === "annual" ? "bg-white text-brand-900 shadow" : "text-blue-300 hover:text-white"}`}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${billing === "annual" ? "bg-white text-brand-900 shadow" : "text-blue-100 hover:text-white"}`}
           >
             Anual
           </button>
@@ -170,20 +173,20 @@ export default function PricingSection() {
               className={`transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"} relative flex flex-col rounded-2xl border ${plan.color} ${plan.highlight ? "bg-brand-800/80 backdrop-blur-sm animate-gradient-border" : "bg-white/5"} p-7`}
             >
               {plan.badge && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-600 text-white text-xs font-bold px-4 py-1 rounded-full">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 max-w-[min(92vw,16rem)] bg-brand-600 text-white text-[0.65rem] sm:text-xs font-bold px-3 py-1.5 rounded-full text-center leading-snug shadow-lg">
                   {plan.badge}
                 </div>
               )}
 
               <div className="mb-6">
                 <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
-                <p className="text-blue-300/70 text-sm mb-4">{plan.tagline}</p>
+                <p className="text-blue-100/95 text-sm mb-4">{plan.tagline}</p>
                 <div className="flex items-end gap-1">
                   <span className={`text-3xl font-extrabold text-white transition-opacity duration-200 ${priceVisible ? "opacity-100" : "opacity-0"}`}>
                     {billing === "monthly" ? plan.priceMonthly : plan.priceAnnual}
                   </span>
                   {plan.period && (
-                    <span className="text-blue-300/60 text-sm mb-1">{plan.period}</span>
+                    <span className="text-blue-100 text-sm mb-1">{plan.period}</span>
                   )}
                 </div>
               </div>
