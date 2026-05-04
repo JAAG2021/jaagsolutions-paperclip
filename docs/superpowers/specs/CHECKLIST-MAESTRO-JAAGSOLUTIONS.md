@@ -164,7 +164,7 @@
 | Repo `JAAG2021/jaagsolutions-paperclip` (privado) | ✅ Existe | |
 | **Importar proyecto en Vercel** | ✅ Completo (2026-05-04) | Root Directory `jaagsolutions-web`, rama `feature/jaagsolutions` |
 | **Configurar `VITE_FORMSPREE_ID` en Vercel env vars** | ⚠️ Verificar | Confirmar que está en Production, no solo Preview |
-| **Redeploy con commits recientes** | ❌ **PENDIENTE** | Deployment actual en commit `0592266` (viejo) — forzar redeploy |
+| **Redeploy con commits recientes** | ✅ Completo (2026-05-04) | Push a `JAAG2021/jaagsolutions-paperclip` — Vercel auto-deploya desde GitHub |
 | **Prueba E2E: formulario → Network → Formspree submissions** | ❌ **PENDIENTE** | Hacer después del redeploy |
 | Configurar `VITE_GA_ID` en Vercel (opcional) | ⬜ Opcional | |
 | Configurar `VITE_SITE_URL` en Vercel | ⬜ Opcional | Mejora SEO og:url |
