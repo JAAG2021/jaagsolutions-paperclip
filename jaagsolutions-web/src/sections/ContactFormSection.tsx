@@ -14,6 +14,7 @@ type FormData = {
   timeline: string;
   whatsapp: string;
   recurso_pdf: boolean;
+  _hp: string;
 };
 
 const STEPS_COPY = ["Contexto del negocio", "Tu mayor fricción hoy", "Inversión y timing"] as const;
@@ -46,6 +47,7 @@ export default function ContactFormSection() {
       presupuesto: "",
       timeline: "",
       recurso_pdf: true,
+      _hp: "",
     },
   });
 
@@ -61,6 +63,11 @@ export default function ContactFormSection() {
   }, []);
 
   async function onSubmit(data: FormData) {
+    if (data._hp) {
+      reset();
+      setStepIndex(0);
+      return;
+    }
     setSubmitError(false);
     try {
       const payload = {
@@ -170,7 +177,7 @@ export default function ContactFormSection() {
               </div>
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
-                <div className="flex gap-2">
+                <div className="flex gap-2" role="status" aria-label={`Paso ${stepIndex + 1} de ${STEPS_COPY.length}: ${STEPS_COPY[stepIndex]}`}>
                   {STEPS_COPY.map((label, idx) => (
                     <div key={label} className="flex flex-1 flex-col min-w-0">
                       <span
@@ -193,6 +200,7 @@ export default function ContactFormSection() {
                       <input
                         {...register("nombre", { required: "Indicá cómo llamarte" })}
                         placeholder="Nombre completo *"
+                        aria-label="Nombre completo (obligatorio)"
                         autoComplete="name"
                         className={inputClass}
                       />
@@ -210,6 +218,7 @@ export default function ContactFormSection() {
                         type="email"
                         autoComplete="email"
                         placeholder="Email corporativo (@empresa)  · * "
+                        aria-label="Email corporativo (obligatorio)"
                         className={inputClass}
                       />
                       {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
@@ -219,7 +228,7 @@ export default function ContactFormSection() {
                     </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
-                        <input {...register("empresa", { required: "Nombre de la empresa *" })} placeholder="Nombre de empresa *" className={inputClass} />
+                        <input {...register("empresa", { required: "Nombre de la empresa *" })} placeholder="Nombre de empresa *" aria-label="Nombre de empresa (obligatorio)" className={inputClass} />
                         {errors.empresa && <p className="mt-1 text-xs text-red-600">{errors.empresa.message}</p>}
                       </div>
                       <div>
@@ -234,6 +243,7 @@ export default function ContactFormSection() {
                                   : "URL válida https://… o dominio tipo mitienda.mx",
                           })}
                           placeholder="Sitio web (opcional)"
+                          aria-label="Sitio web (opcional)"
                           className={inputClass}
                           autoCapitalize="off"
                         />
@@ -241,10 +251,10 @@ export default function ContactFormSection() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                      <label htmlFor="tamano_equipo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
                         Tamaño del equipo
                       </label>
-                      <select {...register("tamano_equipo", { required: "Necesitamos tamaño orientativo del equipo *" })} className={selectClass}>
+                      <select id="tamano_equipo" {...register("tamano_equipo", { required: "Necesitamos tamaño orientativo del equipo *" })} className={selectClass}>
                         <option value="">Seleccioná tamaño típico *</option>
                         <option value="1-5">1 – 5</option>
                         <option value="6-20">6 – 20</option>
@@ -262,10 +272,10 @@ export default function ContactFormSection() {
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                      <label htmlFor="dolor_proceso" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
                         ¿Qué proceso te quita más tiempo hoy?
                       </label>
-                      <select {...register("dolor_proceso", { required: "Elegí categoría cercana al dolor mayor *" })} className={selectClass}>
+                      <select id="dolor_proceso" {...register("dolor_proceso", { required: "Elegí categoría cercana al dolor mayor *" })} className={selectClass}>
                         <option value="">Seleccioná un foco inicial *</option>
                         <option value="ventas-leads">Ventas / Captación leads</option>
                         <option value="facturacion-cobranza">Facturación · Cobranza · Pagos</option>
@@ -279,6 +289,7 @@ export default function ContactFormSection() {
                         {...register("herramientas_actual")}
                         rows={4}
                         placeholder='Herramientas típicas: Excel, Sheets, CRM (nombre), WhatsApp Business, correo Gmail/Outlook… (Opcional)'
+                        aria-label="Herramientas actuales (opcional)"
                         className={`${inputClass} resize-none`}
                       />
                     </div>
@@ -286,6 +297,7 @@ export default function ContactFormSection() {
                       {...register("whatsapp")}
                       type="tel"
                       placeholder="WhatsApp (opcional — aceleramos coordinación rápida)"
+                      aria-label="WhatsApp (opcional)"
                       autoComplete="tel"
                       className={inputClass}
                     />
@@ -298,10 +310,10 @@ export default function ContactFormSection() {
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                      <label htmlFor="presupuesto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
                         Rango de inversión estimado (solo orientativo)
                       </label>
-                      <select {...register("presupuesto", { required: "Seleccioná rango aproximado *" })} className={selectClass}>
+                      <select id="presupuesto" {...register("presupuesto", { required: "Seleccioná rango aproximado *" })} className={selectClass}>
                         <option value="">Rango alineado a tu etapa · *</option>
                         <option value="<500">&lt; USD&nbsp;500 · Explorador (Starter cercano)</option>
                         <option value="500-1500">USD&nbsp;500 – 1.500 · PYME típico en Growth</option>
@@ -310,10 +322,10 @@ export default function ContactFormSection() {
                       {errors.presupuesto && <p className="mt-1 text-xs text-red-600">{errors.presupuesto.message}</p>}
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                      <label htmlFor="timeline" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
                         Urgencia
                       </label>
-                      <select {...register("timeline", { required: "Indicá el timing esperado *" })} className={selectClass}>
+                      <select id="timeline" {...register("timeline", { required: "Indicá el timing esperado *" })} className={selectClass}>
                         <option value="">¿Qué tan pronto necesitás tenerlo funcionando? *</option>
                         <option value="inmediato">Inmediato (este mes)</option>
                         <option value="1-3meses">1 – 3 meses</option>
@@ -329,6 +341,16 @@ export default function ContactFormSection() {
                     </label>
                   </div>
                 </div>
+
+                {/* Honeypot antispam — oculto para humanos, trampa para bots */}
+                <input
+                  {...register("_hp")}
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", overflow: "hidden" }}
+                />
 
                 {submitError && (
                   <p className="text-sm text-red-600">

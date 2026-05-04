@@ -29,6 +29,7 @@ export default function HeroSection() {
   return (
     <section
       id="inicio"
+      aria-labelledby="hero-heading"
       className="relative bg-brand-900 text-white overflow-hidden lg:min-h-[calc(100svh-4rem)] lg:flex lg:items-center"
     >
       {/* ── Decorative background ── */}
@@ -48,7 +49,7 @@ export default function HeroSection() {
               Automatización + SaaS para PYMEs
             </div>
 
-            <h1 className="text-5xl sm:text-6xl lg:text-5xl xl:text-6xl font-extrabold leading-[1.05] tracking-tight mb-5 lg:mb-4">
+            <h1 id="hero-heading" className="text-5xl sm:text-6xl lg:text-5xl xl:text-6xl font-extrabold leading-[1.05] tracking-tight mb-5 lg:mb-4">
               Liberamos a tu equipo de las tareas manuales para que te enfoques en escalar.
             </h1>
 
@@ -62,7 +63,7 @@ export default function HeroSection() {
                 className="btn-glow inline-flex items-center justify-center gap-2 bg-white text-brand-900 font-bold px-8 py-4 rounded-xl text-base hover:bg-blue-50 transition-colors shadow-lg"
               >
                 Solicitar diagnóstico gratis
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
               </a>
@@ -71,7 +72,7 @@ export default function HeroSection() {
                 className="inline-flex items-center justify-center gap-2 border border-white/35 text-white font-semibold px-8 py-4 rounded-xl text-base hover:bg-white/10 transition-colors backdrop-blur-sm"
               >
                 Descubre tu potencial de ahorro
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </a>
@@ -98,21 +99,21 @@ export default function HeroSection() {
 
             <div className="flex flex-wrap items-center gap-4 text-sm text-blue-200/90">
               <span className="flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg aria-hidden="true" className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 Sin costo inicial
               </span>
               <span className="text-blue-500/50">·</span>
               <span className="flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg aria-hidden="true" className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 Respuesta en 24 h
               </span>
               <span className="text-blue-500/50">·</span>
               <span className="flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg aria-hidden="true" className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 MVP en 1–4 semanas

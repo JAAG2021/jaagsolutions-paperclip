@@ -185,10 +185,10 @@
 
 | Tarea | Prioridad | Descripción |
 |-------|-----------|-------------|
-| W-008 Antispam honeypot | P1 | Campo oculto en formulario para filtrar bots |
+| W-008 Antispam honeypot | ✅ Completo | Campo `_hp` invisible en form + rechazo silencioso en `api/lead.js` |
 | W-011 Eventos secundarios GA | P1 | Track clics CTA, scroll depth |
-| W-016 Accesibilidad A11y | P2 | Contraste, focus visible, nav teclado |
-| Páginas privacidad / términos | P1 | Links del footer actualmente van a `#` |
+| W-016 Accesibilidad A11y | ✅ Completo | aria-label, aria-expanded, aria-controls, aria-labelledby, role en TopNav, FaqItem, ContactForm, HeroSection, CTAButton |
+| Páginas privacidad / términos | ✅ Completo | Modales desde footer — LegalModal + PrivacyPolicyContent + TermsContent |
 
 ---
 

@@ -13,7 +13,7 @@ export default function TopNav() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+    <nav aria-label="Navegación principal" className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -42,8 +42,10 @@ export default function TopNav() {
             className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Abrir menu"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg aria-hidden="true" className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {menuOpen ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               ) : (
@@ -55,7 +57,7 @@ export default function TopNav() {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="md:hidden border-t border-gray-100 py-3 space-y-2">
+          <div id="mobile-menu" aria-label="Menú de navegación móvil" className="md:hidden border-t border-gray-100 py-3 space-y-2">
             {navLinks.map((link) => (
               <a
                 key={link.href}

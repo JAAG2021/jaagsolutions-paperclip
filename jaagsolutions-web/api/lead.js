@@ -4,6 +4,13 @@
  */
 
 export default async function handler(req, res) {
+  if (req.body?._hp) {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
   if (req.method !== "POST") {
     res.statusCode = 405;
     res.setHeader("Content-Type", "application/json");
