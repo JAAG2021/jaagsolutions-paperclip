@@ -23,9 +23,14 @@ export async function onRequestPost({ request, env }) {
   }
 
   try {
+    const origin = request.headers.get("origin") ?? request.headers.get("referer") ?? "";
     const upstream = await fetch(`https://formspree.io/f/${formId}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...(origin && { Origin: origin, Referer: origin }),
+      },
       body: JSON.stringify(body),
     });
     const text = await upstream.text();
