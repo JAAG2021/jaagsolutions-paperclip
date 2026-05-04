@@ -9,7 +9,7 @@
 
 **Al iniciar conversación:** Claude lee este archivo primero. No propone tareas ya completadas.  
 **Al completar una tarea:** Actualizar este checklist en el mismo commit o inmediatamente después.  
-**El usuario confirma manualmente:** Marcar con ✅ + fecha cualquier acción hecha fuera del código (Vercel, DNS, cuentas, etc.).
+**El usuario confirma manualmente:** Marcar con ✅ + fecha cualquier acción hecha fuera del código (Cloudflare, DNS, cuentas, etc.).
 
 ---
 
@@ -17,22 +17,33 @@
 
 | Entregable | Estado | % Completo |
 |-----------|--------|-----------|
-| Seed Paperclip | Código listo, ejecución en prod pendiente | 80% |
-| Landing Web (código) | **Completo** — antispam + A11y + legales + CF Function | 100% |
-| Landing Web (deploy) | **Migrado a Cloudflare Pages** — pendiente configurar proyecto | 80% |
-| Infraestructura VPS / n8n | Docs listos, provisión pendiente | 30% |
+| Seed Paperclip | Código listo, ejecución en prod pendiente (Fase B) | 80% |
+| Landing Web (código) | **Completo** — formulario 4 pasos + PDF + antispam + A11y + legales | 100% |
+| Landing Web (deploy) | **LIVE** — `jaagsolutions-paperclip.pages.dev` — E2E confirmado ✅ | 100% |
+| Infraestructura VPS / n8n | Docs listos, provisión pendiente (Fase B) | 30% |
 
 ---
 
 ## PRÓXIMOS PASOS — ordenados por prioridad
 
-1. **[TÚ — 5 min]** Crear proyecto en Cloudflare Pages siguiendo `DEPLOY-CLOUDFLARE.md`
-   - Root directory: `jaagsolutions-web`
-   - Build: `npm run build` → `dist`
-   - Variable: `VITE_FORMSPREE_ID=xpqbzolp`
-2. **[TÚ]** Probar formulario en URL `*.pages.dev` → confirmar submission en Formspree
-3. **[FUTURO]** Dominio `www.jaagsolutions.com` en Cloudflare DNS
-4. **[FUTURO]** Fase B: VPS, DNS, n8n, seed producción
+### Inmediatos (código)
+1. **[W-011]** Eventos secundarios GA4 — track clics CTA, scroll depth (P1)
+
+### Acciones manuales (tú)
+2. **[TÚ]** Dominio `www.jaagsolutions.com` → Custom Domain en Cloudflare Pages
+3. **[TÚ]** Desactivar **Formshield** en Formspree (Settings → toggle off) para evitar spam falso positivo, ya que el honeypot `_hp` cubre la protección desde el servidor
+
+### Futuro — Fase B (requiere VPS)
+4. Contratar VPS con IP estable
+5. DNS apex + www apuntando a VPS / Cloudflare
+6. Ejecutar `deploy/setup.sh` + variables `.env`
+7. Correr seed Paperclip en producción
+8. Configurar webhook Formspree → n8n + importar workflow
+9. Prueba E2E completa: formulario → Formspree → n8n → issue Paperclip
+
+### Escalabilidad futura (post-Fase B)
+- **Formulario Paso 4:** conectar `diagnostico_express` con agente IA (Claude/GPT via n8n) para generar propuesta de automatización personalizada y enviarla por email al cliente automáticamente
+- **PDF Lead Magnet:** evolucionar de PDF estático a PDF dinámico generado con datos del formulario (nombre, empresa, `dolor_proceso` → flujo sugerido específico al negocio)
 
 ---
 
@@ -52,7 +63,7 @@
 - [x] Archivo JSON con estructura completa (company/agents/goals/projects/issues)
 - [x] Loader TypeScript con upserts idempotentes
 - [x] Script `pnpm db:seed:jaagsolutions` configurado
-- [ ] **PENDIENTE:** Correr el seed con Paperclip activo en producción y verificar:
+- [ ] **PENDIENTE (Fase B):** Correr el seed con Paperclip activo en producción y verificar:
   - [ ] Company JAAGSOLUTIONS visible en UI de Paperclip
   - [ ] 4 agentes con jerarquía correcta visibles
   - [ ] 4 goals con parentId correcto
@@ -76,8 +87,9 @@
 | `index.html` con SEO base + OG tags | ✅ Completo |
 | `public/favicon.svg` | ✅ Completo |
 | `public/og-share.png` | ✅ Completo |
-| `api/lead.js` (Vercel Serverless — proxy Formspree sin CORS) | ✅ Completo |
-| `vercel.json` (build + output + install config) | ✅ Completo |
+| `functions/api/lead.js` (Cloudflare Pages Function — proxy Formspree) | ✅ Completo — forwarding Origin header anti-spam |
+| `api/lead.js` (legacy Vercel — referencia) | ✅ Completo |
+| `DEPLOY-CLOUDFLARE.md` | ✅ Completo |
 | `src/index.css` (Aurora animations + Tailwind layers) | ✅ Completo |
 | Lazy loading (`AppBelowFold.tsx`) para reducir JS inicial | ✅ Completo |
 | `hooks/useCountUp.ts` (animación numérica + reduced-motion) | ✅ Completo |
@@ -93,52 +105,49 @@
 | `components/FaqItem.tsx` (accordion smooth + ChevronDown) | ✅ Completo |
 | `components/AutomationFlowDiagram.tsx` | ✅ Completo |
 | `components/HeroAutomationHubIllustration.tsx` | ✅ Completo |
+| `components/LegalModal.tsx` | ✅ Completo — Escape key, backdrop click, scroll lock, aria-modal |
+| `components/PrivacyPolicyContent.tsx` | ✅ Completo — VE/CL, Formspree, GA opcional |
+| `components/TermsContent.tsx` | ✅ Completo — jurisdicción dual VE/CL |
 
-### Secciones — Plan original (11 secciones)
+### Secciones
 
 | Sección | Estado | Notas |
 |---------|--------|-------|
-| `TopNav.tsx` | ✅ Completo | Sticky, hamburguesa mobile, anclas |
-| `HeroSection.tsx` | ✅ Completo | Orbs animados, aurora bg, Lottie/video/mockup |
+| `TopNav.tsx` | ✅ Completo | Sticky, hamburguesa mobile, anclas, aria-label |
+| `HeroSection.tsx` | ✅ Completo | Orbs animados, aurora bg, aria-labelledby |
 | `BenefitsSection.tsx` | ✅ Completo | 4 cards con Lucide icons |
-| `ServicesSection.tsx` | ✅ Completo | 2 pilares (Automatización + SaaS) con Lucide |
-| `ProcessSection.tsx` | ✅ Completo | 3 pasos + conector animado + Lucide |
-| `UseCasesSection.tsx` | ✅ Completo | 4 casos before/after infográfico |
-| `ComparisonSection.tsx` | ✅ Completo | Matriz 3 columnas con Lucide icons |
-| `ContactFormSection.tsx` | ✅ Completo | Multi-step (3 pasos), react-hook-form, proxy /api/lead |
+| `ServicesSection.tsx` | ✅ Completo | 2 pilares con Lucide |
+| `ProcessSection.tsx` | ✅ Completo | 3 pasos + conector animado |
+| `UseCasesSection.tsx` | ✅ Completo | 4 casos before/after |
+| `ComparisonSection.tsx` | ✅ Completo | Matriz 3 columnas |
+| `ContactFormSection.tsx` | ✅ Completo | **4 pasos** — paso 4 opcional diagnóstico express |
 | `FaqSection.tsx` | ✅ Completo | Accordion smooth + 6 FAQs |
-| `FinalCtaSection.tsx` | ✅ Completo | Lucide icons, fondo brand-900 |
-| `FooterSection.tsx` | ✅ Completo | Nav + legal + CTA |
-
-### Secciones extra (mejoras visuales post-MVP)
-
-| Sección | Estado | Notas |
-|---------|--------|-------|
-| `StatsSection.tsx` | ✅ Completo | Count-up animado + Lucide |
-| `ToolsSection.tsx` | ✅ Completo | Tarjetas con iconos de categoría |
+| `FinalCtaSection.tsx` | ✅ Completo | fondo brand-900 |
+| `FooterSection.tsx` | ✅ Completo | Nav + modales legales |
+| `StatsSection.tsx` | ✅ Completo | Count-up animado |
+| `ToolsSection.tsx` | ✅ Completo | Tarjetas por categoría |
 | `TestimonialsSection.tsx` | ✅ Completo | Glassmorphism + logo strip |
-| `PricingSection.tsx` | ✅ Completo | Toggle mensual/anual, gradient Growth card |
-| `RoiCalculatorSection.tsx` | ✅ Completo | Calculadora interactiva ROI |
+| `PricingSection.tsx` | ✅ Completo | Toggle mensual/anual |
+| `RoiCalculatorSection.tsx` | ✅ Completo | Calculadora ROI interactiva |
 
 ### Features funcionales
 
 | Feature | Estado | Notas |
 |---------|--------|-------|
-| Formulario multi-paso (3 pasos) con validación | ✅ Completo | react-hook-form |
-| Envío a Formspree via `/api/lead` (sin CORS) | ✅ Completo | Proxy Vercel serverless |
-| Estado éxito / error visible al usuario | ✅ Completo | |
-| Evento GA4 `form_submit` en conversión | ✅ Completo | Solo si `VITE_GA_ID` definido |
-| WhatsApp flotante CTA | ✅ Completo | **⚠️ Número placeholder: `521XXXXXXXXXX` — REEMPLAZAR** |
-| Responsive (mobile / tablet / desktop) | ✅ Completo | Breakpoints Tailwind |
-| Menú hamburguesa mobile | ✅ Completo | |
-| Scroll suave a anclas | ✅ Completo | `scroll-behavior: smooth` en CSS |
-| SEO: title + meta description | ✅ Completo | |
-| SEO: Open Graph (title, description, type) | ✅ Completo | |
+| Formulario 4 pasos con validación | ✅ Completo | Pasos 1–3 obligatorios, paso 4 opcional |
+| Paso 4 — Diagnóstico express (texto libre) | ✅ Completo (2026-05-04) | Botones "Omitir y enviar" / "Enviar con diagnóstico" — **escala a IA personalizada en Fase B** |
+| Envío a Formspree via `/api/lead` (sin CORS) | ✅ Completo | CF Function con Origin forwarding anti-spam |
+| Estado éxito con botón "Enviar otra consulta" | ✅ Completo | Reset sin recargar página |
+| PDF Lead Magnet — descarga inmediata post-submit | ✅ Completo (2026-05-04) | `public/5-flujos-clave-pymes.html` — **escala a PDF dinámico personalizado en Fase B** |
+| Antispam honeypot `_hp` | ✅ Completo | Form + CF Function |
+| Accesibilidad A11y (WCAG 2.1 AA) | ✅ Completo | aria-label, aria-expanded, aria-controls, useId |
+| Privacidad / Términos (modales) | ✅ Completo | Desde footer, sin react-router |
+| Evento GA4 `form_submit` | ✅ Completo | Solo si `VITE_GA_ID` definido |
+| Eventos secundarios GA4 (CTA clics, scroll depth) | ❌ Pendiente — P1 | W-011 |
+| WhatsApp flotante — 2 botones | ✅ Completo | Venezuela `+58 04143151406` / Chile `+56 964862862` |
+| Responsive (mobile / tablet / desktop) | ✅ Completo | |
+| SEO: title + meta description + Open Graph | ✅ Completo | |
 | Aurora / animaciones background | ✅ Completo | |
-| Build de producción (`dist/`) | ✅ Completo — dist/ existe | |
-| Antispam / honeypot | ❌ Pendiente (P1 — W-008) | Backlog original |
-| Privacidad / Términos (páginas reales) | ❌ Pendiente | Footer links van a `#` |
-| Accesibilidad A11y (contraste, focus, labels) | ❌ Pendiente (P2 — W-016) | |
 
 ---
 
@@ -150,38 +159,36 @@
 |---------|--------|
 | `deploy/.env.production.example` | ✅ Completo |
 | `deploy/docker-compose.yml` | ✅ Completo — Paperclip + PostgreSQL 16 + n8n 1.112.6 + Caddy |
-| `deploy/Caddyfile` | ✅ Completo — SSL LE, paperclip + n8n + apex→www |
+| `deploy/Caddyfile` | ✅ Completo |
 | `deploy/setup.sh` | ✅ Completo |
 | `deploy/scripts/get-paperclip-ids.sh` | ✅ Completo |
-| `deploy/n8n-workflows/formspree-to-paperclip.json` | ✅ Completo — validación HMAC + lectura submission |
+| `deploy/n8n-workflows/formspree-to-paperclip.json` | ✅ Completo |
 | `deploy/RUNBOOK.md` | ✅ Completo |
-| `jaagsolutions-web/DEPLOY-VERCEL.md` | ✅ Completo |
+| `jaagsolutions-web/DEPLOY-CLOUDFLARE.md` | ✅ Completo |
 
-### Fase A — Preview web + Formspree (sin VPS)
+### Fase A — Live en Cloudflare Pages ✅
 
 | Item | Estado | Notas |
 |------|--------|-------|
-| Cuenta Formspree creada | ✅ Completo | |
-| Form ID anotado | ✅ Completo | `VITE_FORMSPREE_ID` = `xpqbzolp` |
+| Cuenta Formspree creada | ✅ Completo | Form ID `xpqbzolp` |
 | Repo `JAAG2021/jaagsolutions-paperclip` (privado) | ✅ Existe | |
-| **Importar proyecto en Vercel** | ✅ Completo (2026-05-04) | Root Directory `jaagsolutions-web`, rama `feature/jaagsolutions` |
-| **Configurar `VITE_FORMSPREE_ID` en Vercel env vars** | ⚠️ Verificar | Confirmar que está en Production, no solo Preview |
-| **Redeploy con commits recientes** | ✅ Completo (2026-05-04) | Push a `JAAG2021/jaagsolutions-paperclip` — Vercel auto-deploya desde GitHub |
-| **Prueba E2E: formulario → Network → Formspree submissions** | ❌ **PENDIENTE** | Hacer después del redeploy |
-| Configurar `VITE_GA_ID` en Vercel (opcional) | ⬜ Opcional | |
-| Configurar `VITE_SITE_URL` en Vercel | ⬜ Opcional | Mejora SEO og:url |
-| Configurar `VITE_OG_IMAGE_URL` en Vercel | ⬜ Opcional | Mejora share social |
-| **Reemplazar número WhatsApp placeholder** | ✅ Completo | Venezuela `+58 04143151406` / Chile `+56 964862862` — dos botones flotantes |
-| Dominio `www.jaagsolutions.com` → CNAME Vercel | ❌ Pendiente (post-DNS) | |
+| Proyecto Cloudflare Pages `jaagsolutions-paperclip` | ✅ Completo (2026-05-04) | Build: `npm install && npm run build` |
+| `VITE_FORMSPREE_ID=xpqbzolp` en Cloudflare env vars | ✅ Completo | |
+| Deploy exitoso | ✅ Completo (2026-05-04) | `https://jaagsolutions-paperclip.pages.dev` |
+| Prueba E2E formulario → Formspree submissions | ✅ Confirmado (2026-05-04) | Llegó a Inbox (con Origin fix) |
+| Dominio `www.jaagsolutions.com` → Custom Domain Cloudflare | ❌ Pendiente | Acción manual — post-DNS |
+| Desactivar Formshield en Formspree | ❌ Pendiente | Para evitar falsos positivos — honeypot ya protege |
+| Configurar `VITE_GA_ID` en Cloudflare | ⬜ Opcional | |
+| Configurar `VITE_SITE_URL` en Cloudflare | ⬜ Opcional | Mejora og:url SEO |
 
-### Fase B — VPS + Automatización (después de Fase A)
+### Fase B — VPS + Automatización
 
 | Item | Estado |
 |------|--------|
 | Contratar VPS con IP estable | ❌ Pendiente |
-| Configurar DNS (apex + www coherente con VPS/Vercel) | ❌ Pendiente |
+| Configurar DNS (apex + www) | ❌ Pendiente |
 | Ejecutar `deploy/setup.sh` en VPS | ❌ Pendiente |
-| Variables en `deploy/.env` (Paperclip, n8n, Formspree secret) | ❌ Pendiente |
+| Variables en `deploy/.env` | ❌ Pendiente |
 | Correr seed Paperclip en producción | ❌ Pendiente |
 | Obtener IDs con `get-paperclip-ids.sh` | ❌ Pendiente |
 | Configurar webhook Formspree → n8n | ❌ Pendiente |
@@ -191,24 +198,11 @@
 
 ---
 
-## TAREAS BLOQUEANTES (PRÓXIMOS PASOS INMEDIATOS)
-
-1. **Reemplazar número WhatsApp** en [`jaagsolutions-web/src/App.tsx:37`](../../../jaagsolutions-web/src/App.tsx) — cambiar `521XXXXXXXXXX` por número real.
-2. **Vercel — importar proyecto** (Root Directory: `jaagsolutions-web`, rama `feature/jaagsolutions`).
-3. **Vercel — configurar env vars** (`VITE_FORMSPREE_ID=xpqbzolp`) y hacer Redeploy.
-4. **Prueba del formulario** en URL de Vercel → verificar submission en Formspree.
-5. **Opcional:** configurar `VITE_GA_ID` para medir conversiones desde el primer día.
-
----
-
-## TAREAS P1 / P2 DIFERIDAS (código)
+## TAREAS P1 DIFERIDAS (código)
 
 | Tarea | Prioridad | Descripción |
 |-------|-----------|-------------|
-| W-008 Antispam honeypot | ✅ Completo | Campo `_hp` invisible en form + rechazo silencioso en `api/lead.js` |
-| W-011 Eventos secundarios GA | P1 | Track clics CTA, scroll depth |
-| W-016 Accesibilidad A11y | ✅ Completo | aria-label, aria-expanded, aria-controls, aria-labelledby, role en TopNav, FaqItem, ContactForm, HeroSection, CTAButton |
-| Páginas privacidad / términos | ✅ Completo | Modales desde footer — LegalModal + PrivacyPolicyContent + TermsContent |
+| W-011 Eventos secundarios GA4 | **P1 — PRÓXIMO** | Track clics CTA, scroll depth 25/50/75/100% |
 
 ---
 
@@ -220,6 +214,4 @@
 | Plan implementación landing | [`docs/superpowers/plans/2026-04-16-jaagsolutions-web-landing.md`](../plans/2026-04-16-jaagsolutions-web-landing.md) |
 | Plan implementación seed | [`docs/superpowers/plans/2026-04-16-jaagsolutions-paperclip-seed.md`](../plans/2026-04-16-jaagsolutions-paperclip-seed.md) |
 | Checklist producción (Fase A/B) | [`docs/superpowers/specs/2026-04-30-jaagsolutions-produccion-checklist.md`](./2026-04-30-jaagsolutions-produccion-checklist.md) |
-| Guía deploy Vercel | [`jaagsolutions-web/DEPLOY-VERCEL.md`](../../../jaagsolutions-web/DEPLOY-VERCEL.md) |
-| Backlog web original | [`Proyect_JAAGSOLUTIONS/2026-04-15-jaagsolutions-backlog-web-mvp.md`](../../../Proyect_JAAGSOLUTIONS/2026-04-15-jaagsolutions-backlog-web-mvp.md) |
 | Runbook VPS | [`deploy/RUNBOOK.md`](../../../deploy/RUNBOOK.md) |
