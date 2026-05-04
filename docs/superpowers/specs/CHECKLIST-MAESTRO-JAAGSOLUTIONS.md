@@ -1,18 +1,36 @@
 # Checklist Maestro — Proyecto JAAGSOLUTIONS
 **Revisión:** 2026-05-04  
 **Rama:** `feature/jaagsolutions`  
-**Regla:** actualizar este archivo inmediatamente al completar cada item. No ejecutar tareas repetitivas.
+**Regla:** LEER ESTE ARCHIVO AL INICIO DE CADA SESIÓN antes de proponer cualquier tarea. Actualizar inmediatamente al completar cada item.
 
 ---
 
-## RESUMEN EJECUTIVO
+## PROTOCOLO DE SESIÓN
+
+**Al iniciar conversación:** Claude lee este archivo primero. No propone tareas ya completadas.  
+**Al completar una tarea:** Actualizar este checklist en el mismo commit o inmediatamente después.  
+**El usuario confirma manualmente:** Marcar con ✅ + fecha cualquier acción hecha fuera del código (Vercel, DNS, cuentas, etc.).
+
+---
+
+## RESUMEN EJECUTIVO — 2026-05-04
 
 | Entregable | Estado | % Completo |
 |-----------|--------|-----------|
 | Seed Paperclip | Código listo, ejecución en prod pendiente | 80% |
-| Landing Web (código) | Completo + mejoras visuales extra | 100% |
-| Landing Web (deploy Vercel) | Parcialmente completo | 60% |
+| Landing Web (código) | **Completo** — antispam + A11y + legales incluidos | 100% |
+| Landing Web (deploy Vercel) | Proyecto importado · **Redeploy pendiente** (commit viejo) | 75% |
 | Infraestructura VPS / n8n | Docs listos, provisión pendiente | 30% |
+
+---
+
+## PRÓXIMOS PASOS — ordenados por prioridad
+
+1. **[TÚ]** Push o trigger redeploy en Vercel para que tome el commit más reciente
+2. **[TÚ]** Verificar que `VITE_FORMSPREE_ID=xpqbzolp` está en Settings → Env Vars → Production
+3. **[TÚ]** Probar formulario en la URL de Vercel → confirmar submission en Formspree
+4. **[CÓDIGO — listo]** Todo el código está commiteado en `feature/jaagsolutions`
+5. **[FUTURO]** Fase B: VPS, DNS, n8n, seed producción
 
 ---
 
@@ -144,10 +162,10 @@
 | Cuenta Formspree creada | ✅ Completo | |
 | Form ID anotado | ✅ Completo | `VITE_FORMSPREE_ID` = `xpqbzolp` |
 | Repo `JAAG2021/jaagsolutions-paperclip` (privado) | ✅ Existe | |
-| **Importar proyecto en Vercel** | ❌ **PENDIENTE** | Root Directory = `jaagsolutions-web` |
-| **Configurar `VITE_FORMSPREE_ID` en Vercel env vars** | ❌ **PENDIENTE** | = `xpqbzolp`, marcar Preview + Production |
-| **Redeploy con variables configuradas** | ❌ **PENDIENTE** | VITE_* se inyectan en build |
-| **Prueba E2E: formulario → Network → Formspree submissions** | ❌ **PENDIENTE** | |
+| **Importar proyecto en Vercel** | ✅ Completo (2026-05-04) | Root Directory `jaagsolutions-web`, rama `feature/jaagsolutions` |
+| **Configurar `VITE_FORMSPREE_ID` en Vercel env vars** | ⚠️ Verificar | Confirmar que está en Production, no solo Preview |
+| **Redeploy con commits recientes** | ❌ **PENDIENTE** | Deployment actual en commit `0592266` (viejo) — forzar redeploy |
+| **Prueba E2E: formulario → Network → Formspree submissions** | ❌ **PENDIENTE** | Hacer después del redeploy |
 | Configurar `VITE_GA_ID` en Vercel (opcional) | ⬜ Opcional | |
 | Configurar `VITE_SITE_URL` en Vercel | ⬜ Opcional | Mejora SEO og:url |
 | Configurar `VITE_OG_IMAGE_URL` en Vercel | ⬜ Opcional | Mejora share social |
