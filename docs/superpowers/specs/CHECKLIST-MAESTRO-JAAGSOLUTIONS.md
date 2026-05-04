@@ -151,7 +151,7 @@
 | Configurar `VITE_GA_ID` en Vercel (opcional) | ⬜ Opcional | |
 | Configurar `VITE_SITE_URL` en Vercel | ⬜ Opcional | Mejora SEO og:url |
 | Configurar `VITE_OG_IMAGE_URL` en Vercel | ⬜ Opcional | Mejora share social |
-| **Reemplazar número WhatsApp placeholder** | ❌ **PENDIENTE** | `App.tsx:37` — cambiar `521XXXXXXXXXX` |
+| **Reemplazar número WhatsApp placeholder** | ✅ Completo | Venezuela `+58 04143151406` / Chile `+56 964862862` — dos botones flotantes |
 | Dominio `www.jaagsolutions.com` → CNAME Vercel | ❌ Pendiente (post-DNS) | |
 
 ### Fase B — VPS + Automatización (después de Fase A)
