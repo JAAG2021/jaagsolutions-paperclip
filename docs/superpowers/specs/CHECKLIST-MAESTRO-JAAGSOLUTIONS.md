@@ -18,19 +18,21 @@
 | Entregable | Estado | % Completo |
 |-----------|--------|-----------|
 | Seed Paperclip | Código listo, ejecución en prod pendiente | 80% |
-| Landing Web (código) | **Completo** — antispam + A11y + legales incluidos | 100% |
-| Landing Web (deploy Vercel) | Proyecto importado · **Redeploy pendiente** (commit viejo) | 75% |
+| Landing Web (código) | **Completo** — antispam + A11y + legales + CF Function | 100% |
+| Landing Web (deploy) | **Migrado a Cloudflare Pages** — pendiente configurar proyecto | 80% |
 | Infraestructura VPS / n8n | Docs listos, provisión pendiente | 30% |
 
 ---
 
 ## PRÓXIMOS PASOS — ordenados por prioridad
 
-1. **[TÚ]** Push o trigger redeploy en Vercel para que tome el commit más reciente
-2. **[TÚ]** Verificar que `VITE_FORMSPREE_ID=xpqbzolp` está en Settings → Env Vars → Production
-3. **[TÚ]** Probar formulario en la URL de Vercel → confirmar submission en Formspree
-4. **[CÓDIGO — listo]** Todo el código está commiteado en `feature/jaagsolutions`
-5. **[FUTURO]** Fase B: VPS, DNS, n8n, seed producción
+1. **[TÚ — 5 min]** Crear proyecto en Cloudflare Pages siguiendo `DEPLOY-CLOUDFLARE.md`
+   - Root directory: `jaagsolutions-web`
+   - Build: `npm run build` → `dist`
+   - Variable: `VITE_FORMSPREE_ID=xpqbzolp`
+2. **[TÚ]** Probar formulario en URL `*.pages.dev` → confirmar submission en Formspree
+3. **[FUTURO]** Dominio `www.jaagsolutions.com` en Cloudflare DNS
+4. **[FUTURO]** Fase B: VPS, DNS, n8n, seed producción
 
 ---
 
