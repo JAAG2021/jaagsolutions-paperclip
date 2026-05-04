@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>5 Flujos de Automatización que toda PYME debe tener — JAAGSOLUTIONS</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      line-height: 1.6;
+    }
+
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+      color: white;
+      padding: 3rem 2.5rem;
+      border-radius: 1.5rem;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.07);
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -40px; left: -40px;
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+    }
+    .header-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      padding: 0.25rem 0.875rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .header h1 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    .header h1 em {
+      font-style: normal;
+      color: #93c5fd;
+    }
+    .header p {
+      font-size: 1rem;
+      opacity: 0.85;
+      max-width: 540px;
+      position: relative;
+    }
+    .header-meta {
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      opacity: 0.65;
+      position: relative;
+    }
+
+    /* Intro */
+    .intro {
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem 2rem;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 2rem;
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+    .intro-icon { font-size: 1.75rem; flex-shrink: 0; }
+    .intro p { font-size: 0.95rem; color: #475569; }
+    .intro strong { color: #1e293b; }
+
+    /* Flow cards */
+    .flows { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .flow-card {
+      background: white;
+      border-radius: 1.25rem;
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .flow-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .flow-number {
+      width: 2.25rem; height: 2.25rem;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; font-weight: 800;
+      flex-shrink: 0;
+      color: white;
+    }
+    .flow-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .flow-title { font-size: 1.05rem; font-weight: 700; color: #0f172a; }
+    .flow-subtitle { font-size: 0.8rem; color: #64748b; margin-top: 0.1rem; }
+
+    .flow-body { padding: 1.25rem 1.5rem; }
+
+    .flow-problem {
+      background: #fef2f2;
+      border-left: 3px solid #fca5a5;
+      padding: 0.75rem 1rem;
+      border-radius: 0 0.5rem 0.5rem 0;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+      color: #7f1d1d;
+    }
+    .flow-problem strong { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; color: #b91c1c; }
+
+    .flow-steps {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+    .step-pill {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      padding: 0.3rem 0.75rem;
+      font-size: 0.78rem;
+      color: #334155;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .step-arrow {
+      color: #94a3b8;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .flow-result {
+      background: #f0fdf4;
+      border-left: 3px solid #86efac;
+      padding: 0.75rem 1rem;
+      border-radius: 0 0.5rem 0.5rem 0;
+      font-size: 0.875rem;
+      color: #14532d;
+    }
+    .flow-result strong { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; color: #15803d; }
+
+    .flow-tools {
+      margin-top: 0.875rem;
+      font-size: 0.78rem;
+      color: #64748b;
+    }
+    .flow-tools span {
+      display: inline-block;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 0.15rem 0.5rem;
+      border-radius: 0.25rem;
+      margin: 0.15rem 0.2rem 0.15rem 0;
+    }
+
+    /* Color variants */
+    .color-1 .flow-number { background: #2563eb; }
+    .color-1 .flow-header { border-bottom-color: #dbeafe; background: #f8fbff; }
+    .color-2 .flow-number { background: #7c3aed; }
+    .color-2 .flow-header { border-bottom-color: #ede9fe; background: #faf8ff; }
+    .color-3 .flow-number { background: #0891b2; }
+    .color-3 .flow-header { border-bottom-color: #cffafe; background: #f8feff; }
+    .color-4 .flow-number { background: #d97706; }
+    .color-4 .flow-header { border-bottom-color: #fef3c7; background: #fffdf5; }
+    .color-5 .flow-number { background: #059669; }
+    .color-5 .flow-header { border-bottom-color: #d1fae5; background: #f7fffe; }
+
+    /* ROI section */
+    .roi-section {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+      color: white;
+      border-radius: 1.25rem;
+      padding: 2rem;
+      margin-top: 2rem;
+    }
+    .roi-section h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .roi-section p { font-size: 0.9rem; opacity: 0.8; margin-bottom: 1.25rem; }
+    .roi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+    }
+    .roi-item {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      text-align: center;
+    }
+    .roi-number { font-size: 1.75rem; font-weight: 800; color: #93c5fd; line-height: 1; }
+    .roi-label { font-size: 0.78rem; opacity: 0.7; margin-top: 0.3rem; }
+
+    /* CTA */
+    .cta-section {
+      text-align: center;
+      margin-top: 2rem;
+      padding: 2rem;
+      background: white;
+      border-radius: 1.25rem;
+      border: 1px solid #e2e8f0;
+    }
+    .cta-section h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .cta-section p { font-size: 0.9rem; color: #64748b; margin-bottom: 1.25rem; }
+    .cta-btn {
+      display: inline-block;
+      background: #2563eb;
+      color: white;
+      text-decoration: none;
+      padding: 0.75rem 2rem;
+      border-radius: 0.75rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+    .cta-btn:hover { background: #1d4ed8; }
+
+    /* Print button */
+    .print-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 1.25rem;
+      gap: 0.75rem;
+    }
+    .print-btn {
+      background: white;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.625rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .print-btn:hover { border-color: #2563eb; color: #2563eb; }
+
+    /* Footer */
+    .doc-footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+    .doc-footer a { color: #2563eb; text-decoration: none; }
+
+    @media print {
+      body { background: white; }
+      .page { padding: 0; }
+      .print-bar { display: none; }
+      .cta-section { display: none; }
+      .flow-card { break-inside: avoid; }
+      .header { border-radius: 0; }
+    }
+
+    @media (max-width: 600px) {
+      .intro { flex-direction: column; }
+      .flow-steps { gap: 0.35rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="print-bar">
+    <button class="print-btn" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+  </div>
+
+  <div class="header">
+    <div class="header-badge">Recurso gratuito · JAAGSOLUTIONS</div>
+    <h1>5 Flujos de automatización que toda <em>PYME</em> debe tener</h1>
+    <p>Procesos concretos, herramientas accesibles y resultados medibles — sin necesitar un equipo de tecnología propio.</p>
+    <div class="header-meta">jaagsolutions.com · 2025 · Uso libre para dueños de PYME</div>
+  </div>
+
+  <div class="intro">
+    <div class="intro-icon">💡</div>
+    <p>
+      <strong>¿Por qué estos 5 flujos?</strong> Son los procesos que más tiempo consumen en PYMEs de servicios y comercio, y donde la automatización entrega el mayor retorno en menos de 90 días. Cada flujo incluye el disparador, los pasos automatizados, el resultado esperado y las herramientas típicas para implementarlo.
+    </p>
+  </div>
+
+  <div class="flows">
+
+    <!-- Flujo 1 -->
+    <div class="flow-card color-1">
+      <div class="flow-header">
+        <div class="flow-number">1</div>
+        <div class="flow-icon">🎯</div>
+        <div>
+          <div class="flow-title">Captura y calificación automática de leads</div>
+          <div class="flow-subtitle">Ventas · Captación · CRM</div>
+        </div>
+      </div>
+      <div class="flow-body">
+        <div class="flow-problem">
+          <strong>Problema típico</strong>
+          Los leads llegan por formulario web, WhatsApp e Instagram, pero se pierden en diferentes bandejas. El seguimiento depende de que alguien lo recuerde manualmente.
+        </div>
+        <div class="flow-steps">
+          <span class="step-pill">📋 Lead completa formulario</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">🤖 Calificación automática por respuestas</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">📨 Email de bienvenida personalizado</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">📊 Registro en CRM con etiqueta de prioridad</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">🔔 Notificación al vendedor asignado</span>
+        </div>
+        <div class="flow-result">
+          <strong>Resultado esperado</strong>
+          Cero leads perdidos. Tiempo de primer contacto &lt; 5 minutos (vs. horas o días). El vendedor llega a la llamada sabiendo el perfil del prospecto.
+        </div>
+        <div class="flow-tools">
+          <strong>Herramientas típicas:</strong>
+          <span>Typeform / Tally</span><span>n8n / Make</span><span>HubSpot Free / Airtable</span><span>Gmail API</span><span>WhatsApp Business API</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flujo 2 -->
+    <div class="flow-card color-2">
+      <div class="flow-header">
+        <div class="flow-number">2</div>
+        <div class="flow-icon">🤝</div>
+        <div>
+          <div class="flow-title">Onboarding automático de clientes nuevos</div>
+          <div class="flow-subtitle">Retención · Experiencia · Documentación</div>
+        </div>
+      </div>
+      <div class="flow-body">
+        <div class="flow-problem">
+          <strong>Problema típico</strong>
+          Al cerrar una venta, el equipo envía manualmente contratos, credenciales, instrucciones de inicio y agenda la primera reunión. Esto tarda días y varía según quién lo haga.
+        </div>
+        <div class="flow-steps">
+          <span class="step-pill">✅ Venta cerrada en CRM</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">📧 Email de bienvenida + documentos</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">📅 Agenda kick-off automática (Calendly)</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">📁 Carpeta del cliente creada en Drive</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">🔔 Slack / Teams: aviso al equipo</span>
+        </div>
+        <div class="flow-result">
+          <strong>Resultado esperado</strong>
+          El cliente recibe todo lo que necesita en los primeros 10 minutos post-venta, sin intervención manual. El equipo ahorra 45–90 min por cliente nuevo.
+        </div>
+        <div class="flow-tools">
+          <strong>Herramientas típicas:</strong>
+          <span>n8n / Zapier</span><span>Calendly</span><span>Google Drive API</span><span>DocuSign / PandaDoc</span><span>Slack / Teams</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flujo 3 -->
+    <div class="flow-card color-3">
+      <div class="flow-header">
+        <div class="flow-number">3</div>
+        <div class="flow-icon">💳</div>
+        <div>
+          <div class="flow-title">Facturación y recordatorios de cobro</div>
+          <div class="flow-subtitle">Finanzas · Cobranza · Flujo de caja</div>
+        </div>
+      </div>
+      <div class="flow-body">
+        <div class="flow-problem">
+          <strong>Problema típico</strong>
+          Las facturas se generan manualmente o se olvidan. Los recordatorios de pago dependen de que alguien revise la hoja de cálculo. La morosidad sube porque nadie tiene tiempo de hacer seguimiento.
+        </div>
+        <div class="flow-steps">
+          <span class="step-pill">📅 Fecha de facturación llega</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">🧾 Factura generada automáticamente</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">📧 Envío al cliente con link de pago</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">⏰ Recordatorio D-3, D+1, D+7</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">✅ Pago confirmado → CRM actualizado</span>
+        </div>
+        <div class="flow-result">
+          <strong>Resultado esperado</strong>
+          Reducción de morosidad en un 30–50%. El equipo administrativo dedica 0 minutos a generar facturas recurrentes. El flujo de caja es predecible.
+        </div>
+        <div class="flow-tools">
+          <strong>Herramientas típicas:</strong>
+          <span>Alegra / Facturama</span><span>Stripe / MercadoPago</span><span>n8n / Make</span><span>Gmail / SendGrid</span><span>Notion / Airtable</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flujo 4 -->
+    <div class="flow-card color-4">
+      <div class="flow-header">
+        <div class="flow-number">4</div>
+        <div class="flow-icon">💬</div>
+        <div>
+          <div class="flow-title">Atención al cliente de primera línea con IA</div>
+          <div class="flow-subtitle">Soporte · Satisfacción · Tiempo de respuesta</div>
+        </div>
+      </div>
+      <div class="flow-body">
+        <div class="flow-problem">
+          <strong>Problema típico</strong>
+          El equipo responde las mismas preguntas decenas de veces al día (estado de pedido, precios, horarios, proceso de devolución). Fuera del horario laboral, los clientes no reciben respuesta.
+        </div>
+        <div class="flow-steps">
+          <span class="step-pill">💬 Mensaje entra (WhatsApp / web)</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">🤖 Bot IA clasifica la consulta</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">📚 Preguntas frecuentes: respuesta inmediata</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">🎫 Consultas complejas: ticket + asignación</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">📊 Reporte semanal de categorías</span>
+        </div>
+        <div class="flow-result">
+          <strong>Resultado esperado</strong>
+          El 60–75% de las consultas se resuelven sin intervención humana, 24/7. El equipo se concentra en los casos que realmente requieren criterio. NPS mejora por velocidad de respuesta.
+        </div>
+        <div class="flow-tools">
+          <strong>Herramientas típicas:</strong>
+          <span>WhatsApp Business API</span><span>Claude / GPT-4o</span><span>n8n</span><span>Chatwoot / Freshdesk</span><span>Notion (base de conocimiento)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flujo 5 -->
+    <div class="flow-card color-5">
+      <div class="flow-header">
+        <div class="flow-number">5</div>
+        <div class="flow-icon">📊</div>
+        <div>
+          <div class="flow-title">Reporte semanal de KPIs sin trabajo manual</div>
+          <div class="flow-subtitle">Operaciones · Decisiones · Visibilidad</div>
+        </div>
+      </div>
+      <div class="flow-body">
+        <div class="flow-problem">
+          <strong>Problema típico</strong>
+          Los datos están en tres sistemas distintos (CRM, facturación, hoja de cálculo). Preparar el reporte semanal lleva 2–3 horas y siempre queda desactualizado para cuando está listo.
+        </div>
+        <div class="flow-steps">
+          <span class="step-pill">🕐 Todos los lunes a las 8:00 AM</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">🔄 Extracción automática de fuentes</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">🧮 Cálculo de KPIs (ventas, morosidad, tickets)</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">📈 Dashboard actualizado en tiempo real</span>
+          <span class="step-arrow">→</span>
+          <span class="step-pill">📧 Resumen enviado al dueño por email / WhatsApp</span>
+        </div>
+        <div class="flow-result">
+          <strong>Resultado esperado</strong>
+          El dueño toma decisiones con datos actualizados al momento, sin depender de que alguien prepare el informe. Se recuperan 2–4 horas semanales del equipo administrativo.
+        </div>
+        <div class="flow-tools">
+          <strong>Herramientas típicas:</strong>
+          <span>n8n / Make</span><span>Google Sheets / Looker Studio</span><span>HubSpot API</span><span>Metabase</span><span>WhatsApp / Gmail</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROI section -->
+  <div class="roi-section">
+    <h2>Impacto típico al implementar los 5 flujos</h2>
+    <p>Resultados promedio en PYMEs de servicios y comercio a los 90 días de implementación:</p>
+    <div class="roi-grid">
+      <div class="roi-item">
+        <div class="roi-number">8–15h</div>
+        <div class="roi-label">semanales recuperadas por persona</div>
+      </div>
+      <div class="roi-item">
+        <div class="roi-number">-40%</div>
+        <div class="roi-label">en errores de proceso manual</div>
+      </div>
+      <div class="roi-item">
+        <div class="roi-number">24/7</div>
+        <div class="roi-label">atención sin costo extra de personal</div>
+      </div>
+      <div class="roi-item">
+        <div class="roi-number">&lt;90 días</div>
+        <div class="roi-label">para ver retorno de la inversión</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <h2>¿Querés saber cuál de estos flujos implementar primero?</h2>
+    <p>Completá el diagnóstico gratuito y te preparamos un plan de automatización específico para tu negocio — sin compromiso.</p>
+    <a class="cta-btn" href="https://jaagsolutions-paperclip.pages.dev/#contacto">Solicitar diagnóstico gratuito →</a>
+  </div>
+
+  <div class="doc-footer">
+    <p>© 2025 JAAGSOLUTIONS · <a href="https://jaagsolutions-paperclip.pages.dev">jaagsolutions.com</a> · Documento de uso libre para dueños de PYME</p>
+  </div>
+
+</div>
+</body>
+</html>

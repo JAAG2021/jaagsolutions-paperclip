@@ -14,10 +14,16 @@ type FormData = {
   timeline: string;
   whatsapp: string;
   recurso_pdf: boolean;
+  diagnostico_express: string;
   _hp: string;
 };
 
-const STEPS_COPY = ["Contexto del negocio", "Tu mayor fricción hoy", "Inversión y timing"] as const;
+const STEPS_COPY = [
+  "Contexto del negocio",
+  "Tu mayor fricción hoy",
+  "Inversión y timing",
+  "Diagnóstico express",
+] as const;
 
 const FORMSPREE_ID = import.meta.env.VITE_FORMSPREE_ID as string | undefined;
 
@@ -25,6 +31,7 @@ const STEP_FIELDS: (keyof FormData)[][] = [
   ["nombre", "email", "empresa", "tamano_equipo"],
   ["dolor_proceso"],
   ["presupuesto", "timeline"],
+  [], // paso 4: todo opcional
 ];
 
 export default function ContactFormSection() {
@@ -47,6 +54,7 @@ export default function ContactFormSection() {
       presupuesto: "",
       timeline: "",
       recurso_pdf: true,
+      diagnostico_express: "",
       _hp: "",
     },
   });
@@ -83,6 +91,7 @@ export default function ContactFormSection() {
         timeline: data.timeline,
         whatsapp: data.whatsapp,
         recurso_pdf: data.recurso_pdf ? "Sí — PDF 5 flujos automatización PYME" : "No solicitado",
+        diagnostico_express: data.diagnostico_express?.trim() || "No completado",
         tipo_solicitud: "diagnostico_multipaso",
       };
 
@@ -116,7 +125,7 @@ export default function ContactFormSection() {
 
   async function goNext() {
     const keys = STEP_FIELDS[stepIndex];
-    const ok = await trigger(keys, { shouldFocus: true });
+    const ok = keys.length === 0 ? true : await trigger(keys, { shouldFocus: true });
     if (ok && stepIndex < STEPS_COPY.length - 1) setStepIndex((s) => s + 1);
   }
 
@@ -127,6 +136,9 @@ export default function ContactFormSection() {
   const inputClass =
     "w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-gray-900 placeholder-gray-400 text-sm";
   const selectClass = `${inputClass} bg-white`;
+
+  const isLastStep = stepIndex === STEPS_COPY.length - 1;
+  const isBeforeLastStep = stepIndex < STEPS_COPY.length - 1;
 
   return (
     <section id="contacto" className="py-20 bg-white scroll-mt-20">
@@ -152,11 +164,10 @@ export default function ContactFormSection() {
                 <span>Filtramos curiosidades y priorizamos dueños que traen proceso concreto y margen donde automatizar marca diferencia.</span>
               </li>
               <li className="flex gap-3">
-                <span className="text-xl">📑</span>
+                <span className="text-xl">📄</span>
                 <span>
-                  <strong className="text-gray-900">Lead magnet:</strong> el PDF gratuito sobre{" "}
-                  <em>5&nbsp;flujos clave para PYMEs</em> lo enviamos por correo al confirmar el diagnóstico{" "}
-                  (podés pedir que no entre en el último paso).
+                  <strong className="text-gray-900">PDF gratuito disponible al instante:</strong>{" "}
+                  <em>5 flujos de automatización que toda PYME debe tener</em> — descargalo directamente al enviar el formulario.
                 </span>
               </li>
             </ul>
@@ -165,43 +176,51 @@ export default function ContactFormSection() {
           <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-inner">
             {submitted ? (
               <div className="text-center py-6">
-                <div className="text-5xl mb-4" aria-hidden>
-                  ✅
-                </div>
+                <div className="text-5xl mb-4" aria-hidden>✅</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">¡Recibimos tu solicitud!</h3>
                 <p className="text-gray-600 leading-relaxed mb-6">
                   Analizaremos tus respuestas y te escribimos en menos de{" "}
                   <strong className="text-gray-900">24&nbsp;h</strong> para agendar la{" "}
-                  <strong className="text-gray-900">sesión estratégica</strong>. Si solicitaste recurso gratis, llegará al correo cuando respondamos tu caso de punta a punta (revisá spam).
+                  <strong className="text-gray-900">sesión estratégica</strong>.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => { reset(); setStepIndex(0); setSubmitted(false); }}
-                  className="text-sm text-brand-600 hover:text-brand-700 underline underline-offset-2 transition-colors"
+                <a
+                  href="/5-flujos-clave-pymes.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 px-5 py-2.5 rounded-lg transition-colors mb-6"
                 >
-                  Enviar otra consulta
-                </button>
+                  📄 Descargar PDF gratuito
+                </a>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => { reset(); setStepIndex(0); setSubmitted(false); }}
+                    className="text-sm text-brand-600 hover:text-brand-700 underline underline-offset-2 transition-colors"
+                  >
+                    Enviar otra consulta
+                  </button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+                {/* Barra de progreso */}
                 <div className="flex gap-2" role="status" aria-label={`Paso ${stepIndex + 1} de ${STEPS_COPY.length}: ${STEPS_COPY[stepIndex]}`}>
                   {STEPS_COPY.map((label, idx) => (
                     <div key={label} className="flex flex-1 flex-col min-w-0">
                       <span
-                        className={`text-[0.625rem] font-bold uppercase tracking-wide truncate ${idx === stepIndex ? "text-brand-600" : "text-gray-400"}`}
-                        title={label}
+                        className={`text-[0.6rem] font-bold uppercase tracking-wide truncate ${idx === stepIndex ? "text-brand-600" : "text-gray-400"}`}
+                        title={idx === 3 ? `${label} (opcional)` : label}
                       >
-                        {label}
+                        {idx === 3 ? "Diag. express" : label}
                       </span>
                       <div className={`h-1 rounded-full mt-1 ${idx <= stepIndex ? "bg-brand-600" : "bg-gray-200"}`} />
                     </div>
                   ))}
                 </div>
 
+                {/* Paso 1 — Contexto */}
                 <div role="group" aria-labelledby="step-contexto-heading" hidden={stepIndex !== 0}>
-                  <h3 id="step-contexto-heading" className="sr-only">
-                    Paso 1 · Contexto
-                  </h3>
+                  <h3 id="step-contexto-heading" className="sr-only">Paso 1 · Contexto</h3>
                   <div className="grid gap-4">
                     <div>
                       <input
@@ -217,14 +236,11 @@ export default function ContactFormSection() {
                       <input
                         {...register("email", {
                           required: "Correo obligatorio",
-                          pattern: {
-                            value: /^\S+@\S+\.\S+$/,
-                            message: "Email inválido",
-                          },
+                          pattern: { value: /^\S+@\S+\.\S+$/, message: "Email inválido" },
                         })}
                         type="email"
                         autoComplete="email"
-                        placeholder="Email corporativo (@empresa)  · * "
+                        placeholder="Email corporativo (@empresa)  · *"
                         aria-label="Email corporativo (obligatorio)"
                         className={inputClass}
                       />
@@ -235,7 +251,12 @@ export default function ContactFormSection() {
                     </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
-                        <input {...register("empresa", { required: "Nombre de la empresa *" })} placeholder="Nombre de empresa *" aria-label="Nombre de empresa (obligatorio)" className={inputClass} />
+                        <input
+                          {...register("empresa", { required: "Nombre de la empresa *" })}
+                          placeholder="Nombre de empresa *"
+                          aria-label="Nombre de empresa (obligatorio)"
+                          className={inputClass}
+                        />
                         {errors.empresa && <p className="mt-1 text-xs text-red-600">{errors.empresa.message}</p>}
                       </div>
                       <div>
@@ -244,8 +265,7 @@ export default function ContactFormSection() {
                             validate: (v) =>
                               !v?.trim()
                                 ? true
-                                : /^https?:\/\/.+/i.test(v.trim()) ||
-                                    /^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(v.trim())
+                                : /^https?:\/\/.+/i.test(v.trim()) || /^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(v.trim())
                                   ? true
                                   : "URL válida https://… o dominio tipo mitienda.mx",
                           })}
@@ -261,7 +281,11 @@ export default function ContactFormSection() {
                       <label htmlFor="tamano_equipo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
                         Tamaño del equipo
                       </label>
-                      <select id="tamano_equipo" {...register("tamano_equipo", { required: "Necesitamos tamaño orientativo del equipo *" })} className={selectClass}>
+                      <select
+                        id="tamano_equipo"
+                        {...register("tamano_equipo", { required: "Necesitamos tamaño orientativo del equipo *" })}
+                        className={selectClass}
+                      >
                         <option value="">Seleccioná tamaño típico *</option>
                         <option value="1-5">1 – 5</option>
                         <option value="6-20">6 – 20</option>
@@ -273,16 +297,19 @@ export default function ContactFormSection() {
                   </div>
                 </div>
 
+                {/* Paso 2 — Fricción */}
                 <div role="group" aria-labelledby="step-friccion-heading" hidden={stepIndex !== 1}>
-                  <h3 id="step-friccion-heading" className="sr-only">
-                    Paso 2 · Fricción
-                  </h3>
+                  <h3 id="step-friccion-heading" className="sr-only">Paso 2 · Fricción</h3>
                   <div className="space-y-4">
                     <div>
                       <label htmlFor="dolor_proceso" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
                         ¿Qué proceso te quita más tiempo hoy?
                       </label>
-                      <select id="dolor_proceso" {...register("dolor_proceso", { required: "Elegí categoría cercana al dolor mayor *" })} className={selectClass}>
+                      <select
+                        id="dolor_proceso"
+                        {...register("dolor_proceso", { required: "Elegí categoría cercana al dolor mayor *" })}
+                        className={selectClass}
+                      >
                         <option value="">Seleccioná un foco inicial *</option>
                         <option value="ventas-leads">Ventas / Captación leads</option>
                         <option value="facturacion-cobranza">Facturación · Cobranza · Pagos</option>
@@ -295,7 +322,7 @@ export default function ContactFormSection() {
                       <textarea
                         {...register("herramientas_actual")}
                         rows={4}
-                        placeholder='Herramientas típicas: Excel, Sheets, CRM (nombre), WhatsApp Business, correo Gmail/Outlook… (Opcional)'
+                        placeholder="Herramientas típicas: Excel, Sheets, CRM (nombre), WhatsApp Business, correo Gmail/Outlook… (Opcional)"
                         aria-label="Herramientas actuales (opcional)"
                         className={`${inputClass} resize-none`}
                       />
@@ -311,16 +338,19 @@ export default function ContactFormSection() {
                   </div>
                 </div>
 
+                {/* Paso 3 — Inversión */}
                 <div role="group" aria-labelledby="step-comp-heading" hidden={stepIndex !== 2}>
-                  <h3 id="step-comp-heading" className="sr-only">
-                    Paso 3 · Inversión
-                  </h3>
+                  <h3 id="step-comp-heading" className="sr-only">Paso 3 · Inversión</h3>
                   <div className="space-y-4">
                     <div>
                       <label htmlFor="presupuesto" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
                         Rango de inversión estimado (solo orientativo)
                       </label>
-                      <select id="presupuesto" {...register("presupuesto", { required: "Seleccioná rango aproximado *" })} className={selectClass}>
+                      <select
+                        id="presupuesto"
+                        {...register("presupuesto", { required: "Seleccioná rango aproximado *" })}
+                        className={selectClass}
+                      >
                         <option value="">Rango alineado a tu etapa · *</option>
                         <option value="<500">&lt; USD&nbsp;500 · Explorador (Starter cercano)</option>
                         <option value="500-1500">USD&nbsp;500 – 1.500 · PYME típico en Growth</option>
@@ -332,7 +362,11 @@ export default function ContactFormSection() {
                       <label htmlFor="timeline" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
                         Urgencia
                       </label>
-                      <select id="timeline" {...register("timeline", { required: "Indicá el timing esperado *" })} className={selectClass}>
+                      <select
+                        id="timeline"
+                        {...register("timeline", { required: "Indicá el timing esperado *" })}
+                        className={selectClass}
+                      >
                         <option value="">¿Qué tan pronto necesitás tenerlo funcionando? *</option>
                         <option value="inmediato">Inmediato (este mes)</option>
                         <option value="1-3meses">1 – 3 meses</option>
@@ -341,15 +375,42 @@ export default function ContactFormSection() {
                       {errors.timeline && <p className="mt-1 text-xs text-red-600">{errors.timeline.message}</p>}
                     </div>
                     <label className="flex items-start gap-3 rounded-xl bg-white px-4 py-3 border border-brand-100 text-sm text-gray-700 cursor-pointer">
-                      <input type="checkbox" {...register("recurso_pdf")} className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
+                      <input
+                        type="checkbox"
+                        {...register("recurso_pdf")}
+                        className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                      />
                       <span>
-                        <strong className="text-gray-900">Enviame el PDF gratuito</strong> &quot;5 flujos de automatización que toda PYME debe tener&quot; junto con el seguimiento del diagnóstico.
+                        <strong className="text-gray-900">Quiero el PDF gratuito</strong> &quot;5 flujos de automatización que toda PYME debe tener&quot; — disponible para descargar al instante al enviar.
                       </span>
                     </label>
                   </div>
                 </div>
 
-                {/* Honeypot antispam — oculto para humanos, trampa para bots */}
+                {/* Paso 4 — Diagnóstico express (opcional) */}
+                <div role="group" aria-labelledby="step-diag-heading" hidden={stepIndex !== 3}>
+                  <h3 id="step-diag-heading" className="font-semibold text-gray-800 mb-1">
+                    Diagnóstico express{" "}
+                    <span className="text-xs font-normal text-gray-400 normal-case">(opcional · 2 min)</span>
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-3">
+                    Describí en tus palabras el proceso que más querés automatizar: ¿qué pasos hace tu equipo hoy de forma manual?, ¿qué lo dispara?, ¿qué resultado esperás? Esta información nos permite preparar una propuesta de flujo específica antes de la sesión.
+                  </p>
+                  <div className="space-y-3">
+                    <textarea
+                      {...register("diagnostico_express")}
+                      rows={6}
+                      placeholder="Ej: Cada vez que entra un pedido por WhatsApp, lo anotamos en Excel, enviamos confirmación manual por correo y actualizamos el inventario en otro sistema. Tardamos 20 min por pedido y cometemos errores frecuentes..."
+                      aria-label="Descripción libre del proceso a automatizar (opcional)"
+                      className={`${inputClass} resize-none`}
+                    />
+                    <p className="text-xs text-gray-400">
+                      Sin presión — si preferís contarlo en la sesión podés omitir este paso y enviar igual.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Honeypot antispam */}
                 <input
                   {...register("_hp")}
                   type="text"
@@ -375,16 +436,26 @@ export default function ContactFormSection() {
                   ) : (
                     <span className="hidden sm:block text-xs text-transparent select-none">.</span>
                   )}
+
                   <div className="flex gap-3 flex-wrap">
-                    {stepIndex < STEPS_COPY.length - 1 ? (
+                    {isLastStep ? (
+                      <>
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className="text-sm font-semibold text-gray-500 hover:text-gray-700 border border-gray-300 hover:border-gray-400 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          Omitir y enviar
+                        </button>
+                        <CTAButton type="submit" variant="primary" className="min-w-[12rem]" disabled={isSubmitting}>
+                          {isSubmitting ? "Enviando…" : "Enviar con diagnóstico"}
+                        </CTAButton>
+                      </>
+                    ) : isBeforeLastStep ? (
                       <CTAButton type="button" variant="primary" onClick={() => { void goNext(); }} className="min-w-[8rem]" disabled={isSubmitting}>
                         Siguiente
                       </CTAButton>
-                    ) : (
-                      <CTAButton type="submit" variant="primary" className="min-w-[12rem] sm:min-w-[14rem]" disabled={isSubmitting}>
-                        {isSubmitting ? "Enviando…" : "Quiero mi plan de automatización"}
-                      </CTAButton>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </form>
