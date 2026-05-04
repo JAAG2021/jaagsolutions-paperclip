@@ -33,7 +33,7 @@ export default function ContactFormSection() {
     handleSubmit,
     reset,
     trigger,
-    formState: { errors, isSubmitting, isSubmitSuccessful },
+    formState: { errors, isSubmitting },
   } = useForm<FormData>({
     defaultValues: {
       sitio_web: "",
@@ -53,6 +53,7 @@ export default function ContactFormSection() {
 
   const [stepIndex, setStepIndex] = useState(0);
   const [submitError, setSubmitError] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (import.meta.env.PROD && !FORMSPREE_ID?.trim()) {
@@ -106,8 +107,7 @@ export default function ContactFormSection() {
         });
       }
 
-      reset();
-      setStepIndex(0);
+      setSubmitted(true);
     } catch (err) {
       setSubmitError(true);
       throw err;
@@ -163,17 +163,24 @@ export default function ContactFormSection() {
           </div>
 
           <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-inner">
-            {isSubmitSuccessful ? (
+            {submitted ? (
               <div className="text-center py-6">
                 <div className="text-5xl mb-4" aria-hidden>
                   ✅
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">¡Recibimos tu solicitud!</h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 leading-relaxed mb-6">
                   Analizaremos tus respuestas y te escribimos en menos de{" "}
                   <strong className="text-gray-900">24&nbsp;h</strong> para agendar la{" "}
                   <strong className="text-gray-900">sesión estratégica</strong>. Si solicitaste recurso gratis, llegará al correo cuando respondamos tu caso de punta a punta (revisá spam).
                 </p>
+                <button
+                  type="button"
+                  onClick={() => { reset(); setStepIndex(0); setSubmitted(false); }}
+                  className="text-sm text-brand-600 hover:text-brand-700 underline underline-offset-2 transition-colors"
+                >
+                  Enviar otra consulta
+                </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
