@@ -143,7 +143,7 @@
 | Accesibilidad A11y (WCAG 2.1 AA) | ✅ Completo | aria-label, aria-expanded, aria-controls, useId |
 | Privacidad / Términos (modales) | ✅ Completo | Desde footer, sin react-router |
 | Evento GA4 `form_submit` | ✅ Completo | Solo si `VITE_GA_ID` definido |
-| Eventos secundarios GA4 (CTA clics, scroll depth) | ❌ Pendiente — P1 | W-011 |
+| Eventos secundarios GA4 (CTA clics, scroll depth) | ✅ Completo (2026-05-04) | W-011 — `cta_click` + `scroll_depth` 25/50/75/100% |
 | WhatsApp flotante — 2 botones | ✅ Completo | Venezuela `+58 04143151406` / Chile `+56 964862862` |
 | Responsive (mobile / tablet / desktop) | ✅ Completo | |
 | SEO: title + meta description + Open Graph | ✅ Completo | |
