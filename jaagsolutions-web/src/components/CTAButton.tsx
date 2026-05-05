@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { trackEvent } from "../hooks/useAnalytics.ts";
 
 type CTAButtonProps = {
   children: ReactNode;
@@ -8,6 +9,7 @@ type CTAButtonProps = {
   type?: "button" | "submit";
   className?: string;
   disabled?: boolean;
+  gaLabel?: string;
 };
 
 export default function CTAButton({
@@ -18,6 +20,7 @@ export default function CTAButton({
   type = "button",
   className = "",
   disabled,
+  gaLabel,
 }: CTAButtonProps) {
   const base = "inline-flex items-center justify-center font-semibold rounded-lg transition-colors duration-200 px-6 py-3 text-base";
   const variants = {
@@ -27,11 +30,28 @@ export default function CTAButton({
   };
   const classes = `${base} ${variants[variant]} ${className}`;
 
+  const label = gaLabel ?? (typeof children === "string" ? children : undefined);
+
+  function handleClick() {
+    trackEvent("cta_click", { event_label: label ?? "cta", variant });
+    onClick?.();
+  }
+
   if (href) {
-    return <a href={href} className={classes}>{children}</a>;
+    return (
+      <a href={href} className={classes} onClick={handleClick}>
+        {children}
+      </a>
+    );
   }
   return (
-    <button type={type} onClick={onClick} disabled={disabled} aria-disabled={disabled ? true : undefined} className={`${classes} disabled:opacity-60 disabled:cursor-not-allowed`}>
+    <button
+      type={type}
+      onClick={handleClick}
+      disabled={disabled}
+      aria-disabled={disabled ? true : undefined}
+      className={`${classes} disabled:opacity-60 disabled:cursor-not-allowed`}
+    >
       {children}
     </button>
   );

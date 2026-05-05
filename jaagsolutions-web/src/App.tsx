@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import TopNav from "./sections/TopNav.tsx";
 import HeroSection from "./sections/HeroSection.tsx";
 import FooterSection from "./sections/FooterSection.tsx";
+import { useScrollDepth } from "./hooks/useScrollDepth.ts";
 
 const AppBelowFold = lazy(() => import("./AppBelowFold.tsx"));
 
@@ -16,6 +17,8 @@ function BelowFoldFallback() {
 }
 
 export default function App() {
+  useScrollDepth();
+
   return (
     <div className="min-h-screen bg-white">
       <TopNav />
