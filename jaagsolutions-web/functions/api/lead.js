@@ -1,10 +1,15 @@
 /**
  * Cloudflare Pages Function — POST /api/lead
- * Proxy servidor → Formspree (mismo origen, sin CORS en el navegador).
- * Variables de entorno: VITE_FORMSPREE_ID (configurar en Cloudflare Pages → Settings → Variables).
+ * Proxy servidor → Formspree + reenvío a n8n (sin plan premium de Formspree).
+ * Variables de entorno (Cloudflare Pages → Settings → Variables):
+ *   VITE_FORMSPREE_ID    — ID del form en Formspree
+ *   N8N_WEBHOOK_URL      — https://n8n.jaagsolutions.com/webhook/formspree-lead
+ *   N8N_WEBHOOK_SECRET   — mismo valor que FORMSPREE_WEBHOOK_SECRET en VPS .env
  */
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost(context) {
+  const { request, env } = context;
+
   let body;
   try {
     body = await request.json();
@@ -22,8 +27,26 @@ export async function onRequestPost({ request, env }) {
     return json({ error: "Missing VITE_FORMSPREE_ID" }, 500);
   }
 
+  const origin = request.headers.get("origin") ?? request.headers.get("referer") ?? "";
+
+  // Reenvío a n8n en background (fire-and-forget, no bloquea la respuesta)
+  const n8nUrl = env.N8N_WEBHOOK_URL?.trim();
+  const n8nSecret = env.N8N_WEBHOOK_SECRET?.trim();
+  if (n8nUrl) {
+    const n8nBody = { ...body, form: formId };
+    context.waitUntil(
+      fetch(n8nUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(n8nSecret && { "x-paperclip-webhook-token": n8nSecret }),
+        },
+        body: JSON.stringify(n8nBody),
+      }).catch(() => {}),
+    );
+  }
+
   try {
-    const origin = request.headers.get("origin") ?? request.headers.get("referer") ?? "";
     const upstream = await fetch(`https://formspree.io/f/${formId}`, {
       method: "POST",
       headers: {
@@ -41,11 +64,11 @@ export async function onRequestPost({ request, env }) {
   }
 }
 
-export async function onRequest({ request, env }) {
-  if (request.method !== "POST") {
+export async function onRequest(context) {
+  if (context.request.method !== "POST") {
     return json({ error: "Method not allowed" }, 405);
   }
-  return onRequestPost({ request, env });
+  return onRequestPost(context);
 }
 
 function json(data, status) {
