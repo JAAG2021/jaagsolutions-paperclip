@@ -197,11 +197,11 @@
 
 | Item | Estado |
 |------|--------|
-| VPS Google Cloud (90 días free trial disponible) | ❌ Pendiente — crear VM e2-medium Ubuntu 22.04 |
-| Subdominio `app.jaagsolutions.com` → IP VM (Cloudflare DNS) | ❌ Pendiente |
-| Ejecutar `deploy/setup.sh` en VPS | ❌ Pendiente |
-| Variables en `deploy/.env` | ❌ Pendiente |
-| Correr seed Paperclip en producción | ❌ Pendiente |
+| VPS Google Cloud (90 días free trial disponible) | ✅ Completo (2026-05-06) — VM `jaagsolutions-vps` e2-medium Ubuntu 22.04 LTS — IP externa `34.41.171.138` |
+| Subdominio `app.jaagsolutions.com` → IP VM (Cloudflare DNS) | ✅ Completo (2026-05-06) — registro A `app` → `34.41.171.138` DNS only |
+| Ejecutar `deploy/setup.sh` en VPS | ✅ Completo (2026-05-06) — Docker 29.4.2 + 4 contenedores healthy |
+| Variables en `deploy/.env` | ✅ Completo (2026-05-06) — secretos generados con openssl, FORMSPREE_FORM_HASHID=xpqbzolp |
+| Correr seed Paperclip en producción | ✅ Completo (2026-05-06) — 17 creados, 2 actualizados. Company ID: `113d415c-9970-413f-b0d8-f7a6217caf67` |
 | Obtener IDs con `get-paperclip-ids.sh` | ❌ Pendiente |
 | Configurar webhook Formspree → n8n | ❌ Pendiente |
 | Importar workflow n8n (`formspree-to-paperclip.json`) | ❌ Pendiente |

@@ -1,6 +1,21 @@
 # JAAGSOLUTIONS — Diseño de Producción (Opción C)
 **Fecha:** 2026-04-30  
-**Estado:** Aprobado
+**Estado:** ~~Aprobado~~ **ARCHIVADO — Fase A completada con cambios; Fase B pendiente**
+
+> ⚠️ **DOCUMENTO ARCHIVADO — Correcciones aplicadas al estado real (2026-05-05)**
+>
+> Cambios respecto al diseño original:
+>
+> - **Web deploy:** Vercel → **Cloudflare Pages** (`jaagsolutions-paperclip`), rama `feature/jaagsolutions`
+> - **VPS proveedor:** Hetzner CX22 → **Google Cloud e2-medium** (free trial 90 días activo desde 2026-05-05)
+> - **Dominio `www.jaagsolutions.com`** → apunta a **Cloudflare Pages** (no a Vercel)
+> - **Subdominio Fase B:** `paperclip.jaagsolutions.com` / `n8n.jaagsolutions.com` → unificados en **`app.jaagsolutions.com`**
+> - **Formspree free plan:** 100 submissions/mes indicados → son **50/mes** reales
+> - **Fase A:** completada al 100% — formulario, Formspree, dominio, SSL, email routing activos
+>
+> **Fuentes de verdad actualizadas:**
+> - [`CHECKLIST-MAESTRO-JAAGSOLUTIONS.md`](./CHECKLIST-MAESTRO-JAAGSOLUTIONS.md)
+> - [`BITACORA-INFRAESTRUCTURA.md`](./BITACORA-INFRAESTRUCTURA.md)
 
 ---
 

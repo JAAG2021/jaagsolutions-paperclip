@@ -1,9 +1,22 @@
 # JAAGSOLUTIONS — Design Spec
 
 **Fecha:** 2026-04-16  
-**Estado:** Aprobado  
+**Estado:** ~~Aprobado~~ **ARCHIVADO — Spec inicial superado por implementación real**  
 **Entregables:** 2 — Seed de Paperclip + Landing web  
 **Orden de ejecucion:** Seed primero, luego web
+
+> ⚠️ **DOCUMENTO ARCHIVADO (referencia histórica únicamente)**
+> Este spec fue el punto de partida. La implementación real divergió en varios puntos clave:
+> - **Deploy:** Vercel → **Cloudflare Pages** (proyecto `jaagsolutions-paperclip`)
+> - **Build command:** `pnpm build` → `npm install && npm run build`
+> - **Formulario:** campo único → **4 pasos** con diagnóstico express opcional
+> - **Proxy Formspree:** `@formspree/react` directo → **CF Function `functions/api/lead.js`** (anti-CORS + honeypot)
+> - **Componentes adicionales:** StatsSection, ToolsSection, TestimonialsSection, PricingSection, RoiCalculatorSection, HeroAutomationHubIllustration, LegalModal, PrivacyPolicyContent, TermsContent, WhatsApp flotante, PDF Lead Magnet
+> - **Dominio propio:** `jaagsolutions.com` registrado en Hostinger (decisión tomada 2026-05-05)
+>
+> **Para el estado actualizado leer:**
+> - [`CHECKLIST-MAESTRO-JAAGSOLUTIONS.md`](./CHECKLIST-MAESTRO-JAAGSOLUTIONS.md) — estado real de todos los entregables
+> - [`BITACORA-INFRAESTRUCTURA.md`](./BITACORA-INFRAESTRUCTURA.md) — arquitectura y decisiones vigentes
 
 ---
 

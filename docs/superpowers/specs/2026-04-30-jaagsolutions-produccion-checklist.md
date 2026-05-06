@@ -1,5 +1,18 @@
 # Checklist — Plan producción JAAGSOLUTIONS (2026-04-30)
 
+> ⚠️ **CHECKLIST ARCHIVADO — Superado por CHECKLIST-MAESTRO**
+>
+> Este checklist fue creado el 2026-04-30 y rastreaba el estado de Fase A (Vercel + Formspree) y Fase B (Hetzner VPS). Ambas plataformas cambiaron:
+>
+> - Vercel → **Cloudflare Pages** (Fase A completada 2026-05-04/05)
+> - Hetzner → **Google Cloud** (Fase B pendiente)
+>
+> **Usar en su lugar:** [`CHECKLIST-MAESTRO-JAAGSOLUTIONS.md`](./CHECKLIST-MAESTRO-JAAGSOLUTIONS.md) — es la única fuente de verdad para el estado del proyecto.
+>
+> El contenido original se conserva abajo como referencia histórica.
+
+---
+
 Referencia: [2026-04-30-jaagsolutions-produccion-design.md](./2026-04-30-jaagsolutions-produccion-design.md) y plan detallado en `docs/superpowers/plans/2026-04-30-jaagsolutions-produccion.md`.
 
 **Disciplina:** al completar un paso operativo (cuentas, env vars, deploy), actualizar enseguida este archivo (y checklists relacionados). Regla del proyecto: `.cursor/rules/jaagsolutions-checklist-sync.mdc`.
