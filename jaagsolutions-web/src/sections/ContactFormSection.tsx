@@ -156,6 +156,14 @@ export default function ContactFormSection() {
             </p>
             <ul className="space-y-4 text-gray-700 text-sm">
               <li className="flex gap-3">
+                <span className="text-xl">✉️</span>
+                <span>También puedes escribirnos directo a{" "}
+                  <a href="mailto:contacto@jaagsolutions.com" className="text-brand-600 hover:text-brand-700 font-semibold underline underline-offset-2">
+                    contacto@jaagsolutions.com
+                  </a>
+                </span>
+              </li>
+              <li className="flex gap-3">
                 <span className="text-xl">⏱</span>
                 <span>Réplica en menos de <strong className="text-gray-900">24&nbsp;h</strong> coordinando siguiente paso útil para vos.</span>
               </li>

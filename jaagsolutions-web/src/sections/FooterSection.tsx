@@ -23,6 +23,12 @@ export default function FooterSection() {
               JAAG<span className="text-brand-400">SOLUTIONS</span>
             </p>
             <p className="text-sm">Automatizacion y SaaS para PYMEs.</p>
+            <a
+              href="mailto:contacto@jaagsolutions.com"
+              className="text-sm text-brand-400 hover:text-brand-300 transition-colors mt-1 inline-block"
+            >
+              contacto@jaagsolutions.com
+            </a>
           </div>
 
           <nav className="flex flex-wrap gap-x-8 gap-y-2">
