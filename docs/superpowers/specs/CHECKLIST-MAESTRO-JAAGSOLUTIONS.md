@@ -1,5 +1,5 @@
 # Checklist Maestro — Proyecto JAAGSOLUTIONS
-**Revisión:** 2026-05-05  
+**Revisión:** 2026-05-06  
 **Rama:** `feature/jaagsolutions`  
 **Regla:** LEER ESTE ARCHIVO AL INICIO DE CADA SESIÓN antes de proponer cualquier tarea. Actualizar inmediatamente al completar cada item.
 
@@ -23,7 +23,7 @@
 | Landing Web (deploy) | **LIVE** — `jaagsolutions.com` + SSL ✅ (2026-05-05) | 100% |
 | Dominio + DNS | **Completo** — Hostinger → Cloudflare NS + Custom Domains activos ✅ | 100% |
 | Email corporativo | **Completo** — routing `contacto@jaagsolutions.com` → Gmail ✅ | 100% |
-| Infraestructura VPS / n8n | Docs listos, provisión pendiente (Fase B) | 30% |
+| Infraestructura VPS / n8n | **Completo** — VPS + Docker + n8n + workflow activo + E2E verificado ✅ (2026-05-06) | 100% |
 
 ---
 
@@ -202,11 +202,11 @@
 | Ejecutar `deploy/setup.sh` en VPS | ✅ Completo (2026-05-06) — Docker 29.4.2 + 4 contenedores healthy |
 | Variables en `deploy/.env` | ✅ Completo (2026-05-06) — secretos generados con openssl, FORMSPREE_FORM_HASHID=xpqbzolp |
 | Correr seed Paperclip en producción | ✅ Completo (2026-05-06) — 17 creados, 2 actualizados. Company ID: `113d415c-9970-413f-b0d8-f7a6217caf67` |
-| Obtener IDs con `get-paperclip-ids.sh` | ❌ Pendiente |
-| Configurar webhook Formspree → n8n | ❌ Pendiente |
-| Importar workflow n8n (`formspree-to-paperclip.json`) | ❌ Pendiente |
-| Activar workflow n8n | ❌ Pendiente |
-| Prueba E2E completa: formulario → Formspree → n8n → issue Paperclip | ❌ Pendiente |
+| Obtener IDs con `get-paperclip-ids.sh` | ✅ Completo (2026-05-06) — Company, A3 Agent, P2 Project, G2 Goal IDs obtenidos y en `.env` |
+| Configurar webhook Formspree → n8n | ✅ Completo (2026-05-06) — Formspree webhook requiere plan Premium; bypass via CF Function (`functions/api/lead.js`) que postea directamente a n8n con `x-paperclip-webhook-token` |
+| Importar workflow n8n (`formspree-to-paperclip.json`) | ✅ Completo (2026-05-06) — importado desde `/opt/jaagsolutions/repo/deploy/n8n-workflows/` |
+| Activar workflow n8n | ✅ Completo (2026-05-06) — workflow activo en `https://n8n.jaagsolutions.com` |
+| Prueba E2E completa: formulario → Formspree → n8n → issue Paperclip | ✅ Completo (2026-05-06) — issue JAAG-2 creado en Paperclip asignado a Growth Ops (A3) |
 
 ---
 
