@@ -1,5 +1,5 @@
 # Checklist Maestro — Proyecto JAAGSOLUTIONS
-**Revisión:** 2026-05-04  
+**Revisión:** 2026-05-05  
 **Rama:** `feature/jaagsolutions`  
 **Regla:** LEER ESTE ARCHIVO AL INICIO DE CADA SESIÓN antes de proponer cualquier tarea. Actualizar inmediatamente al completar cada item.
 
@@ -9,41 +9,44 @@
 
 **Al iniciar conversación:** Claude lee este archivo primero. No propone tareas ya completadas.  
 **Al completar una tarea:** Actualizar este checklist en el mismo commit o inmediatamente después.  
-**El usuario confirma manualmente:** Marcar con ✅ + fecha cualquier acción hecha fuera del código (Cloudflare, DNS, cuentas, etc.).
+**El usuario confirma manualmente:** Marcar con ✅ + fecha cualquier acción hecha fuera del código (Cloudflare, DNS, cuentas, etc.).  
+**CRÍTICO:** Leer también [`BITACORA-INFRAESTRUCTURA.md`](./BITACORA-INFRAESTRUCTURA.md) antes de cualquier cambio de infraestructura.
 
 ---
 
-## RESUMEN EJECUTIVO — 2026-05-04
+## RESUMEN EJECUTIVO — 2026-05-05
 
 | Entregable | Estado | % Completo |
 |-----------|--------|-----------|
 | Seed Paperclip | Código listo, ejecución en prod pendiente (Fase B) | 80% |
-| Landing Web (código) | **Completo** — formulario 4 pasos + PDF + antispam + A11y + legales | 100% |
-| Landing Web (deploy) | **LIVE** — `jaagsolutions-paperclip.pages.dev` — E2E confirmado ✅ | 100% |
+| Landing Web (código) | **Completo** — formulario 4 pasos + PDF + antispam + A11y + legales + email contacto | 100% |
+| Landing Web (deploy) | **LIVE** — `jaagsolutions.com` + SSL ✅ (2026-05-05) | 100% |
+| Dominio + DNS | **Completo** — Hostinger → Cloudflare NS + Custom Domains activos ✅ | 100% |
+| Email corporativo | **Completo** — routing `contacto@jaagsolutions.com` → Gmail ✅ | 100% |
 | Infraestructura VPS / n8n | Docs listos, provisión pendiente (Fase B) | 30% |
 
 ---
 
 ## PRÓXIMOS PASOS — ordenados por prioridad
 
-### Inmediatos (código)
-1. **[W-011]** Eventos secundarios GA4 — track clics CTA, scroll depth (P1)
-
-### Acciones manuales (tú)
-2. **[TÚ]** Dominio `www.jaagsolutions.com` → Custom Domain en Cloudflare Pages
-3. **[TÚ]** Desactivar **Formshield** en Formspree (Settings → toggle off) para evitar spam falso positivo, ya que el honeypot `_hp` cubre la protección desde el servidor
-
-### Futuro — Fase B (requiere VPS)
-4. Contratar VPS con IP estable
-5. DNS apex + www apuntando a VPS / Cloudflare
-6. Ejecutar `deploy/setup.sh` + variables `.env`
-7. Correr seed Paperclip en producción
-8. Configurar webhook Formspree → n8n + importar workflow
+### Fase B (requiere VPS Google Cloud — ya disponible)
+1. Crear VM en Google Cloud (Ubuntu 22.04, e2-medium, disco 20 GB)
+2. Apuntar subdominio `app.jaagsolutions.com` → IP de la VM (registro A en Cloudflare DNS)
+3. SSH a la VM y ejecutar `deploy/setup.sh`
+4. Completar variables en `deploy/.env` (ver `deploy/.env.production.example`)
+5. Correr seed Paperclip en producción (`pnpm db:seed:jaagsolutions`)
+6. Obtener IDs con `deploy/scripts/get-paperclip-ids.sh`
+7. Configurar webhook Formspree → n8n + importar `deploy/n8n-workflows/formspree-to-paperclip.json`
+8. Activar workflow n8n
 9. Prueba E2E completa: formulario → Formspree → n8n → issue Paperclip
 
+### Opcionales (bajo impacto, cuando haya tiempo)
+- Configurar `VITE_GA_ID` en Cloudflare env vars (para GA4 real)
+- Configurar `VITE_SITE_URL=https://jaagsolutions.com` en Cloudflare (mejora og:url SEO)
+
 ### Escalabilidad futura (post-Fase B)
-- **Formulario Paso 4:** conectar `diagnostico_express` con agente IA (Claude/GPT via n8n) para generar propuesta de automatización personalizada y enviarla por email al cliente automáticamente
-- **PDF Lead Magnet:** evolucionar de PDF estático a PDF dinámico generado con datos del formulario (nombre, empresa, `dolor_proceso` → flujo sugerido específico al negocio)
+- **Formulario Paso 4:** conectar `diagnostico_express` con agente IA (Claude via n8n) para generar propuesta personalizada y enviarla por email al cliente automáticamente
+- **PDF Lead Magnet:** evolucionar de PDF estático a PDF dinámico generado con datos del formulario
 
 ---
 
@@ -88,19 +91,20 @@
 | `public/favicon.svg` | ✅ Completo |
 | `public/og-share.png` | ✅ Completo |
 | `functions/api/lead.js` (Cloudflare Pages Function — proxy Formspree) | ✅ Completo — forwarding Origin header anti-spam |
-| `api/lead.js` (legacy Vercel — referencia) | ✅ Completo |
 | `DEPLOY-CLOUDFLARE.md` | ✅ Completo |
 | `src/index.css` (Aurora animations + Tailwind layers) | ✅ Completo |
 | Lazy loading (`AppBelowFold.tsx`) para reducir JS inicial | ✅ Completo |
 | `hooks/useCountUp.ts` (animación numérica + reduced-motion) | ✅ Completo |
 | `hooks/useScrollReveal.ts` (animación entrada por scroll) | ✅ Completo |
+| `hooks/useAnalytics.ts` (wrapper gtag) | ✅ Completo |
+| `hooks/useScrollDepth.ts` (scroll depth 25/50/75/100%) | ✅ Completo |
 
 ### Componentes base
 
 | Componente | Estado |
 |-----------|--------|
 | `components/SectionHeader.tsx` | ✅ Completo |
-| `components/CTAButton.tsx` (primario/secundario/texto + disabled) | ✅ Completo |
+| `components/CTAButton.tsx` (primario/secundario/texto + GA4 tracking) | ✅ Completo |
 | `components/Card.tsx` | ✅ Completo |
 | `components/FaqItem.tsx` (accordion smooth + ChevronDown) | ✅ Completo |
 | `components/AutomationFlowDiagram.tsx` | ✅ Completo |
@@ -120,10 +124,10 @@
 | `ProcessSection.tsx` | ✅ Completo | 3 pasos + conector animado |
 | `UseCasesSection.tsx` | ✅ Completo | 4 casos before/after |
 | `ComparisonSection.tsx` | ✅ Completo | Matriz 3 columnas |
-| `ContactFormSection.tsx` | ✅ Completo | **4 pasos** — paso 4 opcional diagnóstico express |
+| `ContactFormSection.tsx` | ✅ Completo | **4 pasos** — paso 4 opcional diagnóstico express + email contacto visible |
 | `FaqSection.tsx` | ✅ Completo | Accordion smooth + 6 FAQs |
 | `FinalCtaSection.tsx` | ✅ Completo | fondo brand-900 |
-| `FooterSection.tsx` | ✅ Completo | Nav + modales legales |
+| `FooterSection.tsx` | ✅ Completo | Nav + modales legales + email contacto visible |
 | `StatsSection.tsx` | ✅ Completo | Count-up animado |
 | `ToolsSection.tsx` | ✅ Completo | Tarjetas por categoría |
 | `TestimonialsSection.tsx` | ✅ Completo | Glassmorphism + logo strip |
@@ -145,6 +149,7 @@
 | Evento GA4 `form_submit` | ✅ Completo | Solo si `VITE_GA_ID` definido |
 | Eventos secundarios GA4 (CTA clics, scroll depth) | ✅ Completo (2026-05-04) | W-011 — `cta_click` + `scroll_depth` 25/50/75/100% |
 | WhatsApp flotante — 2 botones | ✅ Completo | Venezuela `+58 04143151406` / Chile `+56 964862862` |
+| Email `contacto@jaagsolutions.com` visible en UI | ✅ Completo (2026-05-05) | Footer + sección Contacto |
 | Responsive (mobile / tablet / desktop) | ✅ Completo | |
 | SEO: title + meta description + Open Graph | ✅ Completo | |
 | Aurora / animaciones background | ✅ Completo | |
@@ -165,28 +170,35 @@
 | `deploy/n8n-workflows/formspree-to-paperclip.json` | ✅ Completo |
 | `deploy/RUNBOOK.md` | ✅ Completo |
 | `jaagsolutions-web/DEPLOY-CLOUDFLARE.md` | ✅ Completo |
+| `docs/superpowers/specs/BITACORA-INFRAESTRUCTURA.md` | ✅ Completo (2026-05-05) |
 
-### Fase A — Live en Cloudflare Pages ✅
+### Fase A — Live en `jaagsolutions.com` ✅ COMPLETO
 
 | Item | Estado | Notas |
 |------|--------|-------|
-| Cuenta Formspree creada | ✅ Completo | Form ID `xpqbzolp` |
-| Repo `JAAG2021/jaagsolutions-paperclip` (privado) | ✅ Existe | |
-| Proyecto Cloudflare Pages `jaagsolutions-paperclip` | ✅ Completo (2026-05-04) | Build: `npm install && npm run build` |
+| Cuenta Formspree creada | ✅ Completo | Form ID `xpqbzolp` — cuenta `inverjaag@gmail.com` |
+| Repo `JAAG2021/jaagsolutions-paperclip` (privado) | ✅ Existe | Branch `feature/jaagsolutions` → despliega en CF Pages |
+| Proyecto Cloudflare Pages `jaagsolutions-paperclip` | ✅ Completo (2026-05-04) | Build: `npm install && npm run build` / Root: `jaagsolutions-web` |
 | `VITE_FORMSPREE_ID=xpqbzolp` en Cloudflare env vars | ✅ Completo | |
 | Deploy exitoso | ✅ Completo (2026-05-04) | `https://jaagsolutions-paperclip.pages.dev` |
 | Prueba E2E formulario → Formspree submissions | ✅ Confirmado (2026-05-04) | Llegó a Inbox (con Origin fix) |
-| Dominio `www.jaagsolutions.com` → Custom Domain Cloudflare | ❌ Pendiente | Acción manual — post-DNS |
-| Desactivar Formshield en Formspree | ❌ Pendiente | Para evitar falsos positivos — honeypot ya protege |
-| Configurar `VITE_GA_ID` en Cloudflare | ⬜ Opcional | |
-| Configurar `VITE_SITE_URL` en Cloudflare | ⬜ Opcional | Mejora og:url SEO |
+| Dominio `jaagsolutions.com` registrado | ✅ Completo (2026-05-05) | Registrar: Hostinger — $10.46/año |
+| Nameservers Hostinger → Cloudflare | ✅ Completo (2026-05-05) | `kellen.ns.cloudflare.com` + `magnolia.ns.cloudflare.com` |
+| `jaagsolutions.com` zona activa en Cloudflare | ✅ Completo (2026-05-05) | Plan Free |
+| `www.jaagsolutions.com` → Custom Domain CF Pages | ✅ Completo (2026-05-05) | SSL habilitado |
+| `jaagsolutions.com` (apex) → Custom Domain CF Pages | ✅ Completo (2026-05-05) | SSL habilitado |
+| Formspree notificaciones → `jaagsolutions@gmail.com` | ✅ Completo (2026-05-05) | Workflow → Actions → Email |
+| Cloudflare Email Routing activado | ✅ Completo (2026-05-05) | `contacto@jaagsolutions.com` → `jaagsolutions@gmail.com` |
+| Formshield en Formspree | ✅ Ya estaba desactivado (confirmado 2026-05-04) | Honeypot `_hp` cubre protección |
+| Configurar `VITE_GA_ID` en Cloudflare | ⬜ Opcional | Cuenta GA4 pendiente de crear |
+| Configurar `VITE_SITE_URL` en Cloudflare | ⬜ Opcional | Valor: `https://jaagsolutions.com` |
 
 ### Fase B — VPS + Automatización
 
 | Item | Estado |
 |------|--------|
-| Contratar VPS con IP estable | ❌ Pendiente |
-| Configurar DNS (apex + www) | ❌ Pendiente |
+| VPS Google Cloud (90 días free trial disponible) | ❌ Pendiente — crear VM e2-medium Ubuntu 22.04 |
+| Subdominio `app.jaagsolutions.com` → IP VM (Cloudflare DNS) | ❌ Pendiente |
 | Ejecutar `deploy/setup.sh` en VPS | ❌ Pendiente |
 | Variables en `deploy/.env` | ❌ Pendiente |
 | Correr seed Paperclip en producción | ❌ Pendiente |
@@ -198,20 +210,12 @@
 
 ---
 
-## TAREAS P1 DIFERIDAS (código)
-
-| Tarea | Prioridad | Descripción |
-|-------|-----------|-------------|
-| W-011 Eventos secundarios GA4 | **P1 — PRÓXIMO** | Track clics CTA, scroll depth 25/50/75/100% |
-
----
-
 ## REFERENCIA DE DOCUMENTOS
 
 | Documento | Ubicación |
 |-----------|-----------|
+| **Bitácora de infraestructura** | [`docs/superpowers/specs/BITACORA-INFRAESTRUCTURA.md`](./BITACORA-INFRAESTRUCTURA.md) |
 | Diseño spec principal | [`docs/superpowers/specs/2026-04-16-jaagsolutions-design.md`](./2026-04-16-jaagsolutions-design.md) |
 | Plan implementación landing | [`docs/superpowers/plans/2026-04-16-jaagsolutions-web-landing.md`](../plans/2026-04-16-jaagsolutions-web-landing.md) |
 | Plan implementación seed | [`docs/superpowers/plans/2026-04-16-jaagsolutions-paperclip-seed.md`](../plans/2026-04-16-jaagsolutions-paperclip-seed.md) |
-| Checklist producción (Fase A/B) | [`docs/superpowers/specs/2026-04-30-jaagsolutions-produccion-checklist.md`](./2026-04-30-jaagsolutions-produccion-checklist.md) |
 | Runbook VPS | [`deploy/RUNBOOK.md`](../../../deploy/RUNBOOK.md) |
