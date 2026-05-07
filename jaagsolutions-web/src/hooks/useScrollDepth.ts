@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { trackEvent } from "./useAnalytics.ts";
+import { trackEvent } from "./analytics.ts";
 
 const THRESHOLDS = [25, 50, 75, 100] as const;
 

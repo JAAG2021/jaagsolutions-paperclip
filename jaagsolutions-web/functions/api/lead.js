@@ -17,6 +17,10 @@ export async function onRequestPost(context) {
     return json({ error: "Invalid JSON" }, 400);
   }
 
+  if (JSON.stringify(body).length > 50_000) {
+    return json({ error: "Payload too large" }, 413);
+  }
+
   // Honeypot antispam — bots llenan el campo _hp, humanos no
   if (body._hp) {
     return json({ ok: true }, 200);
@@ -42,7 +46,7 @@ export async function onRequestPost(context) {
           ...(n8nSecret && { "x-paperclip-webhook-token": n8nSecret }),
         },
         body: JSON.stringify(n8nBody),
-      }).catch(() => {}),
+      }).catch((e) => console.error('[n8n]', e.message)),
     );
   }
 
@@ -64,6 +68,7 @@ export async function onRequestPost(context) {
   }
 }
 
+// CF Pages routes POST to onRequestPost directly; this handler catches all other methods.
 export async function onRequest(context) {
   if (context.request.method !== "POST") {
     return json({ error: "Method not allowed" }, 405);

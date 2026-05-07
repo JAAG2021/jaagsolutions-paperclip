@@ -117,9 +117,8 @@ export default function ContactFormSection() {
       }
 
       setSubmitted(true);
-    } catch (err) {
+    } catch {
       setSubmitError(true);
-      throw err;
     }
   }
 
@@ -212,7 +211,7 @@ export default function ContactFormSection() {
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
                 {/* Barra de progreso */}
-                <div className="flex gap-2" role="status" aria-label={`Paso ${stepIndex + 1} de ${STEPS_COPY.length}: ${STEPS_COPY[stepIndex]}`}>
+                <div className="flex gap-2" role="progressbar" aria-valuenow={stepIndex + 1} aria-valuemin={1} aria-valuemax={STEPS_COPY.length} aria-label={`Paso ${stepIndex + 1} de ${STEPS_COPY.length}: ${STEPS_COPY[stepIndex]}`}>
                   {STEPS_COPY.map((label, idx) => (
                     <div key={label} className="flex flex-1 flex-col min-w-0">
                       <span

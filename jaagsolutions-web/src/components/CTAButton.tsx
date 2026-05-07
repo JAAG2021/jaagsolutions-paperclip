@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { trackEvent } from "../hooks/useAnalytics.ts";
+import { trackEvent } from "../hooks/analytics.ts";
 
 type CTAButtonProps = {
   children: ReactNode;
