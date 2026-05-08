@@ -145,8 +145,8 @@ Formspree requiere que el header `Origin` coincida con el dominio del formulario
 
 | Repo | URL | Propósito |
 |------|-----|-----------|
-| Monorepo Paperclip | `Genesis-fenix/paperclip` (privado) | Código fuente principal — rama `feature/jaagsolutions` tiene todo |
-| Repo landing (deploy) | `JAAG2021/jaagsolutions-paperclip` (privado) | Conectado a Cloudflare Pages — recibe push de la landing |
+| Monorepo Paperclip | `Genesis-fenix/paperclip` (privado) | Framework base — rama `feature/jaagsolutions` contiene todo el proyecto JAAGSOLUTIONS |
+| Repo deploy JAAGSOLUTIONS | `JAAG2021/jaagsolutions-paperclip` (privado) | Conectado a Cloudflare Pages — `feature/jaagsolutions` hace tracking aquí — GitHub Actions corren aquí |
 
 ### Cómo hacer deploy de cambios en la landing
 
@@ -266,7 +266,7 @@ jaagsolutions@gmail.com  ← recibe el email
 ### Cloudflare Pages
 - ❌ NO cambiar el Root Directory de `jaagsolutions-web` — el build fallará
 - ❌ NO cambiar el Build Command de `npm install && npm run build` — si se quita el `npm install`, Cloudflare usa pnpm del monorepo y falla
-- ❌ NO conectar el repo `Genesis-fenix/paperclip` directamente a CF Pages — es el monorepo, no la landing
+- ❌ NO conectar el repo `Genesis-fenix/paperclip` directamente a CF Pages — es el monorepo base, no la landing
 
 ### Formspree
 - ❌ NO activar Formshield — causa falsos positivos con el proxy

@@ -70,7 +70,7 @@ Los workflows se sincronizan automáticamente vía GitHub Actions cuando se hace
 **Configuración única (solo la primera vez):**
 
 1. Generar API key en n8n UI: **Settings → n8n API → Create API key**. Copiar el valor.
-2. En el repo GitHub (`Genesis-fenix/paperclip`): **Settings → Secrets and variables → Actions → New repository secret**:
+2. En el repo GitHub (`JAAG2021/jaagsolutions-paperclip`): **Settings → Secrets and variables → Actions → New repository secret**:
    - `JAAGSOLUTIONS_N8N_URL` = `https://n8n.jaagsolutions.com`
    - `JAAGSOLUTIONS_N8N_API_KEY` = `<la clave generada>`
 3. También agregar `N8N_API_KEY=<clave>` en `deploy/.env` del VPS (para uso manual).

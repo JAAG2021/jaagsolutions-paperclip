@@ -38,7 +38,7 @@ Requiere configuración única de secrets en el repo y API key en n8n:
 
 1. [ ] Generar API key en n8n UI: **Settings → n8n API → Create API key**
 2. [ ] Agregar `N8N_API_KEY=<clave>` en `deploy/.env` del VPS
-3. [ ] En repo `Genesis-fenix/paperclip` → **Settings → Secrets → Actions**:
+3. [ ] En repo `JAAG2021/jaagsolutions-paperclip` → **Settings → Secrets → Actions**:
    - `JAAGSOLUTIONS_N8N_URL` = `https://n8n.jaagsolutions.com`
    - `JAAGSOLUTIONS_N8N_API_KEY` = `<la clave>`
 4. [ ] Para aplicar el JSON actualizado **ahora** (mientras configuras los secrets):
