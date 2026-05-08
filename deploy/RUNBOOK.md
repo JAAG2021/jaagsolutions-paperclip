@@ -1,121 +1,233 @@
-# RUNBOOK — Activación JAAGSOLUTIONS (VPS + Vercel)
+# RUNBOOK — JAAGSOLUTIONS VPS Operations
 
-Seguí el orden cuando tengas **VPS**, **dominio** y **Formspree** listos. Preparar archivos de `deploy/` no requiere VPS; este documento es para el **go-live**.
+> **LEER ANTES DE CUALQUIER CAMBIO EN PRODUCCIÓN.**
+> Este documento describe el estado real del sistema, los procesos validados y las advertencias críticas.
+> Actualizar este archivo cada vez que se cambie un proceso o se descubra un nuevo gotcha.
 
-## Prerrequisitos
+---
 
-- [ ] VPS (ej. Hetzner CX22, Ubuntu 22.04)
-- [ ] Dominio
-- [ ] Cuenta Formspree (formulario + webhook)
-- [ ] (Opcional) Google Analytics 4
+## ESTADO ACTUAL (2026-05-08)
 
-## 1. DNS sugerido
+| Servicio | URL | Estado |
+|---------|-----|--------|
+| Landing web | `https://jaagsolutions.com` | ✅ Live — Cloudflare Pages |
+| Paperclip | `https://paperclip.jaagsolutions.com` | ✅ Live — VPS Docker |
+| n8n | `https://n8n.jaagsolutions.com` | ✅ Live — VPS Docker |
+| Workflow leads | Formspree Lead → Paperclip Issue | ✅ Activo |
 
-| Nombre | Tipo | Valor |
-|--------|------|--------|
-| `www` | CNAME | `cname.vercel-dns.com` (sitio en Vercel) |
-| `@` | A | IP del VPS (para que Caddy atienda apex y redirija a `www`, ver `Caddyfile`) |
-| `paperclip` | A | IP del VPS |
-| `n8n` | A | IP del VPS |
+**VPS:** Google Cloud `jaagsolutions-vps` — e2-medium Ubuntu 22.04 — IP `34.41.171.138`
+**Repo en VPS:** `/opt/jaagsolutions/repo` — branch `feature/jaagsolutions` — remote `origin` = `JAAG2021/jaagsolutions-paperclip`
 
-Comprobar propagación: `dig +short paperclip.tudominio.com`
+---
 
-**Nota:** Si querés el apex sólo en Vercel, ajustá DNS y eliminá o cambiá el bloque `{$DOMAIN}` en `Caddyfile` para no competir con Vercel.
+## ADVERTENCIAS CRÍTICAS — LEER PRIMERO
 
-## 2. Primera vez en el VPS
+### En el VPS
+- ❌ `nano` y `vi` **NO están instalados**. Para editar archivos usar:
+  ```bash
+  echo 'VARIABLE=valor' >> /ruta/al/.env
+  # Verificar con:
+  grep VARIABLE /ruta/al/.env
+  ```
+- ❌ La **n8n REST API devuelve 401** aunque el API key sea válido — incompatibilidad con `N8N_BASIC_AUTH_ACTIVE=true`. Usar siempre el CLI de Docker para importar workflows (ver sección 2).
+- ❌ El `.env` está en `/opt/jaagsolutions/repo/deploy/.env`, NO en `/opt/jaagsolutions/deploy/.env`.
 
-1. Clonar el repo privado JAAG ([JAAG2021/jaagsolutions-paperclip](https://github.com/JAAG2021/jaagsolutions-paperclip), rama acordada p. ej. `feature/jaagsolutions`) o copiar el árbol del proyecto.
-2. `cd deploy && cp .env.production.example .env`
-3. Completar **todos** los valores en `.env` (secretos, `DOMAIN`, `PAPERCLIP_PUBLIC_URL`, rutas de datos).
-4. Opcional: `bash setup.sh` (instala Docker, clona si configuraste `REPO_URL`, levanta compose). Si ya tenés el repo en el servidor, podés hacer sólo `docker compose --env-file .env up -d`.
+### En git
+- El branch `feature/jaagsolutions` hace tracking a `JAAG2021/jaagsolutions-paperclip` (remote `origin` en el VPS).
+- Para enviar cambios locales al VPS: hacer push desde la máquina local con `git push jaag2021 feature/jaagsolutions`, luego `git pull` en el VPS.
 
-Directorios de datos del host (`PAPERCLIP_DATA_DIR`, `N8N_DATA_DIR`) deben existir y ser persistentes.
+### En Paperclip
+- Si Paperclip falla con `EACCES permission denied`:
+  ```bash
+  sudo chown -R 1000:1000 /opt/jaagsolutions/paperclip-data
+  sudo docker restart deploy-paperclip-1
+  ```
 
-## 3. Seed de empresa en Paperclip
+---
 
-1. Abrí `https://paperclip.${DOMAIN}` (o `http://127.0.0.1:3100` vía túnel/SSH).
-2. Autenticación inicial según el flujo de Paperclip.
-3. Importá `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json` desde la UI (**Portability / Import** según versión) o usá la CLI autenticada contra tu instancia (ver documentación de `paperclipai company import`).
+## 1. CÓMO ACTUALIZAR EL WORKFLOW DE N8N
 
-Sin la company **JAAGSOLUTIONS**, el script `get-paperclip-ids.sh` no encontrará IDs.
+**Usar cuando:** se modifica `deploy/n8n-workflows/formspree-to-paperclip.json` u otro workflow.
 
-## 4. API key
-
-1. En Paperclip: **Settings → API Keys** (o ruta equivalente).
-2. Creá una clave con permisos acordes a crear issues en la company.
-3. Pegá el valor en `deploy/.env` como `PAPERCLIP_API_KEY`.
-
-## 5. IDs para n8n
-
-En el VPS (o donde Paperclip sea alcanzable):
-
-```bash
-export PAPERCLIP_API_KEY=...
-export PAPERCLIP_URL=http://127.0.0.1:3100   # o la URL interna que uses
-bash deploy/scripts/get-paperclip-ids.sh
-```
-
-Copiá las cuatro variables `PAPERCLIP_*_ID` a `deploy/.env` y reiniciá n8n:
+### Paso 1 — Desde la máquina local: commit y push
 
 ```bash
-cd deploy && docker compose --env-file .env restart n8n
+# En la máquina local (worktree):
+cd paperclip/.worktrees/jaagsolutions
+git add deploy/n8n-workflows/
+git commit -m "feat(n8n): descripción del cambio"
+git push jaag2021 feature/jaagsolutions
 ```
 
-## 6. Workflow n8n
-
-### Opción A — Automática (recomendada)
-
-Los workflows se sincronizan automáticamente vía GitHub Actions cuando se hace push al branch `feature/jaagsolutions` y cambia algún archivo en `deploy/n8n-workflows/`.
-
-**Configuración única (solo la primera vez):**
-
-1. Generar API key en n8n UI: **Settings → n8n API → Create API key**. Copiar el valor.
-2. En el repo GitHub (`JAAG2021/jaagsolutions-paperclip`): **Settings → Secrets and variables → Actions → New repository secret**:
-   - `JAAGSOLUTIONS_N8N_URL` = `https://n8n.jaagsolutions.com`
-   - `JAAGSOLUTIONS_N8N_API_KEY` = `<la clave generada>`
-3. También agregar `N8N_API_KEY=<clave>` en `deploy/.env` del VPS (para uso manual).
-
-Tras configurar los secrets, **cualquier push que modifique `deploy/n8n-workflows/*.json`** ejecuta el workflow `Sync n8n workflows` automáticamente: descarga el JSON del repo, hace upsert en n8n y activa el workflow.
-
-### Opción B — Manual (sin GitHub Actions)
-
-Requiere la API key en `deploy/.env`:
+### Paso 2 — En el VPS: pull y preparar el JSON
 
 ```bash
 cd /opt/jaagsolutions/repo
 git pull origin feature/jaagsolutions
-N8N_API_KEY=<tu_clave> bash deploy/scripts/sync-n8n-workflows.sh
 ```
 
-### Validación del nodo de seguridad
+Eliminar las tags del JSON antes de importar (las tags no existen en la DB y causan error `SQLITE_CONSTRAINT`):
 
-El nodo **Validar webhook (secreto / firma)** usa comparación en tiempo constante (XOR) para evitar timing attacks. Acepta el secreto (`FORMSPREE_WEBHOOK_SECRET`) en:
+```bash
+python3 -c "
+import json
+d = json.load(open('deploy/n8n-workflows/formspree-to-paperclip.json'))
+d.pop('tags', None)
+json.dump(d, open('/tmp/workflow-import.json', 'w'))
+"
+```
 
-1. **Cabecera** `X-Paperclip-Webhook-Token`, `X-Formspree-Signature` o `X-Webhook-Secret`
-2. **Query string** `?token=<secreto>` o `?secret=<secreto>`
+### Paso 3 — Importar en n8n via CLI
 
-Si el secreto está vacío, solo escribe advertencia en log (solo para desarrollo).
+```bash
+docker cp /tmp/workflow-import.json deploy-n8n-1:/tmp/workflow-import.json
+docker exec deploy-n8n-1 n8n import:workflow --input=/tmp/workflow-import.json
+```
 
-## 7. Formspree
+Output esperado: `Successfully imported 1 workflow.`
 
-1. Integrations → **Webhook** → URL del paso anterior (incluí query `token` / `secret` si elegiste esa opción).
-2. Guardá el `FORMSPREE_ID` del formulario para Vercel (`VITE_FORMSPREE_ID`).
-3. Obtené el hashid del formulario para `FORMSPREE_FORM_HASHID` (campo `form` en el primer webhook de prueba en el historial de n8n o en el dashboard/API de Formspree).
+### Paso 4 — Verificar en UI
 
-## 8. Vercel
+Ir a `https://n8n.jaagsolutions.com` → confirmar que el workflow **"Formspree Lead → Paperclip Issue"** está **Active** (toggle verde). Si quedó inactivo, activarlo manualmente.
 
-Seguí `jaagsolutions-web/DEPLOY-VERCEL.md` y redeploy tras definir variables.
+### ¿Por qué no se puede automatizar via REST API?
 
-## 9. Prueba end-to-end
+n8n tiene `N8N_BASIC_AUTH_ACTIVE=true` que bloquea el endpoint `/api/v1/` con 401 en todas las combinaciones de auth probadas (API key solo, basic auth solo, ambas juntas). El GitHub Action `sync-n8n.yml` existe en el repo pero está pendiente de solución. Mientras tanto, el proceso manual de 4 pasos es el camino validado.
 
-- [ ] Enviar formulario en `www`.
-- [ ] Ver entrada en Formspree / email de notificación.
-- [ ] Ver ejecución OK en n8n (historial del workflow).
-- [ ] Ver nuevo issue en Paperclip asignado a **Growth Ops** (A3), proyecto **Demand Engine MVP**, goal de embudo.
+---
 
-## Criterio “en producción”
+## 2. CÓMO ACTUALIZAR EL SEED DE PAPERCLIP
 
-- [ ] Sitio en HTTPS (Vercel).
-- [ ] Paperclip y n8n en HTTPS vía Caddy.
-- [ ] Seed importado y agentes visibles.
-- [ ] Lead de prueba llega a issue en bandeja de A3.
+**Usar cuando:** se agrega o modifica un agente, goal, proyecto o issue en `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json`.
+
+### Paso 1 — Commit y push desde máquina local
+
+```bash
+git add Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json
+git commit -m "feat(seed): descripción"
+git push jaag2021 feature/jaagsolutions
+```
+
+### Paso 2 — En el VPS: pull y actualizar el JSON en el contenedor
+
+El contenedor Paperclip usa el JSON baked en la imagen, NO el del host. Hay que copiarlo:
+
+```bash
+cd /opt/jaagsolutions/repo
+git pull origin feature/jaagsolutions
+
+sudo docker cp \
+  /opt/jaagsolutions/repo/Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json \
+  deploy-paperclip-1:/app/Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json
+```
+
+### Paso 3 — Ejecutar seed
+
+```bash
+cd /opt/jaagsolutions/repo
+pnpm db:seed:jaagsolutions
+```
+
+Output esperado: `X creados, Y actualizados` (el seed es idempotente — correrlo dos veces no duplica datos).
+
+### Verificar
+
+Ir a `https://paperclip.jaagsolutions.com` → confirmar agentes/goals/proyectos en el dashboard.
+
+---
+
+## 3. CÓMO AGREGAR VARIABLES DE ENTORNO AL VPS
+
+**Usar cuando:** se necesita agregar o cambiar una variable en `deploy/.env`.
+
+```bash
+# Agregar variable (sin nano/vi disponible):
+echo 'NUEVA_VARIABLE=valor' >> /opt/jaagsolutions/repo/deploy/.env
+
+# Verificar que quedó:
+grep NUEVA_VARIABLE /opt/jaagsolutions/repo/deploy/.env
+
+# Aplicar reiniciando el servicio afectado:
+cd /opt/jaagsolutions/repo/deploy
+docker compose --env-file .env restart <servicio>
+# Servicios: paperclip | n8n | caddy | postgres
+```
+
+---
+
+## 4. CÓMO HACER DEPLOY DE CAMBIOS EN LA LANDING
+
+**Usar cuando:** se modifica cualquier archivo en `jaagsolutions-web/`.
+
+Cloudflare Pages despliega automáticamente cuando detecta un push a `feature/jaagsolutions` en `JAAG2021/jaagsolutions-paperclip`.
+
+```bash
+# Desde máquina local:
+cd paperclip/.worktrees/jaagsolutions
+git add jaagsolutions-web/
+git commit -m "feat: descripción"
+git push jaag2021 feature/jaagsolutions
+# CF Pages despliega automáticamente en ~2 min
+```
+
+**Verificar:** ir a `https://jaagsolutions.com` y confirmar el cambio. Revisar el log de deploy en Cloudflare Pages si hay error.
+
+---
+
+## 5. REINICIAR SERVICIOS
+
+```bash
+cd /opt/jaagsolutions/repo/deploy
+
+# Ver estado de todos los contenedores:
+docker compose --env-file .env ps
+
+# Reiniciar un servicio específico:
+docker compose --env-file .env restart paperclip
+docker compose --env-file .env restart n8n
+
+# Ver logs en tiempo real:
+docker logs deploy-n8n-1 --tail 50 -f
+docker logs deploy-paperclip-1 --tail 50 -f
+
+# Reiniciar todo (último recurso):
+docker compose --env-file .env down && docker compose --env-file .env up -d
+```
+
+---
+
+## 6. IDs DE REFERENCIA (PRODUCCIÓN)
+
+| Recurso | ID |
+|---------|-----|
+| Company JAAGSOLUTIONS | `113d415c-9970-413f-b0d8-f7a6217caf67` |
+| Agente A3 (Growth Ops) | `fd1aaf10-d7a4-4d86-97a6-0a00f736e217` |
+| Proyecto P2 (Demand Engine) | `56e5f62f-ee8e-4555-9e85-27057574752d` |
+| Goal G2 | `b2197151-59d5-4f16-b4d3-4223c18da417` |
+| Formspree Form ID | `xpqbzolp` |
+| GA4 Property | `G-K92KJ1FRMH` |
+
+---
+
+## 7. PRUEBA E2E — VERIFICAR QUE EL FLUJO FUNCIONA
+
+Ejecutar cada vez que se cambie el workflow de n8n o la CF Function:
+
+1. Llenar el formulario en `https://jaagsolutions.com` con datos de prueba
+2. Verificar email en `jaagsolutions@gmail.com` — debe llegar notificación de Formspree
+3. En n8n UI → **Executions** — debe aparecer una ejecución exitosa reciente
+4. En Paperclip → **Issues** — debe aparecer un nuevo issue asignado a Growth Ops (A3)
+
+---
+
+## 8. HISTORIAL DE GOTCHAS
+
+| Problema | Causa | Solución |
+|---------|-------|---------|
+| `EACCES permission denied` en Paperclip | Permisos del directorio de datos | `sudo chown -R 1000:1000 /opt/jaagsolutions/paperclip-data` |
+| `git pull` falla con "dubious ownership" | Repo clonado como root | `git config --global --add safe.directory /opt/jaagsolutions/repo` |
+| n8n REST API devuelve 401 | `N8N_BASIC_AUTH_ACTIVE=true` bloquea `/api/v1/` | Usar CLI: `docker exec deploy-n8n-1 n8n import:workflow` |
+| `import:workflow` falla con `SQLITE_CONSTRAINT` | El JSON tiene `tags` con IDs que no existen en DB | Quitar tags con `python3 -c "... d.pop('tags', None) ..."` antes de importar |
+| Seed muestra "0 creados" | Contenedor usa JSON baked en imagen, no el del host | `sudo docker cp jaagsolutions-seed.json deploy-paperclip-1:/app/...` |
+| `nano` / `vi` not found | No están instalados en el VPS | Usar `echo 'VAR=val' >> archivo` |
+| `git pull` falla "not fast-forward" | Remote tiene commits más nuevos | `git pull --rebase origin feature/jaagsolutions` |
