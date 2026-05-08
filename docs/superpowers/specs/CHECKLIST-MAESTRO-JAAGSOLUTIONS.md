@@ -1,5 +1,5 @@
 # Checklist Maestro — Proyecto JAAGSOLUTIONS
-**Revisión:** 2026-05-06  
+**Revisión:** 2026-05-08  
 **Rama:** `feature/jaagsolutions`  
 **Regla:** LEER ESTE ARCHIVO AL INICIO DE CADA SESIÓN antes de proponer cualquier tarea. Actualizar inmediatamente al completar cada item.
 
@@ -14,39 +14,42 @@
 
 ---
 
-## RESUMEN EJECUTIVO — 2026-05-05
+## RESUMEN EJECUTIVO — 2026-05-08
 
 | Entregable | Estado | % Completo |
 |-----------|--------|-----------|
-| Seed Paperclip | Código listo, ejecución en prod pendiente (Fase B) | 80% |
+| Seed Paperclip | **Completo** — 5 agentes, 5 goals, 3 proyectos, 13 issues en producción ✅ (2026-05-07) | 100% |
 | Landing Web (código) | **Completo** — formulario 4 pasos + PDF + antispam + A11y + legales + email contacto | 100% |
-| Landing Web (deploy) | **LIVE** — `jaagsolutions.com` + SSL ✅ (2026-05-05) | 100% |
+| Landing Web (deploy) | **LIVE** — `jaagsolutions.com` + SSL + GA4 activo ✅ (2026-05-07) | 100% |
 | Dominio + DNS | **Completo** — Hostinger → Cloudflare NS + Custom Domains activos ✅ | 100% |
 | Email corporativo | **Completo** — routing `contacto@jaagsolutions.com` → Gmail ✅ | 100% |
 | Infraestructura VPS / n8n | **Completo** — VPS + Docker + n8n + workflow activo + E2E verificado ✅ (2026-05-06) | 100% |
+| Agente Marketing (A4) | **Completo** — Social & Content Lead creado con G4/P3/5 issues ✅ (2026-05-07) | 100% |
+| Auditoría seguridad + bugs | **Completo** — 2 críticos + 4 importantes + 4 menores corregidos ✅ (2026-05-07) | 100% |
 
 ---
 
 ## PRÓXIMOS PASOS — ordenados por prioridad
 
-### Fase B (requiere VPS Google Cloud — ya disponible)
-1. Crear VM en Google Cloud (Ubuntu 22.04, e2-medium, disco 20 GB)
-2. Apuntar subdominio `app.jaagsolutions.com` → IP de la VM (registro A en Cloudflare DNS)
-3. SSH a la VM y ejecutar `deploy/setup.sh`
-4. Completar variables en `deploy/.env` (ver `deploy/.env.production.example`)
-5. Correr seed Paperclip en producción (`pnpm db:seed:jaagsolutions`)
-6. Obtener IDs con `deploy/scripts/get-paperclip-ids.sh`
-7. Configurar webhook Formspree → n8n + importar `deploy/n8n-workflows/formspree-to-paperclip.json`
-8. Activar workflow n8n
-9. Prueba E2E completa: formulario → Formspree → n8n → issue Paperclip
+### ⚠️ Pendiente manual — IMPORTANTE
 
-### Opcionales (bajo impacto, cuando haya tiempo)
-- Configurar `VITE_GA_ID` en Cloudflare env vars (para GA4 real)
-- Configurar `VITE_SITE_URL=https://jaagsolutions.com` en Cloudflare (mejora og:url SEO)
+1. **Reimportar workflow n8n en VPS** (actualizar `safeEqual()` + campo `diagnostico_express`):
 
-### Escalabilidad futura (post-Fase B)
-- **Formulario Paso 4:** conectar `diagnostico_express` con agente IA (Claude via n8n) para generar propuesta personalizada y enviarla por email al cliente automáticamente
-- **PDF Lead Magnet:** evolucionar de PDF estático a PDF dinámico generado con datos del formulario
+   ```bash
+   # En VPS:
+   cd /opt/jaagsolutions/repo
+   git pull origin feature/jaagsolutions
+   # Luego en UI n8n (https://n8n.jaagsolutions.com):
+   # 1. Desactivar workflow "Formspree Lead → Paperclip Issue"
+   # 2. Import from File → /opt/jaagsolutions/repo/deploy/n8n-workflows/formspree-to-paperclip.json
+   # 3. Reactivar workflow
+   ```
+
+### Opcionales
+
+- **Configurar API key Anthropic en Paperclip** → habilita ejecución autónoma de agentes (`Settings → AI Provider`)
+- **Fase escalabilidad:** conectar `diagnostico_express` con agente IA (Claude via n8n) para propuesta personalizada por email
+- **PDF dinámico:** evolucionar lead magnet de estático a generado con datos del formulario
 
 ---
 
@@ -56,7 +59,7 @@
 
 | Archivo | Estado |
 |---------|--------|
-| `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json` | ✅ Completo — company, 4 agentes, 4 goals, 2 proyectos, 8 issues |
+| `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json` | ✅ Completo — company, 5 agentes (A0–A4), 5 goals, 3 proyectos, 13 issues |
 | `packages/db/src/seed-jaagsolutions.ts` | ✅ Completo — loader idempotente con upserts |
 | `packages/db/package.json` → script `seed:jaagsolutions` | ✅ Completo |
 | `package.json` (root) → script `db:seed:jaagsolutions` | ✅ Completo |
@@ -66,13 +69,12 @@
 - [x] Archivo JSON con estructura completa (company/agents/goals/projects/issues)
 - [x] Loader TypeScript con upserts idempotentes
 - [x] Script `pnpm db:seed:jaagsolutions` configurado
-- [ ] **PENDIENTE (Fase B):** Correr el seed con Paperclip activo en producción y verificar:
-  - [ ] Company JAAGSOLUTIONS visible en UI de Paperclip
-  - [ ] 4 agentes con jerarquía correcta visibles
-  - [ ] 4 goals con parentId correcto
-  - [ ] 2 proyectos con lead asignado
-  - [ ] 8 issues distribuidos correctamente
-  - [ ] Correr el script dos veces sin duplicar datos
+- [x] ✅ Company JAAGSOLUTIONS visible en UI de Paperclip (2026-05-07)
+- [x] ✅ 5 agentes con jerarquía correcta (CEO → PM → Engineer; CEO → Growth Ops → Social Lead)
+- [x] ✅ 5 goals con parentId correcto
+- [x] ✅ 3 proyectos con lead asignado (P1 Delivery, P2 Demand Engine, P3 Brand & Content)
+- [x] ✅ 13 issues distribuidos correctamente
+- [x] ✅ Script idempotente verificado (segunda ejecución: 0 creados, actualizados)
 
 ---
 
@@ -96,7 +98,7 @@
 | Lazy loading (`AppBelowFold.tsx`) para reducir JS inicial | ✅ Completo |
 | `hooks/useCountUp.ts` (animación numérica + reduced-motion) | ✅ Completo |
 | `hooks/useScrollReveal.ts` (animación entrada por scroll) | ✅ Completo |
-| `hooks/useAnalytics.ts` (wrapper gtag) | ✅ Completo |
+| `hooks/analytics.ts` (wrapper gtag — renombrado de useAnalytics.ts en auditoría) | ✅ Completo |
 | `hooks/useScrollDepth.ts` (scroll depth 25/50/75/100%) | ✅ Completo |
 
 ### Componentes base
@@ -190,8 +192,8 @@
 | Formspree notificaciones → `jaagsolutions@gmail.com` | ✅ Completo (2026-05-05) | Workflow → Actions → Email |
 | Cloudflare Email Routing activado | ✅ Completo (2026-05-05) | `contacto@jaagsolutions.com` → `jaagsolutions@gmail.com` |
 | Formshield en Formspree | ✅ Ya estaba desactivado (confirmado 2026-05-04) | Honeypot `_hp` cubre protección |
-| Configurar `VITE_GA_ID` en Cloudflare | ⬜ Opcional | Cuenta GA4 pendiente de crear |
-| Configurar `VITE_SITE_URL` en Cloudflare | ⬜ Opcional | Valor: `https://jaagsolutions.com` |
+| Configurar `VITE_GA_ID` en Cloudflare | ✅ Completo (2026-05-07) | GA4 Property `G-K92KJ1FRMH` — cuenta `inverjaag@gmail.com` |
+| Configurar `VITE_SITE_URL` en Cloudflare | ✅ Completo (2026-05-07) | Valor: `https://jaagsolutions.com` |
 
 ### Fase B — VPS + Automatización
 

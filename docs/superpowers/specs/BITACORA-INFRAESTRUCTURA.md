@@ -1,7 +1,7 @@
 # Bitácora de Infraestructura — JAAGSOLUTIONS
 
-**Última actualización:** 2026-05-05  
-**Estado del proyecto:** Fase A completa — Fase B pendiente
+**Última actualización:** 2026-05-08  
+**Estado del proyecto:** Fase A + Fase B completas — producción activa
 
 > **LEER ANTES DE CUALQUIER CAMBIO DE INFRAESTRUCTURA.**  
 > Este documento describe el estado real, decisiones tomadas y advertencias críticas del proyecto. Evita duplicar trabajo y romper lo que ya funciona.
@@ -43,16 +43,19 @@ Usuario
       jaagsolutions@gmail.com
 ```
 
-### Fase B (pendiente — Google Cloud VPS)
+### Fase B (activa — Google Cloud VPS)
 
 ```
-Formspree webhook
-  │
+CF Function /api/lead.js
+  │  fire-and-forget (context.waitUntil)
   ▼
-n8n (VPS Google Cloud)
-  │
-  ├─► Paperclip (crea issue automáticamente)
-  └─► Email de bienvenida al lead
+n8n (VPS Google Cloud — https://n8n.jaagsolutions.com)
+  │  webhook: /webhook/formspree-lead
+  │  validación: x-paperclip-webhook-token (safeEqual XOR)
+  ▼
+Paperclip (crea issue automáticamente → Growth Ops A3)
+  URL: https://paperclip.jaagsolutions.com
+  Company ID: 113d415c-9970-413f-b0d8-f7a6217caf67
 ```
 
 ---
@@ -65,7 +68,7 @@ n8n (VPS Google Cloud)
 | Formspree | `inverjaag@gmail.com` | Form ID `xpqbzolp` — notificaciones a `jaagsolutions@gmail.com` |
 | GitHub (repo landing) | `JAAG2021` | `JAAG2021/jaagsolutions-paperclip` (privado) — branch `feature/jaagsolutions` |
 | Hostinger (dominio) | cuenta propia | `jaagsolutions.com` — $10.46/año — nameservers apuntan a Cloudflare |
-| Google Cloud | cuenta propia | 90 días free trial — para VPS Fase B |
+| Google Cloud | cuenta propia | 90 días free trial (desde 2026-05-06) — VM `jaagsolutions-vps` e2-medium IP `34.41.171.138` |
 | Gmail notificaciones | `jaagsolutions@gmail.com` | Recibe leads de Formspree + emails de `contacto@jaagsolutions.com` |
 | Gmail admin | `inverjaag@gmail.com` | Cuenta maestra Cloudflare/Formspree |
 
@@ -79,6 +82,7 @@ n8n (VPS Google Cloud)
 |-------------|------|--------|-----------|-------|
 | Apex | CNAME | `@` | `jaagsolutions-paperclip.pages.dev` | CF Pages Custom Domain |
 | WWW | CNAME | `www` | `jaagsolutions-paperclip.pages.dev` | CF Pages Custom Domain |
+| App / VPS | A | `app` | `34.41.171.138` | DNS only — Paperclip + n8n |
 | MX (email routing) | MX | `@` | `route1.mx.cloudflare.net` | Auto-creado por Email Routing |
 | TXT (email routing) | TXT | `@` | `v=spf1 include:_spf.mx.cloudflare.net ~all` | Auto-creado |
 
@@ -107,8 +111,8 @@ magnolia.ns.cloudflare.com
 | Variable | Valor | Entorno |
 |----------|-------|---------|
 | `VITE_FORMSPREE_ID` | `xpqbzolp` | Production |
-| `VITE_GA_ID` | *(vacío — pendiente)* | Production |
-| `VITE_SITE_URL` | *(vacío — opcional)* | Production |
+| `VITE_GA_ID` | `G-K92KJ1FRMH` | Production |
+| `VITE_SITE_URL` | `https://jaagsolutions.com` | Production |
 
 ### Cloudflare Email Routing
 
@@ -274,56 +278,56 @@ jaagsolutions@gmail.com  ← recibe el email
 
 ---
 
-## 10. FASE B — PLAN DE IMPLEMENTACIÓN (VPS)
+## 10. VPS — INFRAESTRUCTURA FASE B (ACTIVA)
 
-### Recursos disponibles
-- **Google Cloud** — free trial 90 días activo (desde ~2026-05-05)
-- **Scripts de deploy** — todos listos en `deploy/`
+### Estado actual ✅ Completo (2026-05-06)
 
-### Pasos en orden
+| Componente | URL | Estado |
+|-----------|-----|--------|
+| VPS Google Cloud | IP `34.41.171.138` | e2-medium Ubuntu 22.04, Docker 29.4.2 |
+| Paperclip | `https://paperclip.jaagsolutions.com` | 5 agentes, 5 goals, 3 proyectos, 13 issues |
+| n8n | `https://n8n.jaagsolutions.com` | Workflow activo — Formspree Lead → Issue |
+| Caddy | reverse proxy interno | SSL automático via Let's Encrypt |
+| PostgreSQL | interno (puerto no expuesto) | Datos Paperclip |
 
-1. **Crear VM en Google Cloud Console**
-   - Tipo: `e2-medium` (2 vCPU, 4 GB RAM)
-   - OS: Ubuntu 22.04 LTS
-   - Disco: 20 GB SSD
-   - Firewall: HTTP (80) + HTTPS (443) + SSH (22) habilitados
-   - Anotar la IP externa asignada
+### IDs Paperclip producción
 
-2. **Agregar registro DNS en Cloudflare**
-   - Cloudflare → `jaagsolutions.com` → DNS → Add record
-   - Tipo: A / Nombre: `app` / Contenido: `<IP_VM>` / Proxy: OFF (DNS only)
-   - Resultado: `app.jaagsolutions.com` → VM
+| Recurso | ID |
+|---------|-----|
+| Company JAAGSOLUTIONS | `113d415c-9970-413f-b0d8-f7a6217caf67` |
+| Agente A3 (Growth Ops) | `fd1aaf10-d7a4-4d86-97a6-0a00f736e217` |
+| Proyecto P2 (Demand Engine) | `56e5f62f-ee8e-4555-9e85-27057574752d` |
+| Goal G2 | `b2197151-59d5-4f16-b4d3-4223c18da417` |
 
-3. **Configurar el servidor**
-   ```bash
-   ssh user@<IP_VM>
-   # Copiar deploy/ al servidor
-   scp -r deploy/ user@<IP_VM>:~/
-   # Ejecutar setup
-   bash ~/deploy/setup.sh
-   ```
+### ⚠️ Pendiente: Reimportar workflow n8n
 
-4. **Completar variables de entorno**
-   ```bash
-   cp deploy/.env.production.example deploy/.env
-   nano deploy/.env  # completar todos los valores
-   ```
+El JSON `deploy/n8n-workflows/formspree-to-paperclip.json` fue actualizado en repo (auditoría 2026-05-07) con:
 
-5. **Correr seed y obtener IDs**
-   ```bash
-   pnpm db:seed:jaagsolutions
-   bash deploy/scripts/get-paperclip-ids.sh > ids.txt
-   # Usar los IDs en el workflow de n8n
-   ```
+- `safeEqual()` — validación de token constant-time (anti timing-attack)
+- Campo `diagnostico_express` — captura del paso 4 del formulario
 
-6. **Configurar n8n**
-   - Importar `deploy/n8n-workflows/formspree-to-paperclip.json`
-   - Configurar webhook en Formspree → Settings → Webhooks → `https://app.jaagsolutions.com/webhook/...`
-   - Activar workflow
+**El workflow en producción aún tiene la versión anterior.** Para actualizar:
 
-7. **Prueba E2E**
-   - Llenar formulario en `jaagsolutions.com`
-   - Verificar: Formspree recibe → n8n procesa → issue creado en Paperclip
+```bash
+# En VPS:
+cd /opt/jaagsolutions/repo && git pull origin feature/jaagsolutions
+# En UI n8n (https://n8n.jaagsolutions.com):
+# Desactivar → Import from File → reactivar
+```
+
+### Ruta del repo en VPS
+
+```text
+/opt/jaagsolutions/repo/    ← monorepo (branch feature/jaagsolutions)
+/opt/jaagsolutions/paperclip-data/  ← datos Paperclip (volumen Docker)
+```
+
+**ADVERTENCIA:** El directorio `paperclip-data` debe tener `chown -R 1000:1000`. Si Paperclip falla con EACCES, ejecutar:
+
+```bash
+sudo chown -R 1000:1000 /opt/jaagsolutions/paperclip-data
+sudo docker restart deploy-paperclip-1
+```
 
 ---
 
@@ -351,3 +355,30 @@ jaagsolutions@gmail.com  ← recibe el email
 - Cloudflare Email Routing: `contacto@jaagsolutions.com` → `jaagsolutions@gmail.com`
 - Email `contacto@jaagsolutions.com` visible en footer y sección Contacto
 - Bitácora de infraestructura creada (este documento)
+
+### Sesión 2026-05-06 — Fase B completa
+
+- VM `jaagsolutions-vps` e2-medium Ubuntu 22.04 creada en Google Cloud (IP `34.41.171.138`)
+- DNS: registro A `app` → IP VPS (DNS only)
+- `deploy/setup.sh` ejecutado — Docker 29.4.2, 4 contenedores healthy (Paperclip, PostgreSQL, n8n, Caddy)
+- Seed ejecutado en producción: Company JAAGSOLUTIONS + 4 agentes + 4 goals + 2 proyectos + 8 issues
+- IDs obtenidos con `get-paperclip-ids.sh` — hardcodeados en workflow n8n (process.env no disponible en sandbox)
+- Workflow n8n importado y activado: `Formspree Lead → Paperclip Issue`
+- Bypass Formspree webhook Premium: CF Function postea directo a n8n con `context.waitUntil()` fire-and-forget
+- E2E completo verificado: formulario → CF Function → n8n → issue JAAG-2 en Paperclip (asignado a Growth Ops)
+- Fix EACCES Paperclip: `sudo chown -R 1000:1000 /opt/jaagsolutions/paperclip-data`
+- Fix git ownership: `git config --global --add safe.directory /opt/jaagsolutions/repo`
+
+### Sesión 2026-05-07 — Auditoría, GA4 y Agente A4
+
+- **GA4:** Property `G-K92KJ1FRMH` creada → `VITE_GA_ID` y `VITE_SITE_URL` configurados en Cloudflare Pages
+- **Auditoría completa:** 2 críticos + 4 importantes + 4 menores identificados y corregidos en un commit
+  - C-1: `safeEqual()` XOR constant-time en webhook (anti timing-attack)
+  - C-2: `diagnostico_express` capturado en n8n (campo más valioso del formulario)
+  - I-1..I-4: CF Function body guard, ContactForm no rethrow, hook analytics rename, legacy Vercel eliminado
+  - M-1..M-4: analytics.ts renombrado, CSP header, progressbar ARIA, noindex en PDF
+- **Agente A4 Social & Content Lead:** creado en seed con G4 goal, P3 Brand & Content MVP, 5 issues
+  - Budget: $200/mes, reporta a Growth Ops (A3)
+  - Seed re-ejecutado vía `docker cp` → 8 creados, 19 actualizados
+  - Dashboard confirmado: 5 agentes, 4 proyectos, Social & Content Lead activo
+- **Pendiente:** Reimportar workflow n8n con JSON actualizado (safeEqual + diagnostico_express)
