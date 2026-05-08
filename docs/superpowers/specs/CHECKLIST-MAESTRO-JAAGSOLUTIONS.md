@@ -31,19 +31,25 @@
 
 ## PRÓXIMOS PASOS — ordenados por prioridad
 
-### ⚠️ Pendiente manual — IMPORTANTE
+### Activar sync automático de workflows n8n (una sola vez)
 
-1. **Reimportar workflow n8n en VPS** (actualizar `safeEqual()` + campo `diagnostico_express`):
+El deploy de workflows n8n es ahora **automático via GitHub Actions** (`sync-n8n.yml`).
+Requiere configuración única de secrets en el repo y API key en n8n:
+
+1. [ ] Generar API key en n8n UI: **Settings → n8n API → Create API key**
+2. [ ] Agregar `N8N_API_KEY=<clave>` en `deploy/.env` del VPS
+3. [ ] En repo `Genesis-fenix/paperclip` → **Settings → Secrets → Actions**:
+   - `JAAGSOLUTIONS_N8N_URL` = `https://n8n.jaagsolutions.com`
+   - `JAAGSOLUTIONS_N8N_API_KEY` = `<la clave>`
+4. [ ] Para aplicar el JSON actualizado **ahora** (mientras configuras los secrets):
 
    ```bash
    # En VPS:
-   cd /opt/jaagsolutions/repo
-   git pull origin feature/jaagsolutions
-   # Luego en UI n8n (https://n8n.jaagsolutions.com):
-   # 1. Desactivar workflow "Formspree Lead → Paperclip Issue"
-   # 2. Import from File → /opt/jaagsolutions/repo/deploy/n8n-workflows/formspree-to-paperclip.json
-   # 3. Reactivar workflow
+   cd /opt/jaagsolutions/repo && git pull origin feature/jaagsolutions
+   N8N_API_KEY=<tu_clave> bash deploy/scripts/sync-n8n-workflows.sh
    ```
+
+Una vez configurados los secrets, **cualquier push que toque `deploy/n8n-workflows/*.json` actualiza n8n automáticamente**.
 
 ### Opcionales
 

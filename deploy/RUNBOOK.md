@@ -63,27 +63,38 @@ cd deploy && docker compose --env-file .env restart n8n
 
 ## 6. Workflow n8n
 
-1. Abrí `https://n8n.${DOMAIN}` (basic auth del `.env`).
-2. **Workflows → Import from File** → `deploy/n8n-workflows/formspree-to-paperclip.json` (si ya tenías una versión antigua, reimportá o copiá el nodo **Validar webhook (secreto / firma)**).
-3. Activá el workflow.
-4. En `deploy/.env`, definí al menos:
-   - `FORMSPREE_WEBHOOK_SECRET` — mismo valor que llegará por cabecera, firma HMAC o query (ver abajo).
-   - `FORMSPREE_FORM_HASHID` (recomendado) — debe coincidir con el campo `form` del JSON del webhook (hashid del formulario en Formspree).
-5. Reiniciá n8n: `cd deploy && docker compose --env-file .env restart n8n`.
-6. Copiá la URL del webhook en **modo producción**, ej. `https://n8n.${DOMAIN}/webhook/formspree-lead` (el sufijo exacto lo muestra n8n).
+### Opción A — Automática (recomendada)
 
-### Cómo valida el nodo **Validar webhook (secreto / firma)**
+Los workflows se sincronizan automáticamente vía GitHub Actions cuando se hace push al branch `feature/jaagsolutions` y cambia algún archivo en `deploy/n8n-workflows/`.
 
-Si `FORMSPREE_WEBHOOK_SECRET` está definido (recomendado en producción), el flujo acepta **una** de estas pruebas:
+**Configuración única (solo la primera vez):**
 
-1. **Token en cabecera** (comparación en tiempo constante): coincide con el secreto en alguna de  
-   `X-Paperclip-Webhook-Token`, `X-Formspree-Signature`, `X-Webhook-Secret`.
-2. **HMAC sobre el cuerpo JSON** (si tu emisor firma así): cabecera `X-Hub-Signature-256` o `X-Formspree-Signature-SHA256` con valor `sha256=<hex>`, usando el mismo JSON que n8n tiene en `body` tras parsear. *Ojo:* si el emisor firma bytes crudos y n8n re-serializa, puede fallar; en ese caso usá token en cabecera o query.
-3. **Query en la URL** del webhook: `?token=<secreto>` o `?secret=<secreto>`.
+1. Generar API key en n8n UI: **Settings → n8n API → Create API key**. Copiar el valor.
+2. En el repo GitHub (`Genesis-fenix/paperclip`): **Settings → Secrets and variables → Actions → New repository secret**:
+   - `JAAGSOLUTIONS_N8N_URL` = `https://n8n.jaagsolutions.com`
+   - `JAAGSOLUTIONS_N8N_API_KEY` = `<la clave generada>`
+3. También agregar `N8N_API_KEY=<clave>` en `deploy/.env` del VPS (para uso manual).
 
-Si el secreto está **vacío**, el nodo solo escribe una advertencia en log y **no bloquea** (solo para desarrollo).
+Tras configurar los secrets, **cualquier push que modifique `deploy/n8n-workflows/*.json`** ejecuta el workflow `Sync n8n workflows` automáticamente: descarga el JSON del repo, hace upsert en n8n y activa el workflow.
 
-**Formspree:** el webhook documentado incluye `form`, `keys` y `submission`. Conviene fijar `FORMSPREE_FORM_HASHID` para que solo ese formulario dispare el flujo. Como el webhook “simple” no siempre permite cabeceras custom, suele usarse **URL con `?token=...`** (si Formspree lo conserva) o un **proxy/worker** delante de n8n que añada `X-Paperclip-Webhook-Token`.
+### Opción B — Manual (sin GitHub Actions)
+
+Requiere la API key en `deploy/.env`:
+
+```bash
+cd /opt/jaagsolutions/repo
+git pull origin feature/jaagsolutions
+N8N_API_KEY=<tu_clave> bash deploy/scripts/sync-n8n-workflows.sh
+```
+
+### Validación del nodo de seguridad
+
+El nodo **Validar webhook (secreto / firma)** usa comparación en tiempo constante (XOR) para evitar timing attacks. Acepta el secreto (`FORMSPREE_WEBHOOK_SECRET`) en:
+
+1. **Cabecera** `X-Paperclip-Webhook-Token`, `X-Formspree-Signature` o `X-Webhook-Secret`
+2. **Query string** `?token=<secreto>` o `?secret=<secreto>`
+
+Si el secreto está vacío, solo escribe advertencia en log (solo para desarrollo).
 
 ## 7. Formspree
 

@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# Sync all JSON files in deploy/n8n-workflows/ to the running n8n instance via REST API.
+# Supports upsert (create-or-update) and activates each workflow after sync.
+#
+# Usage:
+#   bash deploy/scripts/sync-n8n-workflows.sh
+#
+# Required env vars (or defined in deploy/.env):
+#   N8N_API_KEY   — API key generada en n8n UI: Settings → n8n API → Create API key
+#   N8N_URL       — URL base de n8n (default: https://n8n.jaagsolutions.com)
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="$(dirname "$SCRIPT_DIR")/.env"
+
+# Auto-cargar deploy/.env si existe (en VPS local)
+if [[ -f "$ENV_FILE" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$ENV_FILE"
+  set +a
+fi
+
+N8N_URL="${N8N_URL:-https://n8n.jaagsolutions.com}"
+N8N_API_KEY="${N8N_API_KEY:?ERROR: N8N_API_KEY no definida. Generarla en n8n UI: Settings → n8n API → Create API key}"
+
+WORKFLOWS_DIR="$(dirname "$SCRIPT_DIR")/n8n-workflows"
+
+# ── Dependencias ──────────────────────────────────────────────────────────────
+if ! command -v jq >/dev/null 2>&1; then
+  echo "[n8n-sync] jq no encontrado. Instalando..."
+  sudo apt-get update -qq && sudo apt-get install -y jq
+fi
+command -v curl >/dev/null 2>&1 || { echo "[n8n-sync] ERROR: curl requerido."; exit 1; }
+
+# ── Helper ────────────────────────────────────────────────────────────────────
+# Llama a la n8n REST API con el API key en el header.
+n8n_api() {
+  curl -sf \
+    -H "X-N8N-API-KEY: ${N8N_API_KEY}" \
+    -H "Accept: application/json" \
+    "$@"
+}
+
+# ── Verificar conectividad ────────────────────────────────────────────────────
+echo "[n8n-sync] Verificando conexión a ${N8N_URL}..."
+if ! n8n_api "${N8N_URL}/api/v1/workflows" >/dev/null; then
+  echo "[n8n-sync] ERROR: No se pudo conectar a ${N8N_URL}/api/v1/workflows"
+  echo "[n8n-sync]   Verificar que N8N_URL y N8N_API_KEY sean correctos."
+  exit 1
+fi
+echo "[n8n-sync] Conexión OK."
+
+# ── Listar workflows existentes (para upsert) ─────────────────────────────────
+ALL_WORKFLOWS=$(n8n_api "${N8N_URL}/api/v1/workflows")
+
+# ── Procesar cada JSON ────────────────────────────────────────────────────────
+shopt -s nullglob
+json_files=("$WORKFLOWS_DIR"/*.json)
+if [[ ${#json_files[@]} -eq 0 ]]; then
+  echo "[n8n-sync] No se encontraron archivos JSON en ${WORKFLOWS_DIR}"
+  exit 0
+fi
+
+for json_file in "${json_files[@]}"; do
+  filename="$(basename "$json_file")"
+  wf_name=$(jq -r '.name' "$json_file")
+  echo ""
+  echo "[n8n-sync] ▶ ${wf_name} (${filename})"
+
+  # Buscar por nombre en la lista ya descargada (evita una llamada por workflow)
+  wf_id=$(echo "$ALL_WORKFLOWS" | jq -r --arg n "$wf_name" \
+    '.data[] | select(.name == $n) | .id' | head -1)
+
+  # Cuerpo limpio: quitar id y meta para que el API los gestione
+  clean_body=$(jq 'del(.id, .meta, .active)' "$json_file")
+
+  if [[ -n "$wf_id" ]]; then
+    echo "[n8n-sync]   Encontrado id=${wf_id} → desactivar → actualizar → activar"
+
+    # Desactivar antes de actualizar (evita conflictos de webhook)
+    n8n_api -X POST "${N8N_URL}/api/v1/workflows/${wf_id}/deactivate" >/dev/null || true
+
+    # Actualizar nodos y conexiones
+    n8n_api -X PUT "${N8N_URL}/api/v1/workflows/${wf_id}" \
+      -H "Content-Type: application/json" \
+      --data-binary <(echo "$clean_body") >/dev/null
+
+    echo "[n8n-sync]   Actualizado."
+  else
+    echo "[n8n-sync]   No encontrado → creando..."
+    wf_id=$(n8n_api -X POST "${N8N_URL}/api/v1/workflows" \
+      -H "Content-Type: application/json" \
+      --data-binary <(echo "$clean_body") | jq -r '.id')
+    echo "[n8n-sync]   Creado id=${wf_id}."
+  fi
+
+  # Activar
+  n8n_api -X POST "${N8N_URL}/api/v1/workflows/${wf_id}/activate" >/dev/null
+  echo "[n8n-sync]   ✓ Activo"
+done
+
+echo ""
+echo "[n8n-sync] ✅ Todos los workflows sincronizados y activos."

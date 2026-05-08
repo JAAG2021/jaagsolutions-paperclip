@@ -1,0 +1,28 @@
+name: Sync n8n workflows
+
+# Dispara automáticamente cuando cambia cualquier JSON en deploy/n8n-workflows/
+# en la rama principal de JAAGSOLUTIONS.
+on:
+  push:
+    branches:
+      - feature/jaagsolutions
+    paths:
+      - 'deploy/n8n-workflows/**'
+
+jobs:
+  sync:
+    name: Upsert & activate n8n workflows
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Sync workflows to n8n
+        env:
+          N8N_URL: ${{ secrets.JAAGSOLUTIONS_N8N_URL }}
+          N8N_API_KEY: ${{ secrets.JAAGSOLUTIONS_N8N_API_KEY }}
+        run: bash deploy/scripts/sync-n8n-workflows.sh
