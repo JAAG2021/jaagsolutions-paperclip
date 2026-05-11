@@ -78,8 +78,19 @@ services:
       PAPERCLIP_API_KEY: ${PAPERCLIP_API_KEY}
       FORMSPREE_WEBHOOK_SECRET: ${FORMSPREE_WEBHOOK_SECRET}
       FORMSPREE_FORM_HASHID: ${FORMSPREE_FORM_HASHID:-}
+      # ── Content Pipeline ──────────────────────────────────
+      IDEOGRAM_API_KEY: ${IDEOGRAM_API_KEY}
+      GOOGLE_VISION_API_KEY: ${GOOGLE_VISION_API_KEY}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      META_PAGE_ACCESS_TOKEN: ${META_PAGE_ACCESS_TOKEN}
+      META_PAGE_ID: ${META_PAGE_ID}
+      META_IG_USER_ID: ${META_IG_USER_ID}
+      LINKEDIN_ACCESS_TOKEN: ${LINKEDIN_ACCESS_TOKEN}
+      PAPERCLIP_JAAG5_ISSUE_ID: ${PAPERCLIP_JAAG5_ISSUE_ID}
     volumes:
       - ${N8N_DATA_DIR}:/home/node/.n8n
+      - ${CONTENT_DIR:-/opt/jaagsolutions/content}:/opt/jaagsolutions/content
     networks:
       - internal
       - web
