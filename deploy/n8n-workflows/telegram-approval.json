@@ -1,0 +1,365 @@
+{
+  "name": "Telegram Approval → Meta + LinkedIn Publisher",
+  "nodes": [
+    {
+      "id": "webhook-telegram",
+      "name": "Webhook Telegram Callback",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "telegram-approval",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "webhookId": "telegram-approval"
+    },
+    {
+      "id": "code-parse",
+      "name": "Parsear callback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300],
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst callbackQuery = body.callback_query;\nif (!callbackQuery) throw new Error('No callback_query en payload: ' + JSON.stringify(body));\n\nconst data = callbackQuery.data || '';\nconst parts = data.split('_');\nconst action = parts[0];\nconst post_id = parts.slice(1).join('_');\nconst callback_query_id = callbackQuery.id;\nconst message_id = callbackQuery.message?.message_id;\nconst chat_id = callbackQuery.message?.chat?.id;\n\nif (!action || !post_id) throw new Error('callback_data inválido: ' + data);\n\nreturn [{ json: { action, post_id, callback_query_id, message_id, chat_id } }];"
+      }
+    },
+    {
+      "id": "http-answer-callback",
+      "name": "Telegram — answerCallbackQuery",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [640, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/answerCallbackQuery",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ callback_query_id: $json.callback_query_id, text: 'Procesando...' }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "postgres-get-post",
+      "name": "Obtener datos del post",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [860, 300],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM content_plan WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": { "id": "1", "name": "PostgreSQL JAAGSOLUTIONS" }
+      }
+    },
+    {
+      "id": "if-approve",
+      "name": "¿Aprobar o Rechazar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1080, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "check-action",
+              "leftValue": "={{ $('Parsear callback').first().json.action }}",
+              "rightValue": "aprobar",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "if-linkedin",
+      "name": "¿Es LinkedIn?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1300, 180],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "check-platform",
+              "leftValue": "={{ $json.platform }}",
+              "rightValue": "linkedin",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "http-linkedin",
+      "name": "LinkedIn — publicar post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1520, 100],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.linkedin.com/v2/ugcPosts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-Restli-Protocol-Version", "value": "2.0.0" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ author: 'urn:li:person:me', lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: $json.copy_text + '\\n\\n' + ($json.hashtags || '') }, shareMediaCategory: 'IMAGE', media: [{ status: 'READY', description: { text: $json.copy_text.substring(0, 200) }, media: $json.image_url, title: { text: 'JAAGSOLUTIONS' } }] } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
+        "options": { "timeout": 30000 }
+      }
+    },
+    {
+      "id": "if-meta",
+      "name": "¿Es Meta/IG/FB?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1520, 260],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "check-meta",
+              "leftValue": "={{ $json.platform }}",
+              "rightValue": "linkedin",
+              "operator": { "type": "string", "operation": "notEquals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "http-fb-photo",
+      "name": "Meta FB — subir foto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1740, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.META_PAGE_ID }}/photos",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.META_PAGE_ACCESS_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "url", "value": "={{ $json.image_url }}" },
+            { "name": "caption", "value": "={{ $json.copy_text + '\\n\\n' + ($json.hashtags || '') }}" },
+            { "name": "published", "value": "true" }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      }
+    },
+    {
+      "id": "http-ig-container",
+      "name": "Meta IG — crear container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1740, 340],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.META_IG_USER_ID }}/media",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.META_PAGE_ACCESS_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "image_url", "value": "={{ $json.image_url }}" },
+            { "name": "caption", "value": "={{ $json.copy_text + '\\n\\n' + ($json.hashtags || '') }}" }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      }
+    },
+    {
+      "id": "http-ig-publish",
+      "name": "Meta IG — publicar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1960, 340],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.META_IG_USER_ID }}/media_publish",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.META_PAGE_ACCESS_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "creation_id", "value": "={{ $json.id }}" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "postgres-published",
+      "name": "status = published",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2200, 220],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE content_plan SET status = 'published', published_at = NOW() WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": { "id": "1", "name": "PostgreSQL JAAGSOLUTIONS" }
+      }
+    },
+    {
+      "id": "http-paperclip-log",
+      "name": "Paperclip — log en JAAG-5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2420, 220],
+      "parameters": {
+        "method": "POST",
+        "url": "=http://paperclip:3100/api/companies/{{ process.env.PAPERCLIP_COMPANY_ID }}/issues/{{ process.env.PAPERCLIP_JAAG5_ISSUE_ID }}/comments",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.PAPERCLIP_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ body: '✅ Post publicado\\nPlataforma: ' + $('Obtener datos del post').first().json.platform + '\\nFecha: ' + $('Obtener datos del post').first().json.scheduled_date }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "telegram-approved",
+      "name": "Telegram — ✅ Publicado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2640, 220],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/editMessageCaption",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Parsear callback').first().json.chat_id, message_id: $('Parsear callback').first().json.message_id, caption: '✅ Publicado en ' + $('Obtener datos del post').first().json.platform.toUpperCase() + '\\n📅 ' + $('Obtener datos del post').first().json.scheduled_date }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "postgres-rejected",
+      "name": "status = pending (rechazado)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1300, 420],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE content_plan SET status = 'pending', retry_count = retry_count + 1 WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": { "id": "1", "name": "PostgreSQL JAAGSOLUTIONS" }
+      }
+    },
+    {
+      "id": "telegram-rejected",
+      "name": "Telegram — ❌ Rechazado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1520, 420],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/editMessageCaption",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Parsear callback').first().json.chat_id, message_id: $('Parsear callback').first().json.message_id, caption: '❌ Rechazado — se regenerará en el próximo ciclo' }) }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Telegram Callback": {
+      "main": [[{ "node": "Parsear callback", "type": "main", "index": 0 }]]
+    },
+    "Parsear callback": {
+      "main": [[{ "node": "Telegram — answerCallbackQuery", "type": "main", "index": 0 }]]
+    },
+    "Telegram — answerCallbackQuery": {
+      "main": [[{ "node": "Obtener datos del post", "type": "main", "index": 0 }]]
+    },
+    "Obtener datos del post": {
+      "main": [[{ "node": "¿Aprobar o Rechazar?", "type": "main", "index": 0 }]]
+    },
+    "¿Aprobar o Rechazar?": {
+      "main": [
+        [{ "node": "¿Es LinkedIn?", "type": "main", "index": 0 }],
+        [{ "node": "status = pending (rechazado)", "type": "main", "index": 0 }]
+      ]
+    },
+    "¿Es LinkedIn?": {
+      "main": [
+        [{ "node": "LinkedIn — publicar post", "type": "main", "index": 0 }],
+        [{ "node": "¿Es Meta/IG/FB?", "type": "main", "index": 0 }]
+      ]
+    },
+    "¿Es Meta/IG/FB?": {
+      "main": [
+        [
+          { "node": "Meta FB — subir foto", "type": "main", "index": 0 },
+          { "node": "Meta IG — crear container", "type": "main", "index": 0 }
+        ],
+        []
+      ]
+    },
+    "LinkedIn — publicar post": {
+      "main": [[{ "node": "status = published", "type": "main", "index": 0 }]]
+    },
+    "Meta FB — subir foto": {
+      "main": [[{ "node": "status = published", "type": "main", "index": 0 }]]
+    },
+    "Meta IG — crear container": {
+      "main": [[{ "node": "Meta IG — publicar", "type": "main", "index": 0 }]]
+    },
+    "Meta IG — publicar": {
+      "main": [[{ "node": "status = published", "type": "main", "index": 0 }]]
+    },
+    "status = published": {
+      "main": [[{ "node": "Paperclip — log en JAAG-5", "type": "main", "index": 0 }]]
+    },
+    "Paperclip — log en JAAG-5": {
+      "main": [[{ "node": "Telegram — ✅ Publicado", "type": "main", "index": 0 }]]
+    },
+    "status = pending (rechazado)": {
+      "main": [[{ "node": "Telegram — ❌ Rechazado", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": ["jaagsolutions", "content-pipeline"]
+}
