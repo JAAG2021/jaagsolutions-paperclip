@@ -1,5 +1,5 @@
 # Checklist Maestro — Proyecto JAAGSOLUTIONS
-**Revisión:** 2026-05-08  
+**Revisión:** 2026-05-11  
 **Rama:** `feature/jaagsolutions`  
 **Regla:** LEER ESTE ARCHIVO AL INICIO DE CADA SESIÓN antes de proponer cualquier tarea. Actualizar inmediatamente al completar cada item.
 
@@ -14,7 +14,7 @@
 
 ---
 
-## RESUMEN EJECUTIVO — 2026-05-08
+## RESUMEN EJECUTIVO — 2026-05-11
 
 | Entregable | Estado | % Completo |
 |-----------|--------|-----------|
@@ -26,6 +26,119 @@
 | Infraestructura VPS / n8n | **Completo** — VPS + Docker + n8n + workflow activo + E2E verificado ✅ (2026-05-06) | 100% |
 | Agente Marketing (A4) | **Completo** — Social & Content Lead creado con G4/P3/5 issues ✅ (2026-05-07) | 100% |
 | Auditoría seguridad + bugs | **Completo** — 2 críticos + 4 importantes + 4 menores corregidos ✅ (2026-05-07) | 100% |
+| A4 apply_patch fix | **Completo** — `codex-run.sh` con `--dangerously-bypass-approvals-and-sandbox` ✅ (2026-05-10) | 100% |
+| Estrategia contenido Mes 1 | **Completo** — CSV Buffer + handoff + blog generados por A4 ✅ (2026-05-10) | 100% |
+| Perfiles sociales | **Completo** — LinkedIn ✅ Instagram ✅ Facebook Business ✅ (2026-05-11) | 100% |
+| LinkedIn Schedule Mes 1 | **Completo** — 8 posts CSV generado por A4, post #1 publicado ✅ (2026-05-11) | 100% |
+| Meta Semana 1 programada | **Completo** — 3 posts FB+IG programados en Meta Business Suite ✅ (2026-05-11) | 100% |
+| Pipeline automatizado contenido | **Archivos listos** — SQL, scripts, workflows n8n creados. Pendiente: obtener API keys (Task 3), configurar n8n UI (Task 6), deploy VPS (Task 9), E2E test (Task 10) | 60% |
+
+---
+
+## BRAND & CONTENT MVP — Estado (2026-05-11)
+
+### Issues completados
+
+| Issue | Título | Estado |
+|-------|--------|--------|
+| `c1e1c24a` | Definir estrategia de contenido y calendario editorial — Mes 1 | ✅ Done (2026-05-10) |
+| `4ada1270` | Configurar perfiles LinkedIn e Instagram de JAAGSOLUTIONS | ✅ Done (2026-05-10) |
+| `c8de442` | Producir primeras 8 piezas de contenido LinkedIn | ✅ Done (2026-05-11) |
+
+### Artefactos generados por A4
+
+| Archivo | Ubicación | Estado |
+|---------|-----------|--------|
+| Estrategia + spec Mes 1 | `docs/superpowers/specs/2026-05-10-brand-content-mes1-estrategia-design.md` | ✅ Completo |
+| Blog post 1 | `/opt/jaagsolutions/repo/docs/content/blog/2026-05-12-automatizar-pyme.md` (VPS) | ✅ Completo |
+| CSV Buffer import | `/paperclip/workspace/content_plan_mes1_buffer.csv` (workspace Docker) | ✅ Completo |
+| Handoff Buffer | `/paperclip/workspace/handoff_buffer_import.md` (workspace Docker) | ✅ Completo |
+| LinkedIn Schedule Mes 1 | `/paperclip/workspace/linkedin_first8_schedule.csv` (workspace Docker) | ✅ Completo — 8 posts mayo 18 → jun 11 |
+
+### Perfiles sociales
+
+| Canal | Estado | Cuenta |
+|-------|--------|--------|
+| LinkedIn | ✅ Creado | `jaagsolutions@gmail.com` |
+| Instagram | ✅ Creado | `jaagsolutions@gmail.com` |
+| Facebook Business | ✅ Creado + conectado a Meta Business Suite | `jaagsolutions@gmail.com` |
+
+### Estrategia de publicación (activa)
+
+| Canal | Herramienta | Frecuencia |
+|-------|-------------|------------|
+| LinkedIn | Native scheduler + cuenta personal Juan A. | Lunes/Jueves |
+| Instagram | Meta Business Suite Planificador | Mar/Jue/Vie |
+| Facebook | Meta Business Suite Planificador (republica IG) | Mar/Jue/Vie |
+
+### Contenido programado Semana 1 (Meta)
+
+| Post | Fecha | Hora | Plataforma |
+|------|-------|------|------------|
+| Infografía "¿Cuántas horas?" | Mar 12 mayo | 10:00 AM | FB + IG |
+| Antes/Después "4h → 20 min" | Jue 14 mayo | 4:00 PM | FB + IG |
+| Somos JAAGSOLUTIONS | Vie 15 mayo | 11:00 AM | FB + IG |
+
+### LinkedIn Post publicado
+
+| Post | Fecha | Estado |
+|------|-------|--------|
+| "Mapa rápido: 3 procesos que debes auditar" | Lun 11 mayo | ✅ Publicado cuenta personal |
+
+### Próximos pasos Brand & Content
+
+1. [ ] **PRIORIDAD MÁXIMA** — Implementar pipeline automatizado de contenido (ver sección abajo)
+2. [ ] Programar posts LinkedIn 2-8 del CSV en LinkedIn native scheduler (18 mayo → 11 junio)
+3. [ ] Generar imágenes + copy para Semana 2 Meta (19, 21, 22 mayo)
+4. [ ] Configurar adaptador Codex para A3 (Growth Ops) — mismo proceso que A4
+
+---
+
+## PIPELINE AUTOMATIZADO DE CONTENIDO — Diseño (pendiente implementar)
+
+**Agente responsable:** A2 (Automation Builder)  
+**Herramienta:** n8n  
+**Estado:** ⏳ Diseñado — falta crear issue y construir
+
+### Flujo objetivo
+
+```
+A4 genera CSV (copy + prompts de imagen)
+            ↓
+n8n llama Ideogram API → genera imagen
+            ↓
+n8n llama Google Vision API (OCR)
+→ extrae texto de la imagen
+→ compara con texto esperado del CSV
+→ si errores → regenera automáticamente (máx 3 intentos)
+            ↓
+n8n envía imagen + copy a Telegram (bot)
+"Revisa este post para [fecha]. ¿Aprobamos?"
+[✅ Aprobar] [❌ Regenerar]
+            ↓
+Juan aprueba desde móvil (único paso manual)
+            ↓
+n8n programa en Meta Graph API (FB + IG)
+n8n programa en LinkedIn API
+            ↓
+Post publicado automáticamente en fecha/hora
+```
+
+### APIs requeridas
+
+| Servicio | Uso | Costo aproximado |
+|---------|-----|-----------------|
+| Ideogram API | Generación de imágenes con texto | ~$0.08/imagen |
+| Google Vision API | OCR validación texto en imagen | Free tier 1000/mes |
+| Telegram Bot API | Checkpoint aprobación | Gratis |
+| Meta Graph API | Programar FB + Instagram | Gratis |
+| LinkedIn API | Programar posts | Gratis (con app registrada) |
+
+### Issue a crear para A2
+
+> **Título:** "Pipeline automatizado de contenido — Meta + LinkedIn + Telegram approval"
+>
+> **Descripción:** Construir workflow n8n que: lea CSV de A4 → genere imágenes vía Ideogram API → valide texto con OCR (Google Vision) → envíe checkpoint de aprobación vía Telegram bot → publique en Meta Graph API + LinkedIn API según fecha/hora del CSV. Un solo paso manual: aprobación de imagen en Telegram.
 
 ---
 
