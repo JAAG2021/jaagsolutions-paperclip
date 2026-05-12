@@ -24,6 +24,12 @@
         "query": "SELECT * FROM content_plan WHERE status = 'pending' AND scheduled_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 2 ORDER BY scheduled_date, scheduled_time LIMIT 10",
         "options": {}
       },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
     },
     {
       "id": "if-has-posts",
@@ -65,6 +71,12 @@
         "query": "UPDATE content_plan SET status = 'generating' WHERE id = '{{ $json.id }}' RETURNING id",
         "options": {}
       },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
     },
     {
       "id": "code-aspect-ratio",
@@ -125,6 +137,12 @@
         "query": "UPDATE content_plan SET image_url = '{{ $json.image_url }}' WHERE id = '{{ $json.id }}'",
         "options": {}
       },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
     },
     {
       "id": "http-vision-ocr",
@@ -204,6 +222,12 @@
         "query": "UPDATE content_plan SET status = 'pending', retry_count = retry_count + 1 WHERE id = '{{ $json.id }}'",
         "options": {}
       },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
     },
     {
       "id": "postgres-error",
@@ -216,6 +240,12 @@
         "query": "UPDATE content_plan SET status = 'error', error_log = 'OCR falló 3 veces' WHERE id = '{{ $json.id }}'",
         "options": {}
       },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
     },
     {
       "id": "postgres-set-review",
@@ -228,6 +258,12 @@
         "query": "UPDATE content_plan SET status = 'review' WHERE id = '{{ $json.id }}'",
         "options": {}
       },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
     },
     {
       "id": "code-prep-telegram",
@@ -273,6 +309,12 @@
         "query": "UPDATE content_plan SET telegram_msg_id = '{{ $json.result.message_id }}' WHERE id = '{{ $('Validar OCR').first().json.id }}'",
         "options": {}
       },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
     }
   ],
   "connections": {

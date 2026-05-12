@@ -51,6 +51,12 @@
         "query": "SELECT * FROM content_plan WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
         "options": {}
       },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
     },
     {
       "id": "if-approve",
@@ -227,6 +233,12 @@
         "query": "UPDATE content_plan SET status = 'published', published_at = NOW() WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
         "options": {}
       },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
     },
     {
       "id": "http-paperclip-log",
@@ -276,6 +288,12 @@
         "query": "UPDATE content_plan SET status = 'pending', retry_count = retry_count + 1 WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
         "options": {}
       },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
     },
     {
       "id": "telegram-rejected",
