@@ -24,9 +24,6 @@
         "query": "SELECT * FROM content_plan WHERE status = 'pending' AND scheduled_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 2 ORDER BY scheduled_date, scheduled_time LIMIT 10",
         "options": {}
       },
-      "credentials": {
-        "postgres": { "id": "1", "name": "PostgreSQL JAAGSOLUTIONS" }
-      }
     },
     {
       "id": "if-has-posts",
@@ -68,9 +65,6 @@
         "query": "UPDATE content_plan SET status = 'generating' WHERE id = '{{ $json.id }}' RETURNING id",
         "options": {}
       },
-      "credentials": {
-        "postgres": { "id": "1", "name": "PostgreSQL JAAGSOLUTIONS" }
-      }
     },
     {
       "id": "code-aspect-ratio",
@@ -117,7 +111,7 @@
       "typeVersion": 2,
       "position": [1740, 220],
       "parameters": {
-        "jsCode": "const stabilityResp = $input.first().json;\nconst prev = $('Calcular aspect_ratio').first().json;\nconst fs = require('fs');\n\nconst base64Image = stabilityResp.image;\nif (!base64Image) throw new Error('Stability AI no devolvió imagen: ' + JSON.stringify(stabilityResp));\n\nconst contentDir = '/opt/jaagsolutions/content';\nif (!fs.existsSync(contentDir)) fs.mkdirSync(contentDir, { recursive: true });\n\nconst filePath = `${contentDir}/${prev.id}.jpg`;\nfs.writeFileSync(filePath, Buffer.from(base64Image, 'base64'));\n\nreturn [{ json: { ...prev, image_base64: base64Image, image_path: filePath } }];"
+        "jsCode": "const stabilityResp = $input.first().json;\nconst prev = $('Calcular aspect_ratio').first().json;\nconst fs = require('fs');\n\nconst base64Image = stabilityResp.image;\nif (!base64Image) throw new Error('Stability AI no devolvió imagen: ' + JSON.stringify(stabilityResp));\n\nconst contentDir = '/opt/jaagsolutions/content';\nif (!fs.existsSync(contentDir)) fs.mkdirSync(contentDir, { recursive: true });\n\nconst filePath = `${contentDir}/${prev.id}.jpg`;\nfs.writeFileSync(filePath, Buffer.from(base64Image, 'base64'));\n\nreturn [{ json: { ...prev, image_base64: base64Image, image_url: filePath } }];"
       }
     },
     {
@@ -128,12 +122,9 @@
       "position": [1960, 220],
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE content_plan SET image_path = '{{ $json.image_path }}' WHERE id = '{{ $json.id }}'",
+        "query": "UPDATE content_plan SET image_url = '{{ $json.image_url }}' WHERE id = '{{ $json.id }}'",
         "options": {}
       },
-      "credentials": {
-        "postgres": { "id": "1", "name": "PostgreSQL JAAGSOLUTIONS" }
-      }
     },
     {
       "id": "http-vision-ocr",
@@ -157,7 +148,7 @@
       "typeVersion": 2,
       "position": [2400, 220],
       "parameters": {
-        "jsCode": "const visionResp = $input.first().json;\nconst postData = $('Guardar image_path').first().json;\n\nconst detectedText = (visionResp.responses?.[0]?.fullTextAnnotation?.text || '').toLowerCase();\nconst copyWords = postData.copy_text\n  .toLowerCase()\n  .split(/\\s+/)\n  .filter(w => w.length > 5)\n  .slice(0, 5);\n\nconst matchCount = copyWords.filter(w => detectedText.includes(w)).length;\nconst ocrPassed = matchCount >= 2 || detectedText.length > 10;\n\nreturn [{ json: { ...postData, ocr_passed: ocrPassed, detected_text: detectedText } }];"
+        "jsCode": "const visionResp = $input.first().json;\nconst postData = $('Guardar imagen en disco').first().json;\n\nconst detectedText = (visionResp.responses?.[0]?.fullTextAnnotation?.text || '').toLowerCase();\n\n// Rechazar imagen si contiene demasiado texto (watermarks, texto generado no deseado)\nconst ocrPassed = detectedText.length < 500;\n\nreturn [{ json: { ...postData, ocr_passed: ocrPassed, detected_text: detectedText } }];"
       }
     },
     {
@@ -213,9 +204,6 @@
         "query": "UPDATE content_plan SET status = 'pending', retry_count = retry_count + 1 WHERE id = '{{ $json.id }}'",
         "options": {}
       },
-      "credentials": {
-        "postgres": { "id": "1", "name": "PostgreSQL JAAGSOLUTIONS" }
-      }
     },
     {
       "id": "postgres-error",
@@ -228,9 +216,6 @@
         "query": "UPDATE content_plan SET status = 'error', error_log = 'OCR falló 3 veces' WHERE id = '{{ $json.id }}'",
         "options": {}
       },
-      "credentials": {
-        "postgres": { "id": "1", "name": "PostgreSQL JAAGSOLUTIONS" }
-      }
     },
     {
       "id": "postgres-set-review",
@@ -243,9 +228,6 @@
         "query": "UPDATE content_plan SET status = 'review' WHERE id = '{{ $json.id }}'",
         "options": {}
       },
-      "credentials": {
-        "postgres": { "id": "1", "name": "PostgreSQL JAAGSOLUTIONS" }
-      }
     },
     {
       "id": "code-prep-telegram",
@@ -254,7 +236,7 @@
       "typeVersion": 2,
       "position": [3060, 140],
       "parameters": {
-        "jsCode": "const postData = $('Guardar image_path').first().json;\nconst fs = require('fs');\nconst filePath = postData.image_path;\nconst fileBuffer = fs.readFileSync(filePath);\nconst base64 = fileBuffer.toString('base64');\n\nreturn [{\n  json: postData,\n  binary: {\n    photo: {\n      data: base64,\n      mimeType: 'image/jpeg',\n      fileName: `${postData.id}.jpg`\n    }\n  }\n}];"
+        "jsCode": "const postData = $('Validar OCR').first().json;\nconst fs = require('fs');\nconst filePath = postData.image_url;\nconst fileBuffer = fs.readFileSync(filePath);\nconst base64 = fileBuffer.toString('base64');\n\nreturn [{\n  json: postData,\n  binary: {\n    photo: {\n      data: base64,\n      mimeType: 'image/jpeg',\n      fileName: `${postData.id}.jpg`\n    }\n  }\n}];"
       }
     },
     {
@@ -271,7 +253,7 @@
         "bodyParameters": {
           "parameters": [
             { "name": "chat_id", "value": "={{ $env.TELEGRAM_CHAT_ID }}" },
-            { "name": "caption", "value": "={{ '📅 *' + $json.scheduled_date + ' ' + $json.scheduled_time + '*\\n📱 ' + ($json.platform || '').toUpperCase() + ' — ' + ($json.pillar || '') + '\\n\\n' + ($json.copy_text || '') + '\\n\\n' + ($json.hashtags || '') }}" },
+            { "name": "caption", "value": "={{ '📅 *' + new Date($json.scheduled_date).toLocaleDateString('es-CO', {day:'2-digit', month:'long', year:'numeric'}) + ' ' + ($json.scheduled_time || '') + '*\\n📱 ' + ($json.platform || '').toUpperCase() + ' — ' + ($json.pillar || '') + '\\n\\n' + ($json.copy_text || '') + '\\n\\n' + ($json.hashtags || '') }}" },
             { "name": "parse_mode", "value": "Markdown" },
             { "name": "reply_markup", "value": "={{ JSON.stringify({ inline_keyboard: [[{ text: '✅ Aprobar', callback_data: 'aprobar_' + $json.id }, { text: '❌ Rechazar', callback_data: 'rechazar_' + $json.id }]] }) }}" },
             { "name": "photo", "parameterType": "formBinaryData", "inputDataFieldName": "photo" }
@@ -288,12 +270,9 @@
       "position": [3500, 140],
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE content_plan SET telegram_msg_id = '{{ $json.result.message_id }}' WHERE id = '{{ $('Guardar image_path').first().json.id }}'",
+        "query": "UPDATE content_plan SET telegram_msg_id = '{{ $json.result.message_id }}' WHERE id = '{{ $('Validar OCR').first().json.id }}'",
         "options": {}
       },
-      "credentials": {
-        "postgres": { "id": "1", "name": "PostgreSQL JAAGSOLUTIONS" }
-      }
     }
   ],
   "connections": {

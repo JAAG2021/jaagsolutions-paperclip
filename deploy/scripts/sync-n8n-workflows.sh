@@ -82,12 +82,27 @@ for json_file in "${json_files[@]}"; do
     # Desactivar antes de actualizar (evita conflictos de webhook)
     n8n_api -X POST "${N8N_URL}/api/v1/workflows/${wf_id}/deactivate" >/dev/null || true
 
+    # Obtener credenciales existentes de cada nodo para no perderlas al hacer PUT
+    existing_nodes=$(n8n_api "${N8N_URL}/api/v1/workflows/${wf_id}" | jq '.nodes // []')
+
+    # Fusionar credenciales del workflow en n8n en el nuevo body:
+    # Si un nodo del repo no tiene credentials, se preservan las de n8n.
+    merged_body=$(echo "$clean_body" | jq \
+      --argjson existing "$existing_nodes" \
+      '.nodes = [.nodes[] | . as $new |
+        ($existing[] | select(.name == $new.name)) as $cur |
+        if ($new.credentials == null or $new.credentials == {}) and ($cur.credentials != null)
+        then $new + {credentials: $cur.credentials}
+        else $new
+        end
+      ]')
+
     # Actualizar nodos y conexiones
     n8n_api -X PUT "${N8N_URL}/api/v1/workflows/${wf_id}" \
       -H "Content-Type: application/json" \
-      --data-binary <(echo "$clean_body") >/dev/null
+      --data-binary <(echo "$merged_body") >/dev/null
 
-    echo "[n8n-sync]   Actualizado."
+    echo "[n8n-sync]   Actualizado (credenciales preservadas)."
   else
     echo "[n8n-sync]   No encontrado → creando..."
     wf_id=$(n8n_api -X POST "${N8N_URL}/api/v1/workflows" \

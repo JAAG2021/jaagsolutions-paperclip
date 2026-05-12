@@ -22,7 +22,7 @@
       "typeVersion": 2,
       "position": [420, 300],
       "parameters": {
-        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst callbackQuery = body.callback_query;\nif (!callbackQuery) throw new Error('No callback_query en payload: ' + JSON.stringify(body));\n\nconst data = callbackQuery.data || '';\nconst parts = data.split('_');\nconst action = parts[0];\nconst post_id = parts.slice(1).join('_');\nconst callback_query_id = callbackQuery.id;\nconst message_id = callbackQuery.message?.message_id;\nconst chat_id = callbackQuery.message?.chat?.id;\n\nif (!action || !post_id) throw new Error('callback_data inválido: ' + data);\n\nreturn [{ json: { action, post_id, callback_query_id, message_id, chat_id } }];"
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst callbackQuery = body.callback_query;\nif (!callbackQuery) throw new Error('No callback_query en payload: ' + JSON.stringify(body));\n\nconst data = callbackQuery.data || '';\nconst parts = data.split('_');\nconst action = parts[0];\nconst post_id = parts.slice(1).join('_');\nconst callback_query_id = callbackQuery.id;\nconst message_id = callbackQuery.message?.message_id;\nconst chat_id = callbackQuery.message?.chat?.id;\n\nif (!action || !post_id) throw new Error('callback_data inválido: ' + data);\nif (action !== 'aprobar' && action !== 'rechazar') throw new Error('action desconocida: ' + action);\n\nreturn [{ json: { action, post_id, callback_query_id, message_id, chat_id } }];"
       }
     },
     {
@@ -51,9 +51,6 @@
         "query": "SELECT * FROM content_plan WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
         "options": {}
       },
-      "credentials": {
-        "postgres": { "id": "1", "name": "PostgreSQL JAAGSOLUTIONS" }
-      }
     },
     {
       "id": "if-approve",
@@ -230,9 +227,6 @@
         "query": "UPDATE content_plan SET status = 'published', published_at = NOW() WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
         "options": {}
       },
-      "credentials": {
-        "postgres": { "id": "1", "name": "PostgreSQL JAAGSOLUTIONS" }
-      }
     },
     {
       "id": "http-paperclip-log",
@@ -267,7 +261,7 @@
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/editMessageCaption",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ chat_id: $('Parsear callback').first().json.chat_id, message_id: $('Parsear callback').first().json.message_id, caption: '✅ Publicado en ' + $('Obtener datos del post').first().json.platform.toUpperCase() + '\\n📅 ' + $('Obtener datos del post').first().json.scheduled_date }) }}",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Parsear callback').first().json.chat_id, message_id: $('Parsear callback').first().json.message_id, caption: '✅ Publicado en ' + $('Obtener datos del post').first().json.platform.toUpperCase() + '\\n📅 ' + new Date($('Obtener datos del post').first().json.scheduled_date).toLocaleDateString('es-CO', {day:'2-digit', month:'long', year:'numeric'}) }) }}",
         "options": {}
       }
     },
@@ -282,9 +276,6 @@
         "query": "UPDATE content_plan SET status = 'pending', retry_count = retry_count + 1 WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
         "options": {}
       },
-      "credentials": {
-        "postgres": { "id": "1", "name": "PostgreSQL JAAGSOLUTIONS" }
-      }
     },
     {
       "id": "telegram-rejected",
