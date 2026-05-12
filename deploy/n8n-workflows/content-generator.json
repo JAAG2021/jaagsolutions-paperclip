@@ -1,5 +1,5 @@
 {
-  "name": "Content Generator — Cron → Ideogram → Vision → Telegram",
+  "name": "Content Generator — Cron → Stability AI → Vision → Telegram",
   "nodes": [
     {
       "id": "schedule-trigger",
@@ -79,50 +79,56 @@
       "typeVersion": 2,
       "position": [1300, 220],
       "parameters": {
-        "jsCode": "const item = $input.first().json;\nconst platform = item.platform || 'instagram';\nconst format = item.format || 'imagen_copy';\n\nconst map = {\n  'linkedin:imagen_copy': 'ASPECT_4_5',\n  'linkedin:texto_largo': 'ASPECT_4_5',\n  'linkedin:carrusel':   'ASPECT_4_5',\n  'instagram:imagen_copy': 'ASPECT_1_1',\n  'instagram:carrusel':   'ASPECT_1_1',\n  'instagram:reel':       'ASPECT_9_16',\n  'meta:imagen_copy':     'ASPECT_1_1',\n  'meta:carrusel':        'ASPECT_1_1',\n  'facebook:imagen_copy': 'ASPECT_4_5',\n};\n\nconst key = `${platform}:${format}`;\nconst aspect_ratio = map[key] || 'ASPECT_1_1';\n\nreturn [{ json: { ...item, aspect_ratio } }];"
+        "jsCode": "const item = $input.first().json;\nconst platform = item.platform || 'instagram';\nconst format = item.format || 'imagen_copy';\n\n// Stability AI v2beta aspect ratios: '1:1','16:9','21:9','2:3','3:2','4:5','5:4','9:16','9:21'\nconst map = {\n  'linkedin:imagen_copy': '4:5',\n  'linkedin:texto_largo': '4:5',\n  'linkedin:carrusel':   '4:5',\n  'instagram:imagen_copy': '1:1',\n  'instagram:carrusel':   '1:1',\n  'instagram:reel':       '9:16',\n  'meta:imagen_copy':     '1:1',\n  'meta:carrusel':        '1:1',\n  'facebook:imagen_copy': '4:5',\n};\n\nconst key = `${platform}:${format}`;\nconst aspect_ratio = map[key] || '1:1';\n\nreturn [{ json: { ...item, aspect_ratio } }];"
       }
     },
     {
-      "id": "http-ideogram",
-      "name": "Ideogram — generar imagen",
+      "id": "http-stability",
+      "name": "Stability AI — generar imagen",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1520, 220],
       "parameters": {
         "method": "POST",
-        "url": "https://api.ideogram.ai/generate",
+        "url": "https://api.stability.ai/v2beta/stable-image/generate/core",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Api-Key", "value": "={{ $env.IDEOGRAM_API_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" }
+            { "name": "Authorization", "value": "={{ 'Bearer ' + $env.STABILITY_AI_API_KEY }}" },
+            { "name": "Accept", "value": "application/json" }
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ image_request: { prompt: $json.image_prompt, aspect_ratio: $json.aspect_ratio, model: 'V_2', magic_prompt_option: 'OFF' } }) }}",
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "prompt", "value": "={{ $json.image_prompt }}" },
+            { "name": "aspect_ratio", "value": "={{ $json.aspect_ratio }}" },
+            { "name": "output_format", "value": "jpeg" }
+          ]
+        },
         "options": { "timeout": 60000 }
       }
     },
     {
-      "id": "code-extract-image-url",
-      "name": "Extraer URL de imagen",
+      "id": "code-save-image",
+      "name": "Guardar imagen en disco",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1740, 220],
       "parameters": {
-        "jsCode": "const ideogramResponse = $input.first().json;\nconst imageUrl = ideogramResponse.data?.[0]?.url;\nif (!imageUrl) throw new Error('Ideogram no devolvió URL de imagen: ' + JSON.stringify(ideogramResponse));\n\nconst prev = $('Calcular aspect_ratio').first().json;\nreturn [{ json: { ...prev, ideogram_image_url: imageUrl } }];"
+        "jsCode": "const stabilityResp = $input.first().json;\nconst prev = $('Calcular aspect_ratio').first().json;\nconst fs = require('fs');\n\nconst base64Image = stabilityResp.image;\nif (!base64Image) throw new Error('Stability AI no devolvió imagen: ' + JSON.stringify(stabilityResp));\n\nconst contentDir = '/opt/jaagsolutions/content';\nif (!fs.existsSync(contentDir)) fs.mkdirSync(contentDir, { recursive: true });\n\nconst filePath = `${contentDir}/${prev.id}.jpg`;\nfs.writeFileSync(filePath, Buffer.from(base64Image, 'base64'));\n\nreturn [{ json: { ...prev, image_base64: base64Image, image_path: filePath } }];"
       }
     },
     {
-      "id": "postgres-set-image-url",
-      "name": "Guardar image_url",
+      "id": "postgres-set-image-path",
+      "name": "Guardar image_path",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [1960, 220],
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE content_plan SET image_url = '{{ $json.ideogram_image_url }}' WHERE id = '{{ $json.id }}'",
+        "query": "UPDATE content_plan SET image_path = '{{ $json.image_path }}' WHERE id = '{{ $json.id }}'",
         "options": {}
       },
       "credentials": {
@@ -140,7 +146,7 @@
         "url": "=https://vision.googleapis.com/v1/images:annotate?key={{ $env.GOOGLE_VISION_API_KEY }}",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ requests: [{ image: { source: { imageUri: $json.ideogram_image_url } }, features: [{ type: 'TEXT_DETECTION', maxResults: 10 }] }] }) }}",
+        "jsonBody": "={{ JSON.stringify({ requests: [{ image: { content: $json.image_base64 }, features: [{ type: 'TEXT_DETECTION', maxResults: 10 }] }] }) }}",
         "options": { "timeout": 30000 }
       }
     },
@@ -151,7 +157,7 @@
       "typeVersion": 2,
       "position": [2400, 220],
       "parameters": {
-        "jsCode": "const visionResp = $input.first().json;\nconst postData = $('Guardar image_url').first().json;\n\nconst detectedText = (visionResp.responses?.[0]?.fullTextAnnotation?.text || '').toLowerCase();\nconst copyWords = postData.copy_text\n  .toLowerCase()\n  .split(/\\s+/)\n  .filter(w => w.length > 5)\n  .slice(0, 5);\n\nconst matchCount = copyWords.filter(w => detectedText.includes(w)).length;\nconst ocrPassed = matchCount >= 2 || detectedText.length > 10;\n\nreturn [{ json: { ...postData, ocr_passed: ocrPassed, detected_text: detectedText } }];"
+        "jsCode": "const visionResp = $input.first().json;\nconst postData = $('Guardar image_path').first().json;\n\nconst detectedText = (visionResp.responses?.[0]?.fullTextAnnotation?.text || '').toLowerCase();\nconst copyWords = postData.copy_text\n  .toLowerCase()\n  .split(/\\s+/)\n  .filter(w => w.length > 5)\n  .slice(0, 5);\n\nconst matchCount = copyWords.filter(w => detectedText.includes(w)).length;\nconst ocrPassed = matchCount >= 2 || detectedText.length > 10;\n\nreturn [{ json: { ...postData, ocr_passed: ocrPassed, detected_text: detectedText } }];"
       }
     },
     {
@@ -242,17 +248,35 @@
       }
     },
     {
+      "id": "code-prep-telegram",
+      "name": "Preparar binario Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3060, 140],
+      "parameters": {
+        "jsCode": "const postData = $('Guardar image_path').first().json;\nconst fs = require('fs');\nconst filePath = postData.image_path;\nconst fileBuffer = fs.readFileSync(filePath);\nconst base64 = fileBuffer.toString('base64');\n\nreturn [{\n  json: postData,\n  binary: {\n    photo: {\n      data: base64,\n      mimeType: 'image/jpeg',\n      fileName: `${postData.id}.jpg`\n    }\n  }\n}];"
+      }
+    },
+    {
       "id": "telegram-send",
       "name": "Telegram — enviar para aprobación",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [3060, 140],
+      "position": [3280, 140],
       "parameters": {
         "method": "POST",
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendPhoto",
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, photo: $('Guardar image_url').first().json.ideogram_image_url, caption: '📅 *' + $('Guardar image_url').first().json.scheduled_date + ' ' + $('Guardar image_url').first().json.scheduled_time + '*\\n📱 ' + ($('Guardar image_url').first().json.platform || '').toUpperCase() + ' — ' + ($('Guardar image_url').first().json.pillar || '') + '\\n\\n' + ($('Guardar image_url').first().json.copy_text || '') + '\\n\\n' + ($('Guardar image_url').first().json.hashtags || ''), parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '✅ Aprobar', callback_data: 'aprobar_' + $('Guardar image_url').first().json.id }, { text: '❌ Rechazar', callback_data: 'rechazar_' + $('Guardar image_url').first().json.id }]] } }) }}",
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "chat_id", "value": "={{ $env.TELEGRAM_CHAT_ID }}" },
+            { "name": "caption", "value": "={{ '📅 *' + $json.scheduled_date + ' ' + $json.scheduled_time + '*\\n📱 ' + ($json.platform || '').toUpperCase() + ' — ' + ($json.pillar || '') + '\\n\\n' + ($json.copy_text || '') + '\\n\\n' + ($json.hashtags || '') }}" },
+            { "name": "parse_mode", "value": "Markdown" },
+            { "name": "reply_markup", "value": "={{ JSON.stringify({ inline_keyboard: [[{ text: '✅ Aprobar', callback_data: 'aprobar_' + $json.id }, { text: '❌ Rechazar', callback_data: 'rechazar_' + $json.id }]] }) }}" },
+            { "name": "photo", "parameterType": "formBinaryData", "inputDataFieldName": "photo" }
+          ]
+        },
         "options": {}
       }
     },
@@ -261,10 +285,10 @@
       "name": "Guardar telegram_msg_id",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [3280, 140],
+      "position": [3500, 140],
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE content_plan SET telegram_msg_id = '{{ $json.result.message_id }}' WHERE id = '{{ $('Guardar image_url').first().json.id }}'",
+        "query": "UPDATE content_plan SET telegram_msg_id = '{{ $json.result.message_id }}' WHERE id = '{{ $('Guardar image_path').first().json.id }}'",
         "options": {}
       },
       "credentials": {
@@ -292,15 +316,15 @@
       "main": [[{ "node": "Calcular aspect_ratio", "type": "main", "index": 0 }]]
     },
     "Calcular aspect_ratio": {
-      "main": [[{ "node": "Ideogram — generar imagen", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Stability AI — generar imagen", "type": "main", "index": 0 }]]
     },
-    "Ideogram — generar imagen": {
-      "main": [[{ "node": "Extraer URL de imagen", "type": "main", "index": 0 }]]
+    "Stability AI — generar imagen": {
+      "main": [[{ "node": "Guardar imagen en disco", "type": "main", "index": 0 }]]
     },
-    "Extraer URL de imagen": {
-      "main": [[{ "node": "Guardar image_url", "type": "main", "index": 0 }]]
+    "Guardar imagen en disco": {
+      "main": [[{ "node": "Guardar image_path", "type": "main", "index": 0 }]]
     },
-    "Guardar image_url": {
+    "Guardar image_path": {
       "main": [[{ "node": "Google Vision — OCR", "type": "main", "index": 0 }]]
     },
     "Google Vision — OCR": {
@@ -322,6 +346,9 @@
       ]
     },
     "status = review": {
+      "main": [[{ "node": "Preparar binario Telegram", "type": "main", "index": 0 }]]
+    },
+    "Preparar binario Telegram": {
       "main": [[{ "node": "Telegram — enviar para aprobación", "type": "main", "index": 0 }]]
     },
     "Telegram — enviar para aprobación": {
