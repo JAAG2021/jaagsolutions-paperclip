@@ -1,7 +1,12 @@
 # Checklist Maestro — Proyecto JAAGSOLUTIONS
-**Revisión:** 2026-05-11  
-**Rama:** `feature/jaagsolutions`  
+**Revisión:** 2026-05-12
+**Rama:** `feature/jaagsolutions`
 **Regla:** LEER ESTE ARCHIVO AL INICIO DE CADA SESIÓN antes de proponer cualquier tarea. Actualizar inmediatamente al completar cada item.
+
+**DOCS-FIRST:** Antes de cualquier cambio en infraestructura o workflows, leer en orden:
+1. Este checklist (estado actual + tareas pendientes)
+2. `BITACORA-INFRAESTRUCTURA.md` (decisiones + 18+ gotchas históricos resueltos)
+3. `deploy/RUNBOOK.md` (procesos validados, sección 1.bis para imports con credenciales)
 
 ---
 
@@ -31,7 +36,7 @@
 | Perfiles sociales | **Completo** — LinkedIn ✅ Instagram ✅ Facebook Business ✅ (2026-05-11) | 100% |
 | LinkedIn Schedule Mes 1 | **Completo** — 8 posts CSV generado por A4, post #1 publicado ✅ (2026-05-11) | 100% |
 | Meta Semana 1 programada | **Completo** — 3 posts FB+IG programados en Meta Business Suite ✅ (2026-05-11) | 100% |
-| Pipeline automatizado contenido | **Archivos listos** — SQL, scripts, workflows n8n creados. Pendiente: obtener API keys (Task 3), configurar n8n UI (Task 6), deploy VPS (Task 9), E2E test (Task 10) | 60% |
+| Pipeline automatizado contenido | **Workflows activos en producción** — credenciales fijadas en JSON, ambos workflows activos, flujo Telegram Rechazar verificado E2E ✅ (2026-05-12). Pendiente: probar flujo Aprobar (Meta/LinkedIn API tokens), evaluar calidad de imagen (Stability vs Ideogram), regeneración inmediata tras rechazo | 80% |
 
 ---
 

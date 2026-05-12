@@ -6,7 +6,7 @@
 
 ---
 
-## ESTADO ACTUAL (2026-05-08)
+## ESTADO ACTUAL (2026-05-12)
 
 | Servicio | URL | Estado |
 |---------|-----|--------|
@@ -14,6 +14,8 @@
 | Paperclip | `https://paperclip.jaagsolutions.com` | ✅ Live — VPS Docker |
 | n8n | `https://n8n.jaagsolutions.com` | ✅ Live — VPS Docker |
 | Workflow leads | Formspree Lead → Paperclip Issue | ✅ Activo |
+| Workflow content gen | Content Generator (Cron → Stability AI → Vision → Telegram) | ✅ Activo — calidad imagen en evaluación |
+| Workflow telegram approval | Telegram Approval → Meta + LinkedIn | ✅ Activo — flujo Rechazar verificado E2E |
 
 **VPS:** Google Cloud `jaagsolutions-vps` — e2-medium Ubuntu 22.04 — IP `34.41.171.138`
 **Repo en VPS:** `/opt/jaagsolutions/repo` — branch `feature/jaagsolutions` — remote `origin` = `JAAG2021/jaagsolutions-paperclip`
@@ -93,6 +95,77 @@ Ir a `https://n8n.jaagsolutions.com` → confirmar que el workflow **"Formspree 
 ### ¿Por qué no se puede automatizar via REST API?
 
 n8n tiene `N8N_BASIC_AUTH_ACTIVE=true` que bloquea el endpoint `/api/v1/` con 401 en todas las combinaciones de auth probadas (API key solo, basic auth solo, ambas juntas). El GitHub Action `sync-n8n.yml` existe en el repo pero está pendiente de solución. Mientras tanto, el proceso manual de 4 pasos es el camino validado.
+
+### 1.bis CÓMO ACTUALIZAR UN WORKFLOW QUE USA CREDENCIALES (Postgres, OAuth, etc.)
+
+**Usar cuando:** se cambia un workflow con nodos que dependen de credenciales (Postgres, Telegram OAuth, Meta Graph, etc.) y aparece error `Credential with ID "X" does not exist`.
+
+**Causa raíz:** Los IDs de credenciales **no son portables entre instancias n8n**. Un JSON exportado de otra instancia trae IDs que no existen en producción.
+
+#### Paso 1 — Obtener IDs reales de credenciales en producción
+
+```bash
+docker exec deploy-n8n-1 n8n export:credentials --all --pretty --output=/tmp/creds.json
+docker exec deploy-n8n-1 cat /tmp/creds.json
+```
+
+Buscar el `id` y `name` de la credencial deseada (ej. `Postgres account` → ID actual: `3WAwEY7SXDBTW16f`).
+
+#### Paso 2 — Hardcodear en el JSON del workflow
+
+En el repo local, agregar el bloque `credentials` a cada nodo que use la credencial:
+
+```json
+{
+  "id": "postgres-get-post",
+  "name": "Obtener datos del post",
+  "type": "n8n-nodes-base.postgres",
+  "parameters": { ... },
+  "credentials": {
+    "postgres": {
+      "id": "3WAwEY7SXDBTW16f",
+      "name": "Postgres account"
+    }
+  }
+}
+```
+
+#### Paso 3 — Commit y push
+
+```bash
+git add deploy/n8n-workflows/<workflow>.json
+git commit -m "fix(n8n): hardcodear ID de credencial Postgres"
+git push
+```
+
+#### Paso 4 — En VPS: archivar workflow viejo + re-importar
+
+```bash
+cd /opt/jaagsolutions/repo && git pull
+```
+
+En n8n UI (https://n8n.jaagsolutions.com): abrir el workflow viejo → ⚙️ → **Archive** (n8n moderno no tiene Delete; Archive libera el webhook path).
+
+Luego en VPS:
+
+```bash
+python3 -c "
+import json
+d = json.load(open('deploy/n8n-workflows/<workflow>.json'))
+d.pop('tags', None)
+json.dump(d, open('/tmp/<workflow>.json', 'w'))
+"
+docker cp /tmp/<workflow>.json deploy-n8n-1:/tmp/<workflow>.json
+docker exec deploy-n8n-1 n8n import:workflow --input=/tmp/<workflow>.json
+```
+
+#### Paso 5 — Activar y verificar
+
+En n8n UI: activar el nuevo workflow (toggle verde). Abrir cualquier nodo Postgres → "Credential to connect with" debe mostrar el nombre correcto **sin tocar nada en la UI**.
+
+**No re-seleccionar credenciales en la UI** — los cambios manuales en la UI no son confiables. La fuente de verdad es el JSON del repo.
+
+---
 
 ---
 
@@ -229,5 +302,14 @@ Ejecutar cada vez que se cambie el workflow de n8n o la CF Function:
 | n8n REST API devuelve 401 | `N8N_BASIC_AUTH_ACTIVE=true` bloquea `/api/v1/` | Usar CLI: `docker exec deploy-n8n-1 n8n import:workflow` |
 | `import:workflow` falla con `SQLITE_CONSTRAINT` | El JSON tiene `tags` con IDs que no existen en DB | Quitar tags con `python3 -c "... d.pop('tags', None) ..."` antes de importar |
 | Seed muestra "0 creados" | Contenedor usa JSON baked en imagen, no el del host | `sudo docker cp jaagsolutions-seed.json deploy-paperclip-1:/app/...` |
-| `nano` / `vi` not found | No están instalados en el VPS | Usar `echo 'VAR=val' >> archivo` |
+| `nano` / `vi` not found (2026-05-09) | No estaban instalados en el VPS | Usar `echo 'VAR=val' >> archivo` o Python heredoc |
 | `git pull` falla "not fast-forward" | Remote tiene commits más nuevos | `git pull --rebase origin feature/jaagsolutions` |
+| `Credential with ID "1" does not exist for type "postgres"` | El JSON del workflow trae el ID de credencial de otra instancia n8n | Obtener ID real con `docker exec deploy-n8n-1 n8n export:credentials --all --pretty` y hardcodearlo en el bloque `credentials` de cada nodo |
+| Re-asignar credencial en UI no persiste | Al ejecutar workflow, n8n usa el ID baked en JSON al momento de importar | Fix definitivo es en el JSON + re-importar (no en UI) |
+| `SyntaxError: Unexpected character '→'` en Code node | El preview de evaluación de n8n se guardó como parte del código | Borrar todo lo que aparezca después de la expresión válida; `→` no debe estar en el código fuente |
+| `Cannot find module 'fs'` en Code node | n8n bloquea built-ins de Node por defecto | Agregar `NODE_FUNCTION_ALLOW_BUILTIN: "fs,path"` al `environment:` de n8n en docker-compose.yml |
+| `Your local changes would be overwritten by merge` (docker-compose.yml) | VPS tiene cambios locales sin commitear | `git stash push <file>` → `git pull` → `git stash pop` → resolver duplicados con `sed -i '<LINE>d' <file>` |
+| `Ctrl+W` en SSH del navegador cierra la pestaña | Atajo del navegador tiene prioridad sobre nano | Navegar con flechas/Page Down; usar `grep -n` antes para saber a qué línea ir |
+| No aparece opción Delete en menú de workflow n8n | n8n moderno reemplazó Delete por Archive (soft-delete) | Usar Archive (libera el webhook path); alternativa CLI: `docker exec deploy-n8n-1 n8n delete:workflow --id=<ID>` |
+| `callback_data inválido` en Telegram callback parser | Separador `_` vs `:` mismatch entre nodo emisor y receptor | Usar `data.split('_')` + `parts.slice(1).join('_')` porque UUIDs contienen `-` pero no `_` |
+| Imagen guardada como `image_path` pero schema usa `image_url` | Inconsistencia entre plan y schema | El schema es la fuente de verdad; renombrar todas las referencias para coincidir |

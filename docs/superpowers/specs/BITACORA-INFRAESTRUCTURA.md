@@ -1,7 +1,7 @@
 # Bitácora de Infraestructura — JAAGSOLUTIONS
 
-**Última actualización:** 2026-05-08  
-**Estado del proyecto:** Fase A + Fase B completas — producción activa
+**Última actualización:** 2026-05-12
+**Estado del proyecto:** Fase A + Fase B completas — Content Pipeline n8n activo en producción
 
 > **LEER ANTES DE CUALQUIER CAMBIO DE INFRAESTRUCTURA.**  
 > Este documento describe el estado real, decisiones tomadas y advertencias críticas del proyecto. Evita duplicar trabajo y romper lo que ya funciona.
@@ -382,3 +382,454 @@ sudo docker restart deploy-paperclip-1
   - Seed re-ejecutado vía `docker cp` → 8 creados, 19 actualizados
   - Dashboard confirmado: 5 agentes, 4 proyectos, Social & Content Lead activo
 - **Pendiente:** Reimportar workflow n8n con JSON actualizado (safeEqual + diagnostico_express)
+
+### Sesión 2026-05-09 — Configuración adaptador OpenAI/Codex para agente A4
+
+**Objetivo:** Activar el agente A4 (Social & Content Lead) con API de OpenAI.
+
+#### Fallas encontradas y soluciones aplicadas
+
+---
+
+**FALLA 1 — `nano` no disponible en VPS**
+- **Síntoma:** `bash: nano: command not found`
+- **Causa:** La imagen Docker minimalizada no incluye editores de texto.
+- **Solución:** Editar archivos con Python heredoc o `echo >>`. Nunca usar `nano` en este VPS.
+- **Comandos válidos para editar:**
+  ```bash
+  python3 << 'EOF'
+  with open('/ruta/archivo', 'r') as f: content = f.read()
+  content = content.replace('old', 'new')
+  with open('/ruta/archivo', 'w') as f: f.write(content)
+  EOF
+  ```
+
+---
+
+**FALLA 2 — Nombre del contenedor incorrecto**
+- **Síntoma:** `Error response from daemon: No such container: paperclip`
+- **Causa:** Docker Compose nombra los contenedores como `deploy-<servicio>-1`, no como el nombre del servicio.
+- **Solución:** Siempre verificar con:
+  ```bash
+  docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"
+  ```
+- **Nombres correctos en producción:**
+  - `deploy-paperclip-1`
+  - `deploy-postgres-1`
+  - `deploy-n8n-1`
+  - `deploy-caddy-1`
+
+---
+
+**FALLA 3 — OPENAI_API_KEY no llega al contenedor**
+- **Síntoma:** `docker exec deploy-paperclip-1 env | grep OPENAI_API_KEY` → vacío. Test de A4 fallaba aunque la clave estaba en `.env`.
+- **Causa raíz:** Docker Compose usa `.env` para sustituir variables `${VAR}` en el YAML, **pero NO las inyecta automáticamente en los contenedores**. Cada variable que debe estar disponible dentro del contenedor tiene que estar listada explícitamente en la sección `environment:` del servicio.
+- **Solución:** Agregar `OPENAI_API_KEY: ${OPENAI_API_KEY}` en `environment:` del servicio `paperclip` en `docker-compose.yml`.
+- **⚠️ ADVERTENCIA — indentación crítica:** El archivo usa **6 espacios** para variables dentro de `environment:` y **4 espacios** para propiedades del servicio. Usar `sed` con `\n` puede poner la variable con 4 espacios (nivel de servicio), lo que genera:
+  ```
+  validating docker-compose.yml: services.paperclip additional properties 'VAR' not allowed
+  ```
+- **Método correcto para agregar variables al docker-compose.yml:**
+  ```bash
+  python3 << 'EOF'
+  with open('/opt/jaagsolutions/repo/deploy/docker-compose.yml', 'r') as f:
+      content = f.read()
+  old = '      PAPERCLIP_DEPLOYMENT_EXPOSURE: ${PAPERCLIP_DEPLOYMENT_EXPOSURE}'
+  new = old + '\n      OPENAI_API_KEY: ${OPENAI_API_KEY}'
+  content = content.replace(old, new)
+  with open('/opt/jaagsolutions/repo/deploy/docker-compose.yml', 'w') as f:
+      f.write(content)
+  EOF
+  ```
+- **Verificar que quedó bien antes de reiniciar:**
+  ```bash
+  sed -n '40,46p' /opt/jaagsolutions/repo/deploy/docker-compose.yml
+  # OPENAI_API_KEY debe aparecer con 6 espacios, al mismo nivel que las otras vars
+  ```
+- **Reiniciar solo el contenedor afectado (sin bajar los demás):**
+  ```bash
+  cd /opt/jaagsolutions/repo/deploy && docker compose up -d --no-deps paperclip
+  ```
+- **Confirmar que la clave llegó:**
+  ```bash
+  docker exec deploy-paperclip-1 env | grep OPENAI_API_KEY
+  ```
+
+---
+
+**FALLA 4 — Autenticación OAuth de Codex con cuenta equivocada**
+- **Síntoma:** Test mostraba auth detectada pero error 401. Al correr `codex auth`, autenticó con cuenta personal `juanalvarengagalindo@gmail.com` en lugar de la cuenta del proyecto.
+- **Causa raíz:** El adaptador `codex_local` tiene DOS modos de auth:
+  1. **API mode** (correcto): si `OPENAI_API_KEY` está en el entorno, Codex lo usa directamente.
+  2. **Subscription mode** (incorrecto para VPS): si no hay API key, lanza OAuth con callback a `localhost:1455` — imposible en VPS headless.
+  - La autenticación OAuth además almacena un token en `CODEX_HOME/auth.json` que tiene **prioridad sobre `OPENAI_API_KEY`**, corrompiendo futuros intentos.
+- **Solución:** Limpiar el auth OAuth corrupto:
+  ```bash
+  docker exec deploy-paperclip-1 find / -name "auth.json" -path "*/codex/*" 2>/dev/null
+  # Si existe, eliminar:
+  docker exec deploy-paperclip-1 rm -f <ruta>/auth.json
+  ```
+- **Regla:** En VPS headless **NUNCA** ejecutar `codex auth`. Siempre usar `OPENAI_API_KEY`.
+
+---
+
+**FALLA 5 — Codex rechaza ejecutarse: "Not inside a trusted directory"**
+- **Síntoma:** `Not inside a trusted directory and --skip-git-repo-check was not specified.`
+- **Causa:** El directorio de trabajo del contenedor es `/app`, que no es un repositorio git. Codex requiere ejecutarse dentro de un git repo o con el flag `--skip-git-repo-check`.
+- **Solución permanente:** Crear un git repo en el volumen montado `/paperclip/workspace` (persiste entre reinicios del contenedor porque `/paperclip` es un volumen Docker):
+  ```bash
+  docker exec deploy-paperclip-1 sh -c '
+    mkdir -p /paperclip/workspace &&
+    git -C /paperclip/workspace init &&
+    git -C /paperclip/workspace config user.email "agent@jaagsolutions.com" &&
+    git -C /paperclip/workspace config user.name "Agent"
+  '
+  ```
+- **Verificar que Codex corre en ese directorio:**
+  ```bash
+  docker exec deploy-paperclip-1 sh -c 'cd /paperclip/workspace && echo "Respond with hello." | codex exec --json - 2>&1' | head -10
+  # Debe responder con JSON incluyendo "text":"hello"
+  ```
+
+---
+
+**FALLA 6 — Campo `cwd` no disponible en UI de Paperclip para el adaptador Codex**
+- **Síntoma:** No hay campo "Working directory" en la configuración de A4 en la UI.
+- **Causa:** El campo `cwd` del adaptador existe en el código pero no está expuesto en la interfaz.
+- **Solución:** Crear un wrapper script en `/paperclip/workspace/codex-run.sh` y configurarlo como `Command` del adaptador:
+  ```bash
+  docker exec deploy-paperclip-1 sh -c 'cat > /paperclip/workspace/codex-run.sh << '"'"'EOF'"'"'
+  #!/bin/sh
+  cd /paperclip/workspace
+  exec codex "$@"
+  EOF
+  chmod +x /paperclip/workspace/codex-run.sh'
+  ```
+- **En Paperclip UI:** A4 → Configuration → Adapter → campo **Command** → `/paperclip/workspace/codex-run.sh`
+- **Nota:** Al usar comando custom, el test de Paperclip muestra "Skipped hello probe because command is not 'codex'" — esto es normal y esperado. El resultado es **Passed**.
+
+---
+
+#### Estado final (2026-05-09)
+
+| Componente | Estado |
+|-----------|--------|
+| `OPENAI_API_KEY` en contenedor | ✅ Inyectada via docker-compose.yml |
+| `/paperclip/workspace` git repo | ✅ Inicializado, persiste en volumen |
+| `/paperclip/workspace/codex-run.sh` | ✅ Wrapper script creado |
+| A4 adapter Command | ✅ `/paperclip/workspace/codex-run.sh` |
+| A4 adapter Model | ✅ `gpt-5-mini` |
+| Test environment A4 | ✅ Passed |
+| A4 listo para recibir issues | ✅ Sí |
+
+#### Si la falla reaparece después de un reinicio del contenedor
+
+El volumen `/paperclip` persiste, por lo que el workspace y el wrapper script sobreviven. Sin embargo, si el contenedor es **recreado desde cero** (build nuevo), verificar:
+
+```bash
+# 1. Confirmar que el workspace existe
+docker exec deploy-paperclip-1 ls /paperclip/workspace/.git
+
+# 2. Confirmar que el script existe
+docker exec deploy-paperclip-1 ls -la /paperclip/workspace/codex-run.sh
+
+# 3. Si no existen, recrear (ver FALLA 5 y 6 arriba)
+
+# 4. Confirmar que OPENAI_API_KEY llega
+docker exec deploy-paperclip-1 env | grep OPENAI_API_KEY
+```
+
+---
+
+### Sesión 2026-05-10 — Fix apply_patch + Brand & Content MVP Mes 1
+
+#### Problema raíz: A4 no podía escribir archivos con apply_patch
+
+A4 generaba los patches como texto en el chat en lugar de aplicarlos. Causas identificadas y resueltas:
+
+**FALLA 7 — `/paperclip/.codex/config.toml` sin permisos de lectura**
+- **Síntoma:** A4 ejecutaba tareas pero ignoraba la configuración de Codex.
+- **Causa:** Archivo con permisos `root:root -rw-------` — el proceso node no podía leerlo.
+- **Solución:**
+  ```bash
+  docker exec -u root deploy-paperclip-1 chown node:node /paperclip/.codex/config.toml
+  docker exec -u root deploy-paperclip-1 chmod 644 /paperclip/.codex/config.toml
+  ```
+
+**FALLA 8 — `/paperclip/workspace` owned by root**
+- **Síntoma:** apply_patch fallaba silenciosamente — A4 no podía escribir en el workspace.
+- **Causa:** El directorio era `root:root`, el proceso Codex corre como `node`.
+- **Solución:**
+  ```bash
+  docker exec -u root deploy-paperclip-1 chown -R node:node /paperclip/workspace
+  ```
+
+**FALLA 9 — `--approval-mode` no existe en esta versión de Codex**
+- **Síntoma:** `adapter_failed - error: unexpected argument '--approval-mode' found`
+- **Causa:** El flag correcto es `--dangerously-bypass-approvals-and-sandbox`, no `--approval-mode`.
+- **Solución:** Actualizar `codex-run.sh` con el flag correcto.
+
+#### Fix definitivo — codex-run.sh con bypass
+
+```bash
+docker exec -u root deploy-paperclip-1 bash -c 'cat > /paperclip/workspace/codex-run.sh << '"'"'EOF'"'"'
+#!/bin/sh
+cd /paperclip/workspace
+exec codex --dangerously-bypass-approvals-and-sandbox "$@"
+EOF
+chmod +x /paperclip/workspace/codex-run.sh'
+```
+
+**Verificar:**
+```bash
+docker exec deploy-paperclip-1 cat /paperclip/workspace/codex-run.sh
+# Debe mostrar: exec codex --dangerously-bypass-approvals-and-sandbox "$@"
+```
+
+#### Estado final A4 (2026-05-10)
+
+| Componente | Estado |
+|-----------|--------|
+| `/paperclip/workspace` propietario | ✅ `node:node` |
+| `/paperclip/.codex/config.toml` permisos | ✅ `node:node 644` |
+| `codex-run.sh` con bypass | ✅ `--dangerously-bypass-approvals-and-sandbox` |
+| apply_patch funcional | ✅ Verificado — A4 escribe archivos directamente |
+
+**⚠️ ADVERTENCIA:** NUNCA ejecutar `codex auth` en el VPS — genera OAuth que anula OPENAI_API_KEY.
+
+#### Brand & Content MVP — artefactos generados por A4
+
+| Archivo | Ubicación | Descripción |
+|---------|-----------|-------------|
+| Blog post 1 | `/opt/jaagsolutions/repo/docs/content/blog/2026-05-12-automatizar-pyme.md` | Creado manualmente via SSH (apply_patch aún no estaba fijo) |
+| CSV Buffer | `/paperclip/workspace/content_plan_mes1_buffer.csv` | 4 semanas, 3 canales, regla 70/30, pilares exactos |
+| Handoff Buffer | `/paperclip/workspace/handoff_buffer_import.md` | Instrucciones importación + spec documentada |
+
+#### Issues completados (Brand & Content MVP)
+
+| Issue | Título | Done |
+|-------|--------|------|
+| `c1e1c24a` | Definir estrategia de contenido y calendario editorial — Mes 1 | ✅ 2026-05-10 |
+| `4ada1270` | Configurar perfiles LinkedIn e Instagram de JAAGSOLUTIONS | ✅ 2026-05-10 |
+
+#### Perfiles sociales
+
+| Canal | Estado |
+|-------|--------|
+| LinkedIn | ✅ Creado (`jaagsolutions@gmail.com`) |
+| Instagram | ✅ Creado (`jaagsolutions@gmail.com`) |
+| Facebook Business | ⏳ Pendiente |
+
+#### Reconciliation loop — comportamiento esperado
+
+Después de cada turno de A4, Paperclip detecta que no hay ejecución viva y bloquea el issue automáticamente. **Esto es normal.** Para continuar: mover el issue a In Progress manualmente y responder. No es un error.
+
+---
+
+### Sesión 2026-05-11 — Contenido Semana 1 + Pipeline diseño
+
+#### Logros
+
+**Perfiles sociales completados:**
+- Facebook Business Page creada con `jaagsolutions@gmail.com`
+- Meta Business Suite portfolio "Jaagsolutions" configurado
+- Facebook Page + @jaagsolutions Instagram conectados al portfolio
+- Buffer abandonado (loading issues) → reemplazado por Meta Business Suite + LinkedIn native
+
+**Contenido Semana 1:**
+- A4 generó `linkedin_first8_schedule.csv` — 8 posts LinkedIn con copy completo, fechas (mayo 18 → jun 11), horarios America/New_York, hashtags, CTAs y briefs de imagen
+- Issue `c8de442` marcado Done
+- LinkedIn Post #1 publicado manualmente en cuenta personal Juan A. Alvarenga (Lun 11 mayo)
+  - Página JAAGSOLUTIONS etiquetada correctamente (link azul activo)
+- 3 imágenes generadas con Ideogram (prompts en español con texto incluido)
+- 3 posts programados en Meta Business Suite Planificador (FB + Instagram simultáneo):
+
+| Post | Fecha | Hora |
+|------|-------|------|
+| Infografía "¿Cuántas horas?" | Mar 12 mayo | 10:00 AM |
+| Antes/Después "4h → 20 min" | Jue 14 mayo | 4:00 PM |
+| Somos JAAGSOLUTIONS | Vie 15 mayo | 11:00 AM |
+
+**Pipeline automatizado diseñado:**
+
+Flujo definido para automatizar 100% la publicación de contenido con un solo paso manual (aprobación de imagen):
+
+```
+A4 CSV → n8n → Ideogram API (imagen) → Google Vision OCR (validación)
+→ Telegram bot (aprobación humana) → Meta Graph API + LinkedIn API
+```
+
+APIs requeridas: Ideogram, Google Vision, Telegram Bot, Meta Graph API, LinkedIn API.
+
+#### Decisiones tomadas
+
+| Decisión | Alternativa descartada | Motivo |
+|----------|----------------------|--------|
+| Ideogram para imágenes | Canva manual | Generación automática con texto incluido |
+| Meta Business Suite scheduler | Buffer | Buffer no cargaba; MBS es nativo y gratuito |
+| Cuenta personal LinkedIn | Página empresa | Mayor alcance orgánico en etapa inicial |
+| Pipeline n8n completo | Publicación manual siempre | Agencia de automatización no puede operar manualmente |
+
+#### Pendiente próxima sesión — PRIORIDAD
+
+1. Crear issue en Paperclip para A2: **"Pipeline automatizado de contenido — Meta + LinkedIn + Telegram approval"**
+2. Configurar Telegram bot para checkpoint de aprobación
+3. Obtener credenciales: Ideogram API key, Meta Graph API token, LinkedIn API app
+4. Construir workflow n8n en etapas (empezar por Ideogram → Telegram, luego Meta API, luego LinkedIn API)
+5. Programar posts LinkedIn 2-8 del CSV en LinkedIn native scheduler (18 mayo → 11 junio)
+6. Generar imágenes + copy para Meta Semana 2 (19, 21, 22 mayo)
+
+---
+
+### Sesión 2026-05-12 — Content Pipeline n8n en producción + fix masivo de credenciales
+
+**Objetivo:** Activar los workflows `content-generator` y `telegram-approval` en VPS, debuggear todos los errores que aparecen al ejecutar el flujo completo (cron → generación imagen → Vision OCR → Telegram → callback → Postgres → publicación).
+
+#### Fallas encontradas y soluciones aplicadas
+
+---
+
+**FALLA 10 — `callback_data` con separador incorrecto en "Parsear callback"**
+- **Síntoma:** `Problem in node 'Parsear callback' rechazar:UUID [line 13]` o `callback_data inválido: rechazar_UUID`.
+- **Causa:** El nodo "Telegram — enviar para aprobación" en `content-generator.json` genera `callback_data` con `aprobar_<UUID>` (separador `_`). En el código del nodo "Parsear callback" se intentó cambiar el split a `:` o se confundió el separador.
+- **Solución:** Usar `data.split('_')` y reconstruir el `post_id` con `parts.slice(1).join('_')` (porque los UUIDs contienen guiones pero no `_`).
+- **Regla:** Cualquier cambio en `callback_data` debe coincidir entre el nodo que envía y el que recibe.
+
+---
+
+**FALLA 11 — Preview de evaluación de n8n guardado dentro del código del Code node**
+- **Síntoma:** `SyntaxError: Unexpected character '→' [line 8]`
+- **Causa:** Al guardar el código del Code node, n8n incluyó la línea de preview (`→ 0927ed25-...`) como parte del JavaScript. El símbolo `→` es solo informativo en el editor pero se guardó como texto.
+- **Solución:** Borrar todo lo que aparece después del cierre de la expresión válida en cada línea. Verificar siempre que el código fuente del Code node no incluya símbolos `→`.
+
+---
+
+**FALLA 12 — Credenciales hardcoded a ID `"1"` que no existe en la instancia n8n**
+- **Síntoma:** `Credential with ID "1" does not exist for type "postgres"` en cada nodo Postgres.
+- **Causa raíz:** Los workflows JSON tenían bloques `credentials` con `"id": "1"` y `"name": "PostgreSQL JAAGSOLUTIONS"`. El ID `"1"` venía del entorno donde se creó el workflow originalmente (otra instancia de n8n). En la instancia productiva del VPS, la credencial de Postgres tiene ID `3WAwEY7SXDBTW16f` y nombre `Postgres account`.
+- **Síntoma confuso:** Aunque el usuario re-seleccionaba la credencial correcta en la UI, al ejecutar el workflow seguía apareciendo el error porque las executions guardan el ID que estaba en el JSON al momento de ejecutar, y los cambios manuales no siempre persisten en la versión importada.
+- **Solución de raíz:**
+  1. Obtener el ID real de la credencial:
+     ```bash
+     docker exec deploy-n8n-1 n8n export:credentials --all --pretty --output=/tmp/creds.json
+     docker exec deploy-n8n-1 cat /tmp/creds.json
+     ```
+  2. Agregar bloque `credentials` explícito a **cada nodo Postgres** del JSON:
+     ```json
+     "credentials": {
+       "postgres": {
+         "id": "3WAwEY7SXDBTW16f",
+         "name": "Postgres account"
+       }
+     }
+     ```
+  3. Archivar los workflows viejos en n8n UI (n8n moderno reemplazó Delete por Archive).
+  4. Re-importar los workflows con el ID correcto baked-in:
+     ```bash
+     docker exec deploy-n8n-1 n8n import:workflow --input=/tmp/<workflow>.json
+     ```
+- **Regla crítica:** Cuando un workflow se exporta de una instancia y se importa a otra, los IDs de credenciales **no son portables**. Hay que reescribir el bloque `credentials` con el ID de la instancia destino.
+
+---
+
+**FALLA 13 — Columna `image_path` no existe (era `image_url`)**
+- **Síntoma:** Query falla porque el schema usa `image_url` pero el código intentaba escribir a `image_path`.
+- **Causa:** Inconsistencia entre el plan original (que mencionaba `image_path`) y el schema final (`image_url`).
+- **Solución:** Renombrar todas las referencias en `content-generator.json`:
+  - Code node "Guardar imagen en disco" devuelve `image_url` (no `image_path`)
+  - SQL "UPDATE content_plan SET image_url = ..." (no `image_path`)
+- **Regla:** El schema (`deploy/sql/content-plan-schema.sql`) es la fuente de verdad. Cualquier query o expresión que mencione un nombre de columna debe coincidir.
+
+---
+
+**FALLA 14 — Referencias a nodos previos con `$('NodoX').first().json.X` apuntando al nodo incorrecto**
+- **Síntoma:** Validación de OCR fallaba porque `Validar OCR` intentaba leer `postData` de un nodo que no contenía esos campos.
+- **Causa:** El Code node "Validar OCR" hacía `$('Calcular aspect_ratio').first().json` cuando los datos del post estaban en `$('Guardar imagen en disco').first().json` (que es el nodo inmediatamente anterior con los campos completos).
+- **Solución:** Actualizar las referencias a los nodos correctos en cada Code node. Verificar con el editor de n8n que las pestañas "Input" muestren los datos esperados.
+
+---
+
+**FALLA 15 — `NODE_FUNCTION_ALLOW_BUILTIN` no estaba en el repo**
+- **Síntoma:** `require('fs')` en Code nodes fallaba con `Cannot find module 'fs'`.
+- **Causa:** n8n por defecto NO permite usar built-ins de Node desde Code nodes por seguridad. Para habilitarlos hay que setear `NODE_FUNCTION_ALLOW_BUILTIN: "fs,path"` en el environment del servicio n8n.
+- **Solución:** Agregar la variable en `deploy/docker-compose.yml` en la sección `environment` del servicio `n8n`, después de `GENERIC_TIMEZONE`. NO duplicar en la sección "Content Pipeline" (es config general, no específica del pipeline).
+- **Reinicio necesario:**
+  ```bash
+  cd /opt/jaagsolutions/repo/deploy && docker compose --env-file .env up -d n8n
+  ```
+
+---
+
+**FALLA 16 — `git pull` en VPS falla por cambios locales en `docker-compose.yml`**
+- **Síntoma:** `error: Your local changes to the following files would be overwritten by merge: deploy/docker-compose.yml. Please commit your changes or stash them before you merge. Aborting`.
+- **Causa:** El VPS tenía cambios locales (`NODE_FUNCTION_ALLOW_BUILTIN` agregado manualmente + `OPENAI_API_KEY` agregado en sesión 2026-05-09). El repo también incluía `NODE_FUNCTION_ALLOW_BUILTIN` en el último commit.
+- **Solución:**
+  1. `git stash push deploy/docker-compose.yml -m "local-openai-key"`
+  2. `git pull`
+  3. `git stash pop` (resuelve el merge — generalmente sin conflicto si las líneas son idénticas, pero deja duplicado lógico)
+  4. Verificar duplicados con `grep -n "NODE_FUNCTION_ALLOW_BUILTIN" deploy/docker-compose.yml`
+  5. Si aparece duplicado, borrar con `sed -i '<LINE>d' deploy/docker-compose.yml`
+- **Regla:** Antes de hacer `git pull` en el VPS, ejecutar `git diff <archivo>` para entender qué hay localmente. Si hay cambios locales válidos, hacer `stash` primero. Si los cambios locales ya están en el repo (de un commit anterior), descartar con `git checkout -- <archivo>`.
+
+---
+
+**FALLA 17 — `nano` ahora sí está instalado pero `Ctrl+W` cierra la pestaña del navegador**
+- **Síntoma:** En sesión 2026-05-09 se reportó que `nano` no existía. En 2026-05-12 sí existe. PERO al usar `Ctrl+W` (que en nano significa "Where Is / Search"), el navegador interpreta el atajo como "cerrar pestaña" y mata la sesión SSH.
+- **Solución:** Navegar en nano con **flechas, Page Up/Down y Home/End** únicamente. Para buscar usar `grep -n` desde la terminal antes de abrir el archivo, así sabes en qué línea ir. Para guardar y salir: `Ctrl+O` → `Enter` → `Ctrl+X`.
+
+---
+
+**FALLA 18 — En n8n moderno reemplazaron Delete por Archive**
+- **Síntoma:** No aparece opción "Delete" en el menú de un workflow. Solo: Open, Share, Duplicate, Archive.
+- **Causa:** n8n 1.112.6 cambió el flujo a soft-delete (Archive). Los archivados pueden ser borrados desde la vista de Archivados, pero para nuestros propósitos (re-importar workflow con mismos webhook paths) Archive es suficiente porque libera la ruta del webhook.
+- **Solución:** Usar Archive antes de re-importar. Alternativa CLI:
+  ```bash
+  docker exec deploy-n8n-1 n8n list:workflow
+  docker exec deploy-n8n-1 n8n delete:workflow --id=<ID>
+  ```
+
+---
+
+#### Proceso validado — Actualizar un workflow n8n con cambios de credenciales
+
+1. **En máquina local:** editar JSON con el bloque `credentials` apuntando al ID correcto (NO al nombre — el ID es lo que n8n usa internamente).
+2. **Commit + push** al repo.
+3. **En VPS:**
+   - `cd /opt/jaagsolutions/repo && git pull` (resolver conflictos si los hay — ver FALLA 16).
+   - Strip `tags` del JSON con Python (los tags rompen import — gotcha histórico).
+   - `docker cp /tmp/<workflow>.json deploy-n8n-1:/tmp/<workflow>.json`
+4. **En n8n UI:** Archivar el workflow viejo para liberar el webhook path (FALLA 18).
+5. **En VPS:** `docker exec deploy-n8n-1 n8n import:workflow --input=/tmp/<workflow>.json`
+6. **En n8n UI:** activar el nuevo workflow (toggle verde). Verificar abriendo un nodo que dependa de credenciales — debe mostrar el nombre correcto **sin tocar nada**.
+7. **Prueba E2E:** disparar el flujo (en este caso, botón Rechazar en Telegram). Verificar execution exitosa.
+
+#### Estado final Content Pipeline (2026-05-12)
+
+| Componente | Estado |
+|-----------|--------|
+| `deploy/sql/content-plan-schema.sql` | ✅ Aplicado en producción |
+| `deploy/n8n-workflows/content-generator.json` | ✅ Importado y activo |
+| `deploy/n8n-workflows/telegram-approval.json` | ✅ Importado y activo |
+| Credencial Postgres en nodos | ✅ ID `3WAwEY7SXDBTW16f` hardcoded en JSON |
+| `NODE_FUNCTION_ALLOW_BUILTIN` | ✅ En `docker-compose.yml` |
+| Flujo Telegram "Rechazar" | ✅ Verificado E2E (execution ID#65 Succeeded en 1.428s) |
+| Flujo Telegram "Aprobar" | ⏳ Pendiente — falta credenciales Meta/LinkedIn para test completo |
+| Cron 8 AM diario | ⏳ Probar con trigger manual primero |
+| Calidad imágenes Stability AI | ⚠️ Problema detectado — imágenes generadas no son acordes al `image_prompt` |
+
+#### Problemas abiertos detectados — para evaluación
+
+1. **Imagen sin relación al prompt:** Stability AI v2beta core genera imágenes con texto irrelevante o sin relación a la temática del post. Hay que evaluar si el problema es el motor (cambio a Ideogram), el prompt (auditor de prompt + filtros), o ambos.
+2. **Rechazo no regenera inmediatamente:** El flujo actual marca `status = pending` + `retry_count + 1` y espera al próximo cron (8 AM siguiente día). Para no perder publicaciones programadas, debería regenerar inmediatamente al rechazar.
+
+Ambos pendientes están documentados en sección separada para definir el approach antes de implementar.
+
+#### Regla operativa establecida — DOCS FIRST
+
+**Cualquier cambio en infraestructura debe ir precedido de:**
+1. Leer `docs/superpowers/specs/BITACORA-INFRAESTRUCTURA.md` (este archivo) — historial de gotchas
+2. Leer `deploy/RUNBOOK.md` — procesos validados
+3. Leer `docs/superpowers/specs/CHECKLIST-MAESTRO-JAAGSOLUTIONS.md` — estado actual
+4. Para cambios en n8n: leer también `deploy/n8n-workflows/*.json` y `deploy/scripts/sync-n8n-workflows.sh`
+
+**Esto evita repetir errores ya resueltos** (ej. tags en JSON, credenciales hardcoded, indentación de docker-compose.yml, etc.).
