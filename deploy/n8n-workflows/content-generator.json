@@ -6,10 +6,18 @@
       "name": "Cron 8 AM diario",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [200, 300],
+      "position": [
+        200,
+        300
+      ],
       "parameters": {
         "rule": {
-          "interval": [{ "field": "cronExpression", "expression": "0 8 * * *" }]
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
         }
       }
     },
@@ -18,7 +26,10 @@
       "name": "Obtener posts pendientes",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [420, 300],
+      "position": [
+        420,
+        300
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "SELECT * FROM content_plan WHERE status = 'pending' AND scheduled_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 2 ORDER BY scheduled_date, scheduled_time LIMIT 10",
@@ -36,16 +47,26 @@
       "name": "¿Hay posts?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [640, 300],
+      "position": [
+        640,
+        300
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
           "conditions": [
             {
               "id": "check-rows",
               "leftValue": "={{ $json.id }}",
               "rightValue": "",
-              "operator": { "type": "string", "operation": "notEmpty" }
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
             }
           ],
           "combinator": "and"
@@ -57,15 +78,24 @@
       "name": "Procesar 1 post a la vez",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [860, 220],
-      "parameters": { "batchSize": 1, "options": {} }
+      "position": [
+        860,
+        220
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
     },
     {
       "id": "postgres-set-generating",
       "name": "status = generating",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1080, 220],
+      "position": [
+        1080,
+        220
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "UPDATE content_plan SET status = 'generating' WHERE id = '{{ $json.id }}' RETURNING id",
@@ -83,9 +113,58 @@
       "name": "Calcular aspect_ratio",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1300, 220],
+      "position": [
+        1300,
+        220
+      ],
       "parameters": {
         "jsCode": "const item = $input.first().json;\nconst platform = item.platform || 'instagram';\nconst format = item.format || 'imagen_copy';\n\n// Stability AI v2beta aspect ratios: '1:1','16:9','21:9','2:3','3:2','4:5','5:4','9:16','9:21'\nconst map = {\n  'linkedin:imagen_copy': '4:5',\n  'linkedin:texto_largo': '4:5',\n  'linkedin:carrusel':   '4:5',\n  'instagram:imagen_copy': '1:1',\n  'instagram:carrusel':   '1:1',\n  'instagram:reel':       '9:16',\n  'meta:imagen_copy':     '1:1',\n  'meta:carrusel':        '1:1',\n  'facebook:imagen_copy': '4:5',\n};\n\nconst key = `${platform}:${format}`;\nconst aspect_ratio = map[key] || '1:1';\n\nreturn [{ json: { ...item, aspect_ratio } }];"
+      }
+    },
+    {
+      "id": "http-prompt-auditor",
+      "name": "Auditor de prompt (OpenAI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1410,
+        220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env.OPENAI_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'gpt-4o-mini', temperature: 0.7, max_tokens: 500, messages: [ { role: 'system', content: 'Eres un experto en diseño visual para redes sociales (LinkedIn, Instagram, Facebook). Tu tarea es transformar un prompt de imagen genérico en un prompt detallado y rico para Stability AI v2beta. REQUISITOS: 1) Coherencia visual con marca JAAGSOLUTIONS (automatización para pymes, profesional, moderno, confiable). 2) Especificar composición (foco, regla de tercios, framing). 3) Paleta de colores modernos (azules profundos, blancos, acentos cálidos opcional). 4) Estilo visual (fotografía corporativa moderna / ilustración minimalista / infografía clean — elegir según pillar). 5) Elementos visuales concretos (objetos, escenas, personas reales o ilustradas, gráficos). 6) Mood (confianza, claridad, eficiencia, transformación). 7) Si el copy_text menciona un dato o frase clave, incluirlo en la imagen entre comillas exactas. 8) NO watermarks ni logos externos. 9) El prompt debe estar en INGLÉS. 10) Longitud: 100-200 palabras. DEVUELVE SOLO EL PROMPT MEJORADO EN INGLÉS, SIN EXPLICACIONES NI COMILLAS EXTERIORES.' }, { role: 'user', content: 'Plataforma: ' + $json.platform + '\nFormato: ' + $json.format + '\nPilar: ' + $json.pillar + '\nTipo: ' + $json.post_type + '\nCopy del post: ' + $json.copy_text + '\nPrompt base: ' + $json.image_prompt } ] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "code-apply-refined-prompt",
+      "name": "Aplicar prompt mejorado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        220
+      ],
+      "parameters": {
+        "jsCode": "const auditResp = $input.first().json;\nconst prev = $('Calcular aspect_ratio').first().json;\nconst refined = auditResp.choices?.[0]?.message?.content?.trim();\nif (!refined) {\n  console.log('[Auditor] No refined prompt returned, using original');\n  return [{ json: prev }];\n}\nconsole.log('[Auditor] Original:', prev.image_prompt);\nconsole.log('[Auditor] Refined:', refined);\nreturn [{ json: { ...prev, image_prompt: refined, image_prompt_original: prev.image_prompt } }];"
       }
     },
     {
@@ -93,27 +172,47 @@
       "name": "Stability AI — generar imagen",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1520, 220],
+      "position": [
+        1740,
+        220
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://api.stability.ai/v2beta/stable-image/generate/core",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "={{ 'Bearer ' + $env.STABILITY_AI_API_KEY }}" },
-            { "name": "Accept", "value": "application/json" }
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env.STABILITY_AI_API_KEY }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
         "contentType": "multipart-form-data",
         "bodyParameters": {
           "parameters": [
-            { "name": "prompt", "value": "={{ $json.image_prompt }}" },
-            { "name": "aspect_ratio", "value": "={{ $json.aspect_ratio }}" },
-            { "name": "output_format", "value": "jpeg" }
+            {
+              "name": "prompt",
+              "value": "={{ $json.image_prompt }}"
+            },
+            {
+              "name": "aspect_ratio",
+              "value": "={{ $json.aspect_ratio }}"
+            },
+            {
+              "name": "output_format",
+              "value": "jpeg"
+            }
           ]
         },
-        "options": { "timeout": 60000 }
+        "options": {
+          "timeout": 60000
+        }
       }
     },
     {
@@ -121,7 +220,10 @@
       "name": "Guardar imagen en disco",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1740, 220],
+      "position": [
+        1960,
+        220
+      ],
       "parameters": {
         "jsCode": "const stabilityResp = $input.first().json;\nconst prev = $('Calcular aspect_ratio').first().json;\nconst fs = require('fs');\n\nconst base64Image = stabilityResp.image;\nif (!base64Image) throw new Error('Stability AI no devolvió imagen: ' + JSON.stringify(stabilityResp));\n\nconst contentDir = '/opt/jaagsolutions/content';\nif (!fs.existsSync(contentDir)) fs.mkdirSync(contentDir, { recursive: true });\n\nconst filePath = `${contentDir}/${prev.id}.jpg`;\nfs.writeFileSync(filePath, Buffer.from(base64Image, 'base64'));\n\nreturn [{ json: { ...prev, image_base64: base64Image, image_url: filePath } }];"
       }
@@ -131,7 +233,10 @@
       "name": "Guardar image_path",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1960, 220],
+      "position": [
+        2180,
+        220
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "UPDATE content_plan SET image_url = '{{ $json.image_url }}' WHERE id = '{{ $json.id }}'",
@@ -149,14 +254,19 @@
       "name": "Google Vision — OCR",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2180, 220],
+      "position": [
+        2400,
+        220
+      ],
       "parameters": {
         "method": "POST",
         "url": "=https://vision.googleapis.com/v1/images:annotate?key={{ $env.GOOGLE_VISION_API_KEY }}",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ requests: [{ image: { content: $json.image_base64 }, features: [{ type: 'TEXT_DETECTION', maxResults: 10 }] }] }) }}",
-        "options": { "timeout": 30000 }
+        "options": {
+          "timeout": 30000
+        }
       }
     },
     {
@@ -164,7 +274,10 @@
       "name": "Validar OCR",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2400, 220],
+      "position": [
+        2620,
+        220
+      ],
       "parameters": {
         "jsCode": "const visionResp = $input.first().json;\nconst postData = $('Guardar imagen en disco').first().json;\n\nconst detectedText = (visionResp.responses?.[0]?.fullTextAnnotation?.text || '').toLowerCase();\n\n// Rechazar imagen si contiene demasiado texto (watermarks, texto generado no deseado)\nconst ocrPassed = detectedText.length < 500;\n\nreturn [{ json: { ...postData, ocr_passed: ocrPassed, detected_text: detectedText } }];"
       }
@@ -174,16 +287,26 @@
       "name": "¿OCR correcto?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [2620, 220],
+      "position": [
+        2840,
+        220
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
           "conditions": [
             {
               "id": "check-ocr",
               "leftValue": "={{ $json.ocr_passed }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "equal" }
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
             }
           ],
           "combinator": "and"
@@ -195,16 +318,26 @@
       "name": "¿Puede reintentar?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [2840, 380],
+      "position": [
+        3060,
+        380
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
           "conditions": [
             {
               "id": "check-retry",
               "leftValue": "={{ $json.retry_count }}",
               "rightValue": 3,
-              "operator": { "type": "number", "operation": "lt" }
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
             }
           ],
           "combinator": "and"
@@ -216,7 +349,10 @@
       "name": "retry_count++ / volver a pending",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [3060, 300],
+      "position": [
+        3280,
+        300
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "UPDATE content_plan SET status = 'pending', retry_count = retry_count + 1 WHERE id = '{{ $json.id }}'",
@@ -234,7 +370,10 @@
       "name": "status = error",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [3060, 460],
+      "position": [
+        3280,
+        460
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "UPDATE content_plan SET status = 'error', error_log = 'OCR falló 3 veces' WHERE id = '{{ $json.id }}'",
@@ -252,7 +391,10 @@
       "name": "status = review",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [2840, 140],
+      "position": [
+        3060,
+        140
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "UPDATE content_plan SET status = 'review' WHERE id = '{{ $json.id }}'",
@@ -270,7 +412,10 @@
       "name": "Preparar binario Telegram",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3060, 140],
+      "position": [
+        3280,
+        140
+      ],
       "parameters": {
         "jsCode": "const postData = $('Validar OCR').first().json;\nconst fs = require('fs');\nconst filePath = postData.image_url;\nconst fileBuffer = fs.readFileSync(filePath);\nconst base64 = fileBuffer.toString('base64');\n\nreturn [{\n  json: postData,\n  binary: {\n    photo: {\n      data: base64,\n      mimeType: 'image/jpeg',\n      fileName: `${postData.id}.jpg`\n    }\n  }\n}];"
       }
@@ -280,7 +425,10 @@
       "name": "Telegram — enviar para aprobación",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [3280, 140],
+      "position": [
+        3500,
+        140
+      ],
       "parameters": {
         "method": "POST",
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendPhoto",
@@ -288,11 +436,27 @@
         "contentType": "multipart-form-data",
         "bodyParameters": {
           "parameters": [
-            { "name": "chat_id", "value": "={{ $env.TELEGRAM_CHAT_ID }}" },
-            { "name": "caption", "value": "={{ '📅 *' + new Date($json.scheduled_date).toLocaleDateString('es-CO', {day:'2-digit', month:'long', year:'numeric'}) + ' ' + ($json.scheduled_time || '') + '*\\n📱 ' + ($json.platform || '').toUpperCase() + ' — ' + ($json.pillar || '') + '\\n\\n' + ($json.copy_text || '') + '\\n\\n' + ($json.hashtags || '') }}" },
-            { "name": "parse_mode", "value": "Markdown" },
-            { "name": "reply_markup", "value": "={{ JSON.stringify({ inline_keyboard: [[{ text: '✅ Aprobar', callback_data: 'aprobar_' + $json.id }, { text: '❌ Rechazar', callback_data: 'rechazar_' + $json.id }]] }) }}" },
-            { "name": "photo", "parameterType": "formBinaryData", "inputDataFieldName": "photo" }
+            {
+              "name": "chat_id",
+              "value": "={{ $env.TELEGRAM_CHAT_ID }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ '📅 *' + new Date($json.scheduled_date).toLocaleDateString('es-CO', {day:'2-digit', month:'long', year:'numeric'}) + ' ' + ($json.scheduled_time || '') + '*\\n📱 ' + ($json.platform || '').toUpperCase() + ' — ' + ($json.pillar || '') + '\\n\\n' + ($json.copy_text || '') + '\\n\\n' + ($json.hashtags || '') }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "Markdown"
+            },
+            {
+              "name": "reply_markup",
+              "value": "={{ JSON.stringify({ inline_keyboard: [[{ text: '✅ Aprobar', callback_data: 'aprobar_' + $json.id }, { text: '❌ Rechazar', callback_data: 'rechazar_' + $json.id }]] }) }}"
+            },
+            {
+              "name": "photo",
+              "parameterType": "formBinaryData",
+              "inputDataFieldName": "photo"
+            }
           ]
         },
         "options": {}
@@ -303,7 +467,10 @@
       "name": "Guardar telegram_msg_id",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [3500, 140],
+      "position": [
+        3720,
+        140
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "UPDATE content_plan SET telegram_msg_id = '{{ $json.result.message_id }}' WHERE id = '{{ $('Validar OCR').first().json.id }}'",
@@ -319,65 +486,228 @@
   ],
   "connections": {
     "Cron 8 AM diario": {
-      "main": [[{ "node": "Obtener posts pendientes", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Obtener posts pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Obtener posts pendientes": {
-      "main": [[{ "node": "¿Hay posts?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "¿Hay posts?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "¿Hay posts?": {
       "main": [
-        [{ "node": "Procesar 1 post a la vez", "type": "main", "index": 0 }],
+        [
+          {
+            "node": "Procesar 1 post a la vez",
+            "type": "main",
+            "index": 0
+          }
+        ],
         []
       ]
     },
     "Procesar 1 post a la vez": {
-      "main": [[{ "node": "status = generating", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "status = generating",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "status = generating": {
-      "main": [[{ "node": "Calcular aspect_ratio", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Calcular aspect_ratio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Calcular aspect_ratio": {
-      "main": [[{ "node": "Stability AI — generar imagen", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Auditor de prompt (OpenAI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Stability AI — generar imagen": {
-      "main": [[{ "node": "Guardar imagen en disco", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Guardar imagen en disco",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Guardar imagen en disco": {
-      "main": [[{ "node": "Guardar image_path", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Guardar image_path",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Guardar image_path": {
-      "main": [[{ "node": "Google Vision — OCR", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Google Vision — OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Google Vision — OCR": {
-      "main": [[{ "node": "Validar OCR", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Validar OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Validar OCR": {
-      "main": [[{ "node": "¿OCR correcto?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "¿OCR correcto?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "¿OCR correcto?": {
       "main": [
-        [{ "node": "status = review", "type": "main", "index": 0 }],
-        [{ "node": "¿Puede reintentar?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "status = review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Puede reintentar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "¿Puede reintentar?": {
       "main": [
-        [{ "node": "retry_count++ / volver a pending", "type": "main", "index": 0 }],
-        [{ "node": "status = error", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "retry_count++ / volver a pending",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "status = error",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "status = review": {
-      "main": [[{ "node": "Preparar binario Telegram", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Preparar binario Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Preparar binario Telegram": {
-      "main": [[{ "node": "Telegram — enviar para aprobación", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Telegram — enviar para aprobación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Telegram — enviar para aprobación": {
-      "main": [[{ "node": "Guardar telegram_msg_id", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Guardar telegram_msg_id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auditor de prompt (OpenAI)": {
+      "main": [
+        [
+          {
+            "node": "Aplicar prompt mejorado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aplicar prompt mejorado": {
+      "main": [
+        [
+          {
+            "node": "Stability AI — generar imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
-  "settings": { "executionOrder": "v1" },
-  "meta": { "templateCredsSetupCompleted": false },
-  "tags": ["jaagsolutions", "content-pipeline"]
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    "jaagsolutions",
+    "content-pipeline"
+  ]
 }
