@@ -278,11 +278,32 @@
       }
     },
     {
+      "id": "if-retry-ok",
+      "name": "¿retry_count < 3?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1300, 420],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "check-retry-count",
+              "leftValue": "={{ $('Obtener datos del post').first().json.retry_count }}",
+              "rightValue": 3,
+              "operator": { "type": "number", "operation": "lt" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
       "id": "postgres-rejected",
       "name": "status = pending (rechazado)",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1300, 420],
+      "position": [1520, 360],
       "parameters": {
         "operation": "executeQuery",
         "query": "UPDATE content_plan SET status = 'pending', retry_count = retry_count + 1 WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
@@ -296,17 +317,65 @@
       }
     },
     {
-      "id": "telegram-rejected",
-      "name": "Telegram — ❌ Rechazado",
+      "id": "http-trigger-regenerate",
+      "name": "Trigger regeneración inmediata",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1520, 420],
+      "position": [1740, 360],
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n:5678/webhook/regenerate-single",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ post_id: $('Parsear callback').first().json.post_id }) }}",
+        "options": { "timeout": 10000 }
+      }
+    },
+    {
+      "id": "telegram-regenerating",
+      "name": "Telegram — 🔄 Regenerando",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1960, 360],
       "parameters": {
         "method": "POST",
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/editMessageCaption",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ chat_id: $('Parsear callback').first().json.chat_id, message_id: $('Parsear callback').first().json.message_id, caption: '❌ Rechazado — se regenerará en el próximo ciclo' }) }}",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Parsear callback').first().json.chat_id, message_id: $('Parsear callback').first().json.message_id, caption: '🔄 Rechazado — regenerando imagen inmediatamente (intento ' + ($('Obtener datos del post').first().json.retry_count + 1) + ' de 3)' }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "postgres-status-error",
+      "name": "status = error (max retries)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1520, 540],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE content_plan SET status = 'error', error_log = 'Rechazado 3 veces — requiere revisión manual' WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "id": "telegram-failed-final",
+      "name": "Telegram — ❌ Falló 3 veces",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1740, 540],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/editMessageCaption",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Parsear callback').first().json.chat_id, message_id: $('Parsear callback').first().json.message_id, caption: '❌ Rechazado 3 veces — el post fue marcado como ERROR. Requiere revisión manual del image_prompt o del copy en la base de datos.' }) }}",
         "options": {}
       }
     }
@@ -327,7 +396,13 @@
     "¿Aprobar o Rechazar?": {
       "main": [
         [{ "node": "¿Es LinkedIn?", "type": "main", "index": 0 }],
-        [{ "node": "status = pending (rechazado)", "type": "main", "index": 0 }]
+        [{ "node": "¿retry_count < 3?", "type": "main", "index": 0 }]
+      ]
+    },
+    "¿retry_count < 3?": {
+      "main": [
+        [{ "node": "status = pending (rechazado)", "type": "main", "index": 0 }],
+        [{ "node": "status = error (max retries)", "type": "main", "index": 0 }]
       ]
     },
     "¿Es LinkedIn?": {
@@ -364,7 +439,13 @@
       "main": [[{ "node": "Telegram — ✅ Publicado", "type": "main", "index": 0 }]]
     },
     "status = pending (rechazado)": {
-      "main": [[{ "node": "Telegram — ❌ Rechazado", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Trigger regeneración inmediata", "type": "main", "index": 0 }]]
+    },
+    "Trigger regeneración inmediata": {
+      "main": [[{ "node": "Telegram — 🔄 Regenerando", "type": "main", "index": 0 }]]
+    },
+    "status = error (max retries)": {
+      "main": [[{ "node": "Telegram — ❌ Falló 3 veces", "type": "main", "index": 0 }]]
     }
   },
   "active": false,
