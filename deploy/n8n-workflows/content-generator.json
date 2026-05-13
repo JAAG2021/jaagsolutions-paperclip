@@ -263,7 +263,7 @@
         "url": "=https://vision.googleapis.com/v1/images:annotate?key={{ $env.GOOGLE_VISION_API_KEY }}",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ requests: [{ image: { content: $json.image_base64 }, features: [{ type: 'TEXT_DETECTION', maxResults: 10 }] }] }) }}",
+        "jsonBody": "={{ JSON.stringify({ requests: [{ image: { content: $('Guardar imagen en disco').item.json.image_base64 }, features: [{ type: 'TEXT_DETECTION', maxResults: 10 }] }] }) }}",
         "options": {
           "timeout": 30000
         }
