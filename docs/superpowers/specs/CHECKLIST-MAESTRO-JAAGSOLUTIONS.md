@@ -19,6 +19,67 @@
 
 ---
 
+## ⚠️ INICIO PRÓXIMA SESIÓN — LEER PRIMERO (2026-05-13)
+
+**Estado al cierre de sesión 2026-05-12:**
+El Content Pipeline está en test activo. Se detectó y corrigió FALLA 21 (Google Vision OCR recibía `$json.image_base64` vacío porque un nodo Postgres intermedio borra el stream de datos). El fix está en commit `f5215681` en el worktree local pero **NO está pusheado al remote `jaag2021`**.
+
+**PASO 1 — Push del fix (máquina local, ANTES de cualquier otra cosa):**
+```bash
+cd paperclip/.worktrees/jaagsolutions
+git push jaag2021 feature/jaagsolutions
+```
+
+**PASO 2 — Pull en VPS + re-import del workflow corregido:**
+```bash
+# En VPS:
+cd /opt/jaagsolutions/repo
+git pull
+
+python3 -c "
+import json
+with open('deploy/n8n-workflows/content-generator.json') as f:
+    wf = json.load(f)
+if isinstance(wf, list):
+    for w in wf: w.pop('tags', None)
+else:
+    wf.pop('tags', None)
+with open('/tmp/content-generator-clean.json', 'w') as f:
+    json.dump(wf, f)
+print('OK')
+"
+docker cp /tmp/content-generator-clean.json deploy-n8n-1:/tmp/content-generator-clean.json
+```
+
+En n8n UI: archivar el "Content Generator" activo → luego:
+```bash
+docker exec deploy-n8n-1 n8n import:workflow --input=/tmp/content-generator-clean.json
+```
+Activar el recién importado (toggle ON).
+
+**PASO 3 — Confirmar estado del post de prueba:**
+```bash
+docker exec deploy-postgres-1 psql -U paperclip -d paperclip -c \
+  "SELECT id, status, retry_count FROM content_plan WHERE id='4a9a24b4-bb79-4a64-908b-7af12caf2d21';"
+```
+Debe mostrar `status=pending, retry_count=0`. Si no, resetear:
+```bash
+docker exec deploy-postgres-1 psql -U paperclip -d paperclip -c \
+  "UPDATE content_plan SET status='pending', retry_count=0 WHERE id='4a9a24b4-bb79-4a64-908b-7af12caf2d21';"
+```
+
+**PASO 4 — Ejecutar workflow en UI y verificar que Google Vision OCR pasa sin error.**
+
+**Verificar en el nodo Google Vision — OCR (JSON body debe verse así en Parameters):**
+```
+$('Guardar imagen en disco').item.json.image_base64
+```
+NO debe decir `$json.image_base64` — si sigue diciendo eso, el import NO tomó el fix.
+
+---
+
+---
+
 ## RESUMEN EJECUTIVO — 2026-05-11
 
 | Entregable | Estado | % Completo |
@@ -36,7 +97,7 @@
 | Perfiles sociales | **Completo** — LinkedIn ✅ Instagram ✅ Facebook Business ✅ (2026-05-11) | 100% |
 | LinkedIn Schedule Mes 1 | **Completo** — 8 posts CSV generado por A4, post #1 publicado ✅ (2026-05-11) | 100% |
 | Meta Semana 1 programada | **Completo** — 3 posts FB+IG programados en Meta Business Suite ✅ (2026-05-11) | 100% |
-| Pipeline automatizado contenido | **Workflows activos en producción** — credenciales fijadas en JSON, ambos workflows activos, flujo Telegram Rechazar verificado E2E ✅ (2026-05-12). Pendiente: probar flujo Aprobar (Meta/LinkedIn API tokens), evaluar calidad de imagen (Stability vs Ideogram), regeneración inmediata tras rechazo | 80% |
+| Pipeline automatizado contenido | **En test activo** — workflows importados, SplitInBatches fix + jsonBody fix + Google Vision fix aplicados. Commit `f5215681` pendiente de push/pull al VPS. Post prueba listo en DB (`status=pending`). Bloqueante: push del fix antes de reiniciar test. | 85% |
 
 ---
 

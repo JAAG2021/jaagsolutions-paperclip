@@ -824,6 +824,71 @@ APIs requeridas: Ideogram, Google Vision, Telegram Bot, Meta Graph API, LinkedIn
 
 Ambos pendientes están documentados en sección separada para definir el approach antes de implementar.
 
+---
+
+### Sesión 2026-05-12 (continuación) — Auditor + SplitInBatches + Google Vision fixes
+
+Continuación del deploy y testing del Content Pipeline. Se detectaron y corrigieron 3 nuevas fallas.
+
+---
+
+**FALLA 19 — SplitInBatches v3: output index 0 = "done", index 1 = "loop"**
+- **Síntoma:** El workflow ejecutaba `Procesar 1 post a la vez` y todos los nodos posteriores mostraban "Node executed successfully" en el toast pero sin output — execution se detenía silenciosamente.
+- **Causa raíz:** `SplitInBatches` en typeVersion 3 tiene **dos salidas**: index 0 = "done" (se ejecuta una vez al terminar todos los batches) e index 1 = "loop" (se ejecuta por cada batch). El workflow original conectaba todo al index 0 (done), así que solo se ejecutaba cuando ya no había items — momento en que no había nada que procesar.
+- **Solución aplicada (commit `ec858d9c`):**
+  1. Cambiar la conexión de `Procesar 1 post a la vez` de `main#0` a `main#1` en el JSON.
+  2. Agregar loopback desde los 3 nodos terminales (`Guardar telegram_msg_id`, `retry_count++`, `status = error`) de vuelta al input de `Procesar 1 post a la vez` index 0.
+- **Verificación:** Después del fix, todos los nodos del pipeline se iluminan en verde en secuencia.
+- **Regla:** En n8n, SplitInBatches v3 siempre conectar los nodos de procesamiento al output **index 1 (loop)**. Los nodos finales de cada iteración deben hacer loopback al input 0 del SplitInBatches.
+
+---
+
+**FALLA 20 — jsonBody con saltos de línea literales en strings JavaScript**
+- **Síntoma:** Error "invalid syntax" en el nodo "Auditor de prompt (OpenAI)" al ejecutar el workflow.
+- **Causa raíz:** El campo `jsonBody` del nodo HTTP Request contenía strings de una sola línea con caracteres de salto de línea real (byte `0x0A`) dentro de comillas simples `'...'`. JavaScript no permite saltos de línea literales dentro de strings en comillas simples o dobles — solo en template literals (`` `...` ``).
+- **Error confundido con:** El campo mostraba "Bearer undefined" en la preview de la UI, lo que llevó a investigar `$env.OPENAI_API_KEY`. Pero ese error es solo cosmético: el navegador no tiene acceso a las variables de entorno del servidor n8n. En runtime sí funciona.
+- **Solución aplicada (commit `2264c315`):** Reemplazar los 5 saltos de línea literales con el escape `\n` (barra invertida + n) en la expresión `jsonBody`:
+  ```
+  '\\nFormato: ' + ... + '\\nPilar: ' + ...
+  ```
+- **Verificación:** Confirmar con `docker exec deploy-n8n-1 env | grep OPENAI_API_KEY` que la variable existe en el contenedor. Si existe, el "Bearer undefined" en la UI es cosmético. Si el nodo falla en runtime con 401, ahí sí es problema real.
+- **Regla:** En n8n expression fields, usar `\n` (escape) nunca saltos de línea reales en string literals.
+
+---
+
+**FALLA 21 — `$json.image_base64` undefined después de nodo Postgres**
+- **Síntoma:** Google Vision OCR falla con `Bad request — Request must specify image and features`. El JSON preview del nodo muestra `{"requests":[{"image":{},"features":[...]}]}` — `image` es objeto vacío.
+- **Causa raíz:** El nodo "Guardar image_path" es un `postgres executeQuery` que hace `UPDATE content_plan SET image_url = ...`. En n8n, cuando un nodo executeQuery termina, **su output reemplaza completamente el stream de datos con el resultado del query** (ej. `[{ success: true }]`). Los campos que venían del nodo anterior (`image_base64`, `id`, `copy_text`, etc.) desaparecen.
+  - El nodo "Guardar imagen en disco" (Code node) sí produce `image_base64` en su output.
+  - Pero después de pasar por el Postgres node, `$json` ya no contiene `image_base64`.
+- **Solución aplicada (commit `f5215681`):** En el `jsonBody` del nodo "Google Vision — OCR", referenciar el nodo upstream directamente:
+  ```js
+  $('Guardar imagen en disco').item.json.image_base64
+  ```
+  en lugar de `$json.image_base64`.
+- **⚠️ PENDIENTE AL 2026-05-12:** El commit `f5215681` **NO está pusheado** al remote `jaag2021`. El VPS no lo tiene. Al comenzar la próxima sesión, este commit debe ser pusheado PRIMERO antes de hacer cualquier `git pull` en el VPS.
+  ```bash
+  # En máquina local:
+  git push jaag2021 feature/jaagsolutions
+  # En VPS:
+  cd /opt/jaagsolutions/repo && git pull
+  ```
+- **Regla general:** Después de cualquier nodo Postgres `executeQuery`, `$json` es el resultado del query, NO los datos previos del pipeline. Para acceder a datos de un nodo anterior, usar `$('Nombre del nodo').item.json.campo`.
+
+---
+
+**Estado del test post al 2026-05-12 (fin de sesión):**
+```
+id:          4a9a24b4-bb79-4a64-908b-7af12caf2d21
+status:      pending
+retry_count: 0
+format:      imagen_copy
+platform:    instagram
+```
+El post está listo para el próximo test E2E una vez deployado el commit `f5215681`.
+
+---
+
 #### Regla operativa establecida — DOCS FIRST
 
 **Cualquier cambio en infraestructura debe ir precedido de:**

@@ -6,7 +6,7 @@
 
 ---
 
-## ESTADO ACTUAL (2026-05-12)
+## ESTADO ACTUAL (2026-05-13)
 
 | Servicio | URL | Estado |
 |---------|-----|--------|
@@ -14,8 +14,10 @@
 | Paperclip | `https://paperclip.jaagsolutions.com` | ✅ Live — VPS Docker |
 | n8n | `https://n8n.jaagsolutions.com` | ✅ Live — VPS Docker |
 | Workflow leads | Formspree Lead → Paperclip Issue | ✅ Activo |
-| Workflow content gen | Content Generator (Cron → Stability AI → Vision → Telegram) | ✅ Activo — calidad imagen en evaluación |
-| Workflow telegram approval | Telegram Approval → Meta + LinkedIn | ✅ Activo — flujo Rechazar verificado E2E |
+| Workflow content gen | Content Generator (Cron → Stability AI → Vision → Telegram) | ⚠️ Activo — fix `f5215681` pendiente de push+pull+re-import |
+| Workflow telegram approval | Telegram Approval → Meta + LinkedIn | ✅ Activo |
+
+**⚠️ ACCIÓN REQUERIDA AL INICIO DE PRÓXIMA SESIÓN:** Ver sección en CHECKLIST-MAESTRO — push de commit `f5215681` + re-import del content-generator.
 
 **VPS:** Google Cloud `jaagsolutions-vps` — e2-medium Ubuntu 22.04 — IP `34.41.171.138`
 **Repo en VPS:** `/opt/jaagsolutions/repo` — branch `feature/jaagsolutions` — remote `origin` = `JAAG2021/jaagsolutions-paperclip`
@@ -313,3 +315,8 @@ Ejecutar cada vez que se cambie el workflow de n8n o la CF Function:
 | No aparece opción Delete en menú de workflow n8n | n8n moderno reemplazó Delete por Archive (soft-delete) | Usar Archive (libera el webhook path); alternativa CLI: `docker exec deploy-n8n-1 n8n delete:workflow --id=<ID>` |
 | `callback_data inválido` en Telegram callback parser | Separador `_` vs `:` mismatch entre nodo emisor y receptor | Usar `data.split('_')` + `parts.slice(1).join('_')` porque UUIDs contienen `-` pero no `_` |
 | Imagen guardada como `image_path` pero schema usa `image_url` | Inconsistencia entre plan y schema | El schema es la fuente de verdad; renombrar todas las referencias para coincidir |
+| `SplitInBatches v3` ejecuta "Node executed successfully" pero sin output — pipeline mudo | Output index 0 = "done" (post-loop), index 1 = "loop" (per-batch). Si conectas al 0, el pipeline solo corre cuando ya no hay items | Conectar nodos de proceso al output **index 1**. Los nodos terminales hacen loopback al input 0 de SplitInBatches |
+| Error "invalid syntax" en nodo HTTP Request con `jsonBody` | La expresión JS tiene saltos de línea reales (byte `0x0A`) dentro de strings con comillas simples `'...'`. JS no permite literales multilinea así | Reemplazar saltos de línea por `\n` (escape). Buscar con `grep -c $'\n'` si hay duda |
+| "Bearer undefined" en preview de n8n para `$env.OPENAI_API_KEY` | El navegador no tiene acceso a las env vars del servidor n8n — el preview es cosmético | Verificar con `docker exec deploy-n8n-1 env \| grep OPENAI_API_KEY`. Si la variable existe ahí, el runtime funcionará aunque el preview muestre "undefined" |
+| Google Vision OCR: `Bad request — Request must specify image and features` | `$json.image_base64` llega vacío porque el nodo Postgres anterior (`Guardar image_path`) reemplaza el stream con `{success:true}`. Los datos de imagen se pierden al pasar por cualquier nodo `executeQuery` | Referenciar el nodo upstream directamente: `$('Guardar imagen en disco').item.json.image_base64`. Regla general: después de un nodo Postgres, usar `$('NodoAnterior').item.json.campo` para acceder a datos previos |
+| Commit local pusheado a worktree pero VPS no recibe el fix con `git pull` | `git push` al remote `jaag2021` no fue ejecutado antes del `git pull` en VPS — el commit solo existe en el worktree local | Siempre hacer `git push jaag2021 feature/jaagsolutions` desde la máquina local ANTES de correr `git pull` en el VPS. Verificar con `git log --oneline origin/feature/jaagsolutions..HEAD` — si muestra commits, aún no fueron pusheados |
