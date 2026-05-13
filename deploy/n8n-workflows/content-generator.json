@@ -482,6 +482,44 @@
           "name": "Postgres account"
         }
       }
+    },
+    {
+      "id": "webhook-regenerate-trigger",
+      "name": "Webhook regenerar por ID",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        500
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "regenerate-single",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "webhookId": "regenerate-single"
+    },
+    {
+      "id": "postgres-get-single-post",
+      "name": "Obtener post por ID",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        420,
+        500
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM content_plan WHERE id = '{{ $json.body.post_id }}'",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
     }
   ],
   "connections": {
@@ -692,6 +730,28 @@
         [
           {
             "node": "Stability AI — generar imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook regenerar por ID": {
+      "main": [
+        [
+          {
+            "node": "Obtener post por ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener post por ID": {
+      "main": [
+        [
+          {
+            "node": "status = generating",
             "type": "main",
             "index": 0
           }
