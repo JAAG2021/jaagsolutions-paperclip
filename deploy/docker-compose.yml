@@ -69,7 +69,7 @@ services:
       N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER}
       N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
       GENERIC_TIMEZONE: America/Bogota
-      NODE_FUNCTION_ALLOW_BUILTIN: "fs,path"
+      NODE_FUNCTION_ALLOW_BUILTIN: "fs,path,https,http"
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       # Expuestas al workflow (Code / expresiones vía process.env)
       PAPERCLIP_URL: http://paperclip:3100
@@ -82,6 +82,7 @@ services:
       FORMSPREE_FORM_HASHID: ${FORMSPREE_FORM_HASHID:-}
       # ── Content Pipeline ──────────────────────────────────
       STABILITY_AI_API_KEY: ${STABILITY_AI_API_KEY}
+      IDEOGRAM_API_KEY: ${IDEOGRAM_API_KEY}
       GOOGLE_VISION_API_KEY: ${GOOGLE_VISION_API_KEY}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}

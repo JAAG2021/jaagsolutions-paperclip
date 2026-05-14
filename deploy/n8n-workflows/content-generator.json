@@ -118,7 +118,7 @@
         220
       ],
       "parameters": {
-        "jsCode": "const item = $input.first().json;\nconst platform = item.platform || 'instagram';\nconst format = item.format || 'imagen_copy';\n\n// Stability AI v2beta aspect ratios: '1:1','16:9','21:9','2:3','3:2','4:5','5:4','9:16','9:21'\nconst map = {\n  'linkedin:imagen_copy': '4:5',\n  'linkedin:texto_largo': '4:5',\n  'linkedin:carrusel':   '4:5',\n  'instagram:imagen_copy': '1:1',\n  'instagram:carrusel':   '1:1',\n  'instagram:reel':       '9:16',\n  'meta:imagen_copy':     '1:1',\n  'meta:carrusel':        '1:1',\n  'facebook:imagen_copy': '4:5',\n};\n\nconst key = `${platform}:${format}`;\nconst aspect_ratio = map[key] || '1:1';\n\nreturn [{ json: { ...item, aspect_ratio } }];"
+        "jsCode": "const item = $input.first().json;\nconst platform = item.platform || 'instagram';\nconst format = item.format || 'imagen_copy';\n\n// Ideogram aspect ratios\nconst map = {\n  'linkedin:imagen_copy': 'ASPECT_4_5',\n  'linkedin:texto_largo': 'ASPECT_4_5',\n  'linkedin:carrusel':   'ASPECT_4_5',\n  'instagram:imagen_copy': 'ASPECT_1_1',\n  'instagram:carrusel':   'ASPECT_1_1',\n  'instagram:reel':       'ASPECT_9_16',\n  'meta:imagen_copy':     'ASPECT_1_1',\n  'meta:carrusel':        'ASPECT_1_1',\n  'facebook:imagen_copy': 'ASPECT_4_5',\n};\n\nconst key = `${platform}:${format}`;\nconst aspect_ratio = map[key] || 'ASPECT_1_1';\n\nreturn [{ json: { ...item, aspect_ratio } }];"
       }
     },
     {
@@ -178,38 +178,23 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "https://api.stability.ai/v2beta/stable-image/generate/core",
+        "url": "https://api.ideogram.ai/generate",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "Authorization",
-              "value": "={{ 'Bearer ' + $env.STABILITY_AI_API_KEY }}"
+              "name": "Api-Key",
+              "value": "={{ $env.IDEOGRAM_API_KEY }}"
             },
             {
-              "name": "Accept",
+              "name": "Content-Type",
               "value": "application/json"
             }
           ]
         },
         "sendBody": true,
-        "contentType": "multipart-form-data",
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "prompt",
-              "value": "={{ $json.image_prompt }}"
-            },
-            {
-              "name": "aspect_ratio",
-              "value": "={{ $json.aspect_ratio }}"
-            },
-            {
-              "name": "output_format",
-              "value": "jpeg"
-            }
-          ]
-        },
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ image_request: { prompt: $json.image_prompt, aspect_ratio: $json.aspect_ratio, model: 'V_2', magic_prompt_option: 'OFF' } }) }}",
         "options": {
           "timeout": 60000
         }
@@ -225,7 +210,7 @@
         220
       ],
       "parameters": {
-        "jsCode": "const stabilityResp = $input.first().json;\nconst prev = $('Calcular aspect_ratio').first().json;\nconst fs = require('fs');\n\nconst base64Image = stabilityResp.image;\nif (!base64Image) throw new Error('Stability AI no devolvió imagen: ' + JSON.stringify(stabilityResp));\n\nconst contentDir = '/opt/jaagsolutions/content';\nif (!fs.existsSync(contentDir)) fs.mkdirSync(contentDir, { recursive: true });\n\nconst filePath = `${contentDir}/${prev.id}.jpg`;\nfs.writeFileSync(filePath, Buffer.from(base64Image, 'base64'));\n\nreturn [{ json: { ...prev, image_base64: base64Image, image_url: filePath } }];"
+        "jsCode": "const ideogramResp = $input.first().json;\nconst prev = $('Calcular aspect_ratio').first().json;\nconst fs = require('fs');\nconst https = require('https');\n\nconst imageUrl = ideogramResp.data?.[0]?.url;\nif (!imageUrl) throw new Error('Ideogram no devolvió imagen: ' + JSON.stringify(ideogramResp));\n\nconst contentDir = '/opt/jaagsolutions/content';\nif (!fs.existsSync(contentDir)) fs.mkdirSync(contentDir, { recursive: true });\n\nconst filePath = `${contentDir}/${prev.id}.jpg`;\n\nawait new Promise((resolve, reject) => {\n  const file = fs.createWriteStream(filePath);\n  https.get(imageUrl, (response) => {\n    response.pipe(file);\n    file.on('finish', () => { file.close(); resolve(); });\n  }).on('error', (err) => { fs.unlink(filePath, () => {}); reject(err); });\n});\n\nconst imageBuffer = fs.readFileSync(filePath);\nconst base64Image = imageBuffer.toString('base64');\n\nreturn [{ json: { ...prev, image_base64: base64Image, image_url: filePath } }];"
       }
     },
     {
