@@ -6,9 +6,12 @@ USER root
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Instalar sharp en directorio aislado con pnpm
+# Nota: NO usamos `pnpm init` porque crea package.json con devEngines.packageManager
+# en formato "pnpm@^X.Y.Z" (rango con caret), y corepack lo rechaza al ejecutar
+# el siguiente `pnpm add` (exige semver exacto). Escribimos package.json mínimo.
 RUN mkdir -p /opt/n8n-modules && \
     cd /opt/n8n-modules && \
-    pnpm init && \
+    echo '{"name":"n8n-modules","version":"1.0.0","private":true}' > package.json && \
     pnpm add --node-linker=hoisted sharp && \
     pnpm store prune
 
