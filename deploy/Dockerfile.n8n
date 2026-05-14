@@ -2,11 +2,17 @@ FROM n8nio/n8n:1.112.6
 
 USER root
 
-# Instalar sharp globalmente y exponer vía NODE_PATH
-RUN npm install -g --prefer-binary sharp && \
-    npm cache clean --force
+# Crear directorio aislado para módulos extra de n8n
+WORKDIR /opt/n8n-modules
+
+# pnpm viene con la imagen base de n8n — usarlo para instalar sharp.
+# --node-linker=hoisted genera node_modules plano (compatible con NODE_PATH).
+RUN pnpm init && \
+    pnpm add --node-linker=hoisted sharp && \
+    pnpm store prune
 
 # NODE_PATH permite que require('sharp') lo encuentre desde Code nodes
-ENV NODE_PATH=/usr/local/lib/node_modules
+ENV NODE_PATH=/opt/n8n-modules/node_modules
 
 USER node
+WORKDIR /home/node
