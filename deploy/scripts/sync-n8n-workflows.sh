@@ -106,9 +106,21 @@ for json_file in "${json_files[@]}"; do
     echo "[n8n-sync]   Actualizado (credenciales preservadas)."
   else
     echo "[n8n-sync]   No encontrado → creando..."
-    wf_id=$(n8n_api -X POST "${N8N_URL}/api/v1/workflows" \
+    # POST sin -f para capturar el body de error si el API rechaza el request
+    create_resp=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
+      -H "X-N8N-API-KEY: ${N8N_API_KEY}" \
+      -H "Accept: application/json" \
       -H "Content-Type: application/json" \
-      --data-binary <(echo "$clean_body") | jq -r '.id')
+      -X POST "${N8N_URL}/api/v1/workflows" \
+      --data-binary "$clean_body")
+    http_status=$(echo "$create_resp" | grep -oE 'HTTP_STATUS:[0-9]+' | cut -d: -f2)
+    body=$(echo "$create_resp" | sed 's/HTTP_STATUS:[0-9]*$//')
+    if [[ "$http_status" != "200" && "$http_status" != "201" ]]; then
+      echo "[n8n-sync]   ❌ Error al crear (HTTP $http_status):"
+      echo "$body" | jq . 2>/dev/null || echo "$body"
+      exit 1
+    fi
+    wf_id=$(echo "$body" | jq -r '.id')
     echo "[n8n-sync]   Creado id=${wf_id}."
   fi
 
