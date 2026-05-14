@@ -7,11 +7,16 @@ USER root
 # y sharp necesita ejecutar su script de install para descargar binarios libvips.
 RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 
-# Instalar sharp en directorio aislado con pnpm
+# Instalar sharp en directorio aislado con pnpm.
+# Pinneamos sharp@0.32.x — sharp 0.33+ separó los binarios en sub-packages
+# (@img/sharp-*), y los nested requires de sub-packages son bloqueados por la
+# sandbox @n8n_io/riot del Code node (no están en NODE_FUNCTION_ALLOW_EXTERNAL).
+# 0.32.x mantiene el binario directo en sharp/build/Release/sharp.node con
+# require relativo, que NO pasa por la sandbox.
 RUN mkdir -p /opt/n8n-modules && \
     cd /opt/n8n-modules && \
     echo '{"name":"n8n-modules","version":"1.0.0","private":true}' > package.json && \
-    pnpm add --node-linker=hoisted sharp && \
+    pnpm add --node-linker=hoisted sharp@0.32.6 && \
     pnpm store prune
 
 # NODE_PATH permite que require('sharp') lo encuentre desde Code nodes
