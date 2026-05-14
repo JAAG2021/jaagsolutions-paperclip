@@ -19,7 +19,9 @@
 
 **⚠️ ACCIÓN REQUERIDA AL INICIO DE PRÓXIMA SESIÓN:** Ver sección en CHECKLIST-MAESTRO — push de commit `f5215681` + re-import del content-generator.
 
-**VPS:** Google Cloud `jaagsolutions-vps` — e2-medium Ubuntu 22.04 — IP `34.41.171.138`
+**VPS:** Google Cloud `jaagsolutions-vps` — e2-medium Ubuntu 22.04 — IP `34.41.171.138`  
+**SSH:** `ssh jaagsolutions-vps` (atajo configurado en `~/.ssh/config`) o `ssh -i C:\Users\jalva\.ssh\jaagsolutions_vps jaagsolutions@34.41.171.138`
+**Clave SSH local:** `C:\Users\jalva\.ssh\jaagsolutions_vps` — exclusiva para este proyecto, fingerprint `SHA256:tbhHTHiJB+hazSUuVL4DiEAY+kjjz3d5HrWLq6oJxU4`
 **Repo en VPS:** `/opt/jaagsolutions/repo` — branch `feature/jaagsolutions` — remote `origin` = `JAAG2021/jaagsolutions-paperclip`
 
 ---
