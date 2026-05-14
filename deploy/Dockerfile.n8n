@@ -2,12 +2,13 @@ FROM n8nio/n8n:1.112.6
 
 USER root
 
-# Crear directorio aislado para módulos extra de n8n
-WORKDIR /opt/n8n-modules
+# corepack viene con Node.js — lo usamos para activar pnpm sin npm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# pnpm viene con la imagen base de n8n — usarlo para instalar sharp.
-# --node-linker=hoisted genera node_modules plano (compatible con NODE_PATH).
-RUN pnpm init && \
+# Instalar sharp en directorio aislado con pnpm
+RUN mkdir -p /opt/n8n-modules && \
+    cd /opt/n8n-modules && \
+    pnpm init && \
     pnpm add --node-linker=hoisted sharp && \
     pnpm store prune
 
