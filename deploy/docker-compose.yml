@@ -74,6 +74,12 @@ services:
       GENERIC_TIMEZONE: America/Bogota
       NODE_FUNCTION_ALLOW_BUILTIN: "fs,path,https,http"
       NODE_FUNCTION_ALLOW_EXTERNAL: "sharp"
+      # En n8n ≥1.x, el Code node corre en task runners (proceso hijo) por defecto.
+      # Esos hijos no heredan NODE_PATH del container, así que require('sharp') falla.
+      # Lo desactivamos para que el Code node use el proceso principal de n8n.
+      N8N_RUNNERS_ENABLED: "false"
+      # Refuerzo: NODE_PATH también explícito en compose por si algún proceso lo pierde
+      NODE_PATH: "/opt/n8n-modules/node_modules"
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       # Expuestas al workflow (Code / expresiones vía process.env)
       PAPERCLIP_URL: http://paperclip:3100
