@@ -70,6 +70,7 @@ services:
       N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
       GENERIC_TIMEZONE: America/Bogota
       NODE_FUNCTION_ALLOW_BUILTIN: "fs,path,https,http"
+      NODE_FUNCTION_ALLOW_EXTERNAL: "sharp"
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       # Expuestas al workflow (Code / expresiones vía process.env)
       PAPERCLIP_URL: http://paperclip:3100
