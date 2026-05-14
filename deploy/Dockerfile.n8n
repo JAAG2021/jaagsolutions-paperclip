@@ -11,7 +11,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 # el siguiente `pnpm add` (exige semver exacto). Escribimos package.json mínimo.
 RUN mkdir -p /opt/n8n-modules && \
     cd /opt/n8n-modules && \
-    echo '{"name":"n8n-modules","version":"1.0.0","private":true}' > package.json && \
+    echo '{"name":"n8n-modules","version":"1.0.0","private":true,"pnpm":{"onlyBuiltDependencies":["sharp"]}}' > package.json && \
     pnpm add --node-linker=hoisted sharp && \
     pnpm store prune
 
