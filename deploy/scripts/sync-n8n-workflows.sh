@@ -73,8 +73,9 @@ for json_file in "${json_files[@]}"; do
   wf_id=$(echo "$ALL_WORKFLOWS" | jq -r --arg n "$wf_name" \
     '.data[] | select(.name == $n) | .id' | head -1)
 
-  # Cuerpo limpio: quitar id y meta para que el API los gestione
-  clean_body=$(jq 'del(.id, .meta, .active)' "$json_file")
+  # Cuerpo limpio: el n8n public API rechaza campos extra (tags, pinData, etc.)
+  # Solo acepta: name, nodes, connections, settings, staticData
+  clean_body=$(jq 'del(.id, .meta, .active, .tags, .pinData, .versionId, .triggerCount, .createdAt, .updatedAt)' "$json_file")
 
   if [[ -n "$wf_id" ]]; then
     echo "[n8n-sync]   Encontrado id=${wf_id} → desactivar → actualizar → activar"
