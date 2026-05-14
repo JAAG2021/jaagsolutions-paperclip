@@ -1,0 +1,12 @@
+FROM n8nio/n8n:1.112.6
+
+USER root
+
+# Instalar sharp globalmente y exponer vía NODE_PATH
+RUN npm install -g --prefer-binary sharp && \
+    npm cache clean --force
+
+# NODE_PATH permite que require('sharp') lo encuentre desde Code nodes
+ENV NODE_PATH=/usr/local/lib/node_modules
+
+USER node
