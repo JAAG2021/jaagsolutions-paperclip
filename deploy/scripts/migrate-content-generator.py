@@ -2,7 +2,11 @@
 """
 Migra el workflow "Content Generator" del esquema viejo (Stability + Vision/OCR)
 al nuevo (Ideogram + Sharp Compose), preservando ID y credenciales del workflow
-visible para el usuario en la UI. Borra duplicados zombi.
+visible para el usuario en la UI.
+
+Uso:
+  python3 migrate-content-generator.py              # solo migra (no borra nada)
+  python3 migrate-content-generator.py --cleanup    # migra + borra duplicados zombi
 
 Requiere variables en /opt/jaagsolutions/repo/deploy/.env:
   N8N_URL       (default https://n8n.jaagsolutions.com)
@@ -13,6 +17,8 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+
+CLEANUP = "--cleanup" in sys.argv
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEPLOY_DIR = SCRIPT_DIR.parent
@@ -143,17 +149,19 @@ print(f"      ✓ Contenido reemplazado (nombre nuevo: {clean_body['name']})")
 api("POST", f"/workflows/{target['id']}/activate")
 print(f"      ✓ Activado")
 
-# 8. Limpieza de duplicados zombi
-print(f"[7/7] Limpiando duplicados sin credenciales...")
-deleted = 0
-for d in details:
-    if d["id"] == target["id"]:
-        continue
-    if not d["has_creds"]:
+# 8. Limpieza de duplicados zombi (opt-in con --cleanup)
+zombies = [d for d in details if d["id"] != target["id"] and not d["has_creds"]]
+if CLEANUP:
+    print(f"[7/7] Borrando {len(zombies)} duplicados zombi (--cleanup activo)...")
+    deleted = 0
+    for d in zombies:
         api("DELETE", f"/workflows/{d['id']}")
         print(f"        ✗ borrado {d['id']}  {d['name']}")
         deleted += 1
-print(f"      ✓ {deleted} duplicados borrados")
+    print(f"      ✓ {deleted} duplicados borrados")
+else:
+    print(f"[7/7] Skip cleanup. Encontrados {len(zombies)} duplicados zombi (sin credenciales).")
+    print(f"      Para borrarlos, re-ejecuta con --cleanup")
 
 print("\n[✓] Migración completa.")
 print(f"    Workflow final:  {target['id']}")
