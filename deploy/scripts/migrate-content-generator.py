@@ -149,19 +149,27 @@ print(f"      ✓ Contenido reemplazado (nombre nuevo: {clean_body['name']})")
 api("POST", f"/workflows/{target['id']}/activate")
 print(f"      ✓ Activado")
 
-# 8. Limpieza de duplicados zombi (opt-in con --cleanup)
-zombies = [d for d in details if d["id"] != target["id"] and not d["has_creds"]]
+# 8. Cleanup de TODOS los demás Content Generator (mantener solo el target)
+duplicates = [d for d in details if d["id"] != target["id"]]
+print(f"[7/7] Cleanup duplicados (todo 'Content Generator' excepto target):")
+print(f"      Target a preservar: {target['id']}  {clean_body['name']}")
+print(f"      Candidatos a borrar: {len(duplicates)}")
+for d in duplicates:
+    print(f"        - {d['id']}  active={d['active']}  has_creds={d['has_creds']}  {d['name']}")
+
 if CLEANUP:
-    print(f"[7/7] Borrando {len(zombies)} duplicados zombi (--cleanup activo)...")
+    print(f"\n      --cleanup activo → borrando...")
     deleted = 0
-    for d in zombies:
+    for d in duplicates:
+        # Si está activo, desactivar antes de borrar (evita huérfanos de webhooks/cron)
+        if d["active"]:
+            api("POST", f"/workflows/{d['id']}/deactivate")
         api("DELETE", f"/workflows/{d['id']}")
         print(f"        ✗ borrado {d['id']}  {d['name']}")
         deleted += 1
     print(f"      ✓ {deleted} duplicados borrados")
 else:
-    print(f"[7/7] Skip cleanup. Encontrados {len(zombies)} duplicados zombi (sin credenciales).")
-    print(f"      Para borrarlos, re-ejecuta con --cleanup")
+    print(f"\n      [DRY-RUN] No se borró nada. Para borrarlos, re-ejecuta con --cleanup")
 
 print("\n[✓] Migración completa.")
 print(f"    Workflow final:  {target['id']}")
