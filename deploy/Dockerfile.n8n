@@ -2,16 +2,15 @@ FROM n8nio/n8n:1.112.6
 
 USER root
 
-# corepack viene con Node.js — lo usamos para activar pnpm sin npm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# corepack viene con Node.js — lo usamos para activar pnpm sin npm.
+# Pinneamos pnpm v9 (rama mantenida) porque v10+ bloquea install scripts por defecto
+# y sharp necesita ejecutar su script de install para descargar binarios libvips.
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 
 # Instalar sharp en directorio aislado con pnpm
-# Nota: NO usamos `pnpm init` porque crea package.json con devEngines.packageManager
-# en formato "pnpm@^X.Y.Z" (rango con caret), y corepack lo rechaza al ejecutar
-# el siguiente `pnpm add` (exige semver exacto). Escribimos package.json mínimo.
 RUN mkdir -p /opt/n8n-modules && \
     cd /opt/n8n-modules && \
-    echo '{"name":"n8n-modules","version":"1.0.0","private":true,"pnpm":{"onlyBuiltDependencies":["sharp"]}}' > package.json && \
+    echo '{"name":"n8n-modules","version":"1.0.0","private":true}' > package.json && \
     pnpm add --node-linker=hoisted sharp && \
     pnpm store prune
 
