@@ -286,11 +286,10 @@
           "conditions": [
             {
               "id": "check-ocr",
-              "leftValue": "={{ $json.ocr_passed }}",
-              "rightValue": true,
+              "leftValue": "={{ $json.ocr_passed === true }}",
               "operator": {
                 "type": "boolean",
-                "operation": "equal"
+                "operation": "true"
               }
             }
           ],
