@@ -22,5 +22,8 @@ RUN mkdir -p /opt/n8n-modules && \
 # NODE_PATH permite que require('sharp') lo encuentre desde Code nodes
 ENV NODE_PATH=/opt/n8n-modules/node_modules
 
+# Scripts standalone que corren FUERA del sandbox n8n (via Execute Command node)
+COPY n8n-scripts/ /opt/n8n-scripts/
+
 USER node
 WORKDIR /home/node

@@ -201,8 +201,8 @@
       }
     },
     {
-      "id": "code-save-image",
-      "name": "Componer imagen final (Sharp + SVG)",
+      "id": "code-write-compose-input",
+      "name": "Preparar input compose",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -210,7 +210,33 @@
         220
       ],
       "parameters": {
-        "jsCode": "// Code node: \"Componer imagen final\"\n// Input: salida de Ideogram con data[0].url + datos del post (vía $('Calcular aspect_ratio'))\n// Output: { ...post, image_url: filePath, image_base64 }\n//\n// Hace:\n//   1. Descarga la imagen base de Ideogram (escena visual sin texto)\n//   2. Compone overlay SVG con:\n//        - Logo + tagline JAAGSOLUTIONS (top)\n//        - Caja semitransparente inferior para legibilidad\n//        - copy_text en español (text wrapping manual)\n//        - Hashtags compactos (si caben)\n//        - Plataforma + fecha (esquina)\n//   3. Guarda JPG final en /opt/jaagsolutions/content/<id>.jpg\n//\n// Requiere en docker-compose.yml:\n//   N8N_FUNCTION_ALLOW_EXTERNAL: \"sharp\"\n//   o equivalente: NODE_FUNCTION_ALLOW_EXTERNAL: \"sharp\"\n\nconst sharp = require('sharp');\nconst fs = require('fs');\n\nconst ideogramResp = $input.first().json;\nconst prev = $('Calcular aspect_ratio').first().json;\n\nconst imageUrl = ideogramResp.data?.[0]?.url;\nif (!imageUrl) {\n  throw new Error('Ideogram no devolvió imagen: ' + JSON.stringify(ideogramResp).slice(0, 500));\n}\n\n// Dimensiones por aspect ratio Ideogram\nconst DIMS = {\n  ASPECT_1_1:  { w: 1080, h: 1080 },\n  ASPECT_4_5:  { w: 1080, h: 1350 },\n  ASPECT_9_16: { w: 1080, h: 1920 },\n};\nconst dims = DIMS[prev.aspect_ratio] || DIMS.ASPECT_1_1;\n\n// Paleta JAAGSOLUTIONS\nconst COLORS = {\n  brandDeep:   '#0D1B2A',  // azul corporativo profundo\n  brandMid:    '#1B3A6B',  // azul medio\n  brandLight:  '#E8F0FA',  // off-white frío\n  accent:      '#F5B800',  // dorado para destacar\n  white:       '#FFFFFF',\n};\n\n// ─── Helpers ──────────────────────────────────────────────────────────\nfunction escapeXml(str) {\n  return String(str || '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&apos;');\n}\n\n// Wrap simple por número de caracteres por línea (estimado)\n// fontSize 44px ≈ ~24 chars/línea a 1080px width con padding\nfunction wrapText(text, maxCharsPerLine) {\n  const words = String(text || '').split(/\\s+/).filter(Boolean);\n  const lines = [];\n  let current = '';\n  for (const word of words) {\n    const candidate = current ? `${current} ${word}` : word;\n    if (candidate.length <= maxCharsPerLine) {\n      current = candidate;\n    } else {\n      if (current) lines.push(current);\n      current = word;\n    }\n  }\n  if (current) lines.push(current);\n  return lines;\n}\n\n// Limita hashtags a los primeros N para que quepan\nfunction shortenHashtags(hashtags, max = 4) {\n  if (!hashtags) return '';\n  const tags = String(hashtags).split(/\\s+/).filter(t => t.startsWith('#')).slice(0, max);\n  return tags.join(' ');\n}\n\n// Formatear fecha en español\nfunction formatDate(scheduledDate) {\n  if (!scheduledDate) return '';\n  try {\n    const d = new Date(scheduledDate);\n    return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });\n  } catch (e) {\n    return '';\n  }\n}\n\n// ─── Layout dinámico según aspect ratio ───────────────────────────────\nconst PADDING = 60;\nconst LOGO_HEIGHT = 100;\n\n// Caja de texto inferior: 38% de la altura\nconst TEXT_BOX_HEIGHT = Math.round(dims.h * 0.38);\nconst TEXT_BOX_Y = dims.h - TEXT_BOX_HEIGHT;\n\n// Tamaños de fuente según altura\nconst COPY_FONT_SIZE = dims.h >= 1500 ? 52 : (dims.h >= 1200 ? 46 : 42);\nconst COPY_LINE_HEIGHT = Math.round(COPY_FONT_SIZE * 1.25);\nconst HASHTAG_FONT_SIZE = Math.round(COPY_FONT_SIZE * 0.55);\nconst META_FONT_SIZE = 22;\n\n// Wrap copy text\nconst MAX_CHARS_PER_LINE = dims.h >= 1500 ? 28 : 26;\nconst copyLines = wrapText(prev.copy_text, MAX_CHARS_PER_LINE);\n// Truncar si excede el espacio\nconst MAX_LINES = Math.floor((TEXT_BOX_HEIGHT - 200) / COPY_LINE_HEIGHT);\nconst visibleLines = copyLines.slice(0, MAX_LINES);\nif (copyLines.length > MAX_LINES) {\n  // Añadir elipsis al final de la última línea visible\n  visibleLines[visibleLines.length - 1] = visibleLines[visibleLines.length - 1].replace(/[.,;:!?]+$/, '') + '…';\n}\n\nconst hashtagsLine = shortenHashtags(prev.hashtags, 4);\nconst fechaStr = formatDate(prev.scheduled_date);\nconst plataforma = String(prev.platform || '').toUpperCase();\n\n// ─── Construir SVG overlay ────────────────────────────────────────────\n// Posición Y inicial del bloque de texto: centrado vertical dentro de la caja\nconst textBlockHeight = visibleLines.length * COPY_LINE_HEIGHT + (hashtagsLine ? HASHTAG_FONT_SIZE + 20 : 0);\nconst textStartY = TEXT_BOX_Y + Math.round((TEXT_BOX_HEIGHT - textBlockHeight) / 2) + COPY_FONT_SIZE;\n\nconst copyTspans = visibleLines.map((line, i) =>\n  `<tspan x=\"${PADDING}\" dy=\"${i === 0 ? 0 : COPY_LINE_HEIGHT}\">${escapeXml(line)}</tspan>`\n).join('');\n\nconst hashtagsY = textStartY + visibleLines.length * COPY_LINE_HEIGHT + 10;\nconst hashtagsTspan = hashtagsLine\n  ? `<text x=\"${PADDING}\" y=\"${hashtagsY}\" font-family=\"DejaVu Sans, Liberation Sans, Arial, sans-serif\" font-size=\"${HASHTAG_FONT_SIZE}\" font-weight=\"500\" fill=\"${COLORS.accent}\" opacity=\"0.95\">${escapeXml(hashtagsLine)}</text>`\n  : '';\n\nconst svg = `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"${dims.w}\" height=\"${dims.h}\" viewBox=\"0 0 ${dims.w} ${dims.h}\">\n  <defs>\n    <linearGradient id=\"topFade\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">\n      <stop offset=\"0%\" stop-color=\"${COLORS.brandDeep}\" stop-opacity=\"0.75\"/>\n      <stop offset=\"100%\" stop-color=\"${COLORS.brandDeep}\" stop-opacity=\"0\"/>\n    </linearGradient>\n    <linearGradient id=\"bottomFade\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">\n      <stop offset=\"0%\" stop-color=\"${COLORS.brandDeep}\" stop-opacity=\"0\"/>\n      <stop offset=\"35%\" stop-color=\"${COLORS.brandDeep}\" stop-opacity=\"0.85\"/>\n      <stop offset=\"100%\" stop-color=\"${COLORS.brandDeep}\" stop-opacity=\"0.97\"/>\n    </linearGradient>\n  </defs>\n\n  <!-- Fade superior para legibilidad del logo -->\n  <rect x=\"0\" y=\"0\" width=\"${dims.w}\" height=\"${LOGO_HEIGHT + 40}\" fill=\"url(#topFade)\"/>\n\n  <!-- Logo + tagline (top-left) -->\n  <text x=\"${PADDING}\" y=\"60\" font-family=\"DejaVu Sans, Liberation Sans, Arial, sans-serif\" font-size=\"34\" font-weight=\"800\" fill=\"${COLORS.white}\" letter-spacing=\"1.5\">JAAG<tspan fill=\"${COLORS.accent}\">·</tspan>SOLUTIONS</text>\n  <text x=\"${PADDING}\" y=\"92\" font-family=\"DejaVu Sans, Liberation Sans, Arial, sans-serif\" font-size=\"18\" font-weight=\"400\" fill=\"${COLORS.brandLight}\" opacity=\"0.9\">Automatización inteligente para pymes</text>\n\n  <!-- Plataforma + fecha (top-right) -->\n  <text x=\"${dims.w - PADDING}\" y=\"60\" text-anchor=\"end\" font-family=\"DejaVu Sans, Liberation Sans, Arial, sans-serif\" font-size=\"${META_FONT_SIZE}\" font-weight=\"600\" fill=\"${COLORS.accent}\" letter-spacing=\"2\">${escapeXml(plataforma)}</text>\n  <text x=\"${dims.w - PADDING}\" y=\"88\" text-anchor=\"end\" font-family=\"DejaVu Sans, Liberation Sans, Arial, sans-serif\" font-size=\"${META_FONT_SIZE - 4}\" font-weight=\"400\" fill=\"${COLORS.brandLight}\" opacity=\"0.85\">${escapeXml(fechaStr)}</text>\n\n  <!-- Fade inferior degradado azul para el copy -->\n  <rect x=\"0\" y=\"${TEXT_BOX_Y}\" width=\"${dims.w}\" height=\"${TEXT_BOX_HEIGHT}\" fill=\"url(#bottomFade)\"/>\n\n  <!-- Barra de acento dorada -->\n  <rect x=\"${PADDING}\" y=\"${textStartY - COPY_FONT_SIZE - 25}\" width=\"80\" height=\"6\" fill=\"${COLORS.accent}\" rx=\"3\"/>\n\n  <!-- Copy principal -->\n  <text x=\"${PADDING}\" y=\"${textStartY}\" font-family=\"DejaVu Sans, Liberation Sans, Arial, sans-serif\" font-size=\"${COPY_FONT_SIZE}\" font-weight=\"700\" fill=\"${COLORS.white}\" xml:space=\"preserve\">${copyTspans}</text>\n\n  ${hashtagsTspan}\n\n  <!-- CTA mini bottom-right -->\n  <text x=\"${dims.w - PADDING}\" y=\"${dims.h - PADDING}\" text-anchor=\"end\" font-family=\"DejaVu Sans, Liberation Sans, Arial, sans-serif\" font-size=\"20\" font-weight=\"500\" fill=\"${COLORS.brandLight}\" opacity=\"0.9\">jaagsolutions.com</text>\n</svg>`;\n\n// ─── Descargar imagen base ────────────────────────────────────────────\nlet baseBuffer;\ntry {\n  const resp = await fetch(imageUrl);\n  if (!resp.ok) throw new Error(`Ideogram URL HTTP ${resp.status}`);\n  baseBuffer = Buffer.from(await resp.arrayBuffer());\n} catch (e) {\n  throw new Error('No se pudo descargar imagen Ideogram: ' + e.message);\n}\n\n// ─── Composit con Sharp ───────────────────────────────────────────────\nconst contentDir = '/opt/jaagsolutions/content';\nif (!fs.existsSync(contentDir)) fs.mkdirSync(contentDir, { recursive: true });\nconst filePath = `${contentDir}/${prev.id}.jpg`;\n\nlet composedBuffer;\ntry {\n  composedBuffer = await sharp(baseBuffer)\n    .resize(dims.w, dims.h, { fit: 'cover', position: 'centre' })\n    .composite([{ input: Buffer.from(svg), top: 0, left: 0 }])\n    .jpeg({ quality: 92, progressive: true })\n    .toBuffer();\n} catch (e) {\n  throw new Error('Error en composición Sharp/SVG: ' + e.message + ' | SVG len: ' + svg.length);\n}\n\nfs.writeFileSync(filePath, composedBuffer);\n\nreturn [{\n  json: {\n    ...prev,\n    image_url: filePath,\n    image_base64: composedBuffer.toString('base64'),\n    composition_meta: {\n      dims,\n      copy_lines: visibleLines.length,\n      truncated: copyLines.length > MAX_LINES,\n      file_size_kb: Math.round(composedBuffer.length / 1024),\n    },\n  },\n}];\n"
+        "jsCode": "const fs = require('fs');\nconst ideogramResp = $input.first().json;\nconst prev = $('Calcular aspect_ratio').first().json;\n\nconst imageUrl = ideogramResp.data?.[0]?.url;\nif (!imageUrl) {\n  throw new Error('Ideogram no devolvió imagen: ' + JSON.stringify(ideogramResp).slice(0, 500));\n}\n\nconst tmpPath = `/tmp/compose_${prev.id}.json`;\nfs.writeFileSync(tmpPath, JSON.stringify({\n  image_url: imageUrl,\n  post_id: prev.id,\n  copy_text: prev.copy_text,\n  hashtags: prev.hashtags,\n  platform: prev.platform,\n  scheduled_date: prev.scheduled_date,\n  aspect_ratio: prev.aspect_ratio,\n  output_dir: '/opt/jaagsolutions/content',\n}));\n\nreturn [{ json: { ...prev, tmp_path: tmpPath } }];"
+      }
+    },
+    {
+      "id": "exec-compose",
+      "name": "Exec: compose-image.js",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        2160,
+        220
+      ],
+      "parameters": {
+        "command": "node /opt/n8n-scripts/compose-image.js \"{{ $json.tmp_path }}\""
+      }
+    },
+    {
+      "id": "code-save-image",
+      "name": "Componer imagen final (Sharp + SVG)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2360,
+        220
+      ],
+      "parameters": {
+        "jsCode": "const execResult = $input.first().json;\nconst prev = $('Preparar input compose').first().json;\n\nconst stdout = (execResult.stdout || '').trim();\nif (!stdout) {\n  const stderr = (execResult.stderr || '').trim();\n  throw new Error('compose-image.js sin output. stderr: ' + stderr.slice(0, 1000));\n}\n\nlet result;\ntry {\n  result = JSON.parse(stdout);\n} catch (e) {\n  throw new Error('JSON inválido de compose-image.js: ' + stdout.slice(0, 500));\n}\n\nif (!result.image_url) {\n  throw new Error('compose-image.js no retornó image_url. Output: ' + JSON.stringify(result).slice(0, 500));\n}\n\nreturn [{ json: { ...prev, image_url: result.image_url, image_base64: result.image_base64, composition_meta: result.composition_meta } }];"
       }
     },
     {
@@ -539,6 +565,28 @@
       ]
     },
     "Ideogram — generar imagen (sin texto)": {
+      "main": [
+        [
+          {
+            "node": "Preparar input compose",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar input compose": {
+      "main": [
+        [
+          {
+            "node": "Exec: compose-image.js",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exec: compose-image.js": {
       "main": [
         [
           {
