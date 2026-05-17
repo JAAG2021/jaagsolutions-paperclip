@@ -119,7 +119,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ author: 'urn:li:person:me', lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: $json.copy_text + '\\n\\n' + ($json.hashtags || '') }, shareMediaCategory: 'IMAGE', media: [{ status: 'READY', description: { text: $json.copy_text.substring(0, 200) }, media: $json.image_url, title: { text: 'JAAGSOLUTIONS' } }] } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
+        "jsonBody": "={{ JSON.stringify({ author: $env.LINKEDIN_AUTHOR_URN, lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: $json.copy_text + '\\n\\n' + ($json.hashtags || '') }, shareMediaCategory: 'IMAGE', media: [{ status: 'READY', description: { text: $json.copy_text.substring(0, 200) }, media: $json.image_url, title: { text: 'JAAGSOLUTIONS' } }] } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
         "options": { "timeout": 30000 }
       }
     },

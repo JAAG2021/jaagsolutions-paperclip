@@ -100,6 +100,8 @@ services:
       META_PAGE_ID: ${META_PAGE_ID}
       META_IG_USER_ID: ${META_IG_USER_ID}
       LINKEDIN_ACCESS_TOKEN: ${LINKEDIN_ACCESS_TOKEN}
+      # URN del autor: urn:li:person:{PERSON_ID} (personal) o urn:li:organization:{ORG_ID} (página de empresa)
+      LINKEDIN_AUTHOR_URN: ${LINKEDIN_AUTHOR_URN}
       PAPERCLIP_JAAG5_ISSUE_ID: ${PAPERCLIP_JAAG5_ISSUE_ID}
       # URL pública de las imágenes (Caddy las sirve bajo /static-content/* en el subdominio n8n)
       CONTENT_PUBLIC_URL: https://n8n.${DOMAIN}/static-content
