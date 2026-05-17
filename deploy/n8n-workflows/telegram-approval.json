@@ -101,11 +101,68 @@
       }
     },
     {
+      "id": "http-linkedin-register",
+      "name": "LinkedIn — register upload",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2620, 200],
+      "continueOnFail": true,
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.linkedin.com/v2/assets?action=registerUpload",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ ({ registerUploadRequest: { recipes: ['urn:li:digitalmediaRecipe:feedshare-image'], owner: $env.LINKEDIN_AUTHOR_URN, serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }] } }) }}",
+        "options": { "timeout": 30000 }
+      }
+    },
+    {
+      "id": "read-linkedin-image",
+      "name": "Leer imagen (LinkedIn)",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [2840, 200],
+      "continueOnFail": true,
+      "parameters": {
+        "filePath": "=/opt/jaagsolutions/content/{{ $('Parsear callback').first().json.post_id }}.jpg",
+        "dataPropertyName": "data"
+      }
+    },
+    {
+      "id": "http-linkedin-upload",
+      "name": "LinkedIn — subir imagen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3060, 200],
+      "continueOnFail": true,
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('LinkedIn — register upload').first().json.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": { "timeout": 60000 }
+      }
+    },
+    {
       "id": "http-linkedin",
       "name": "LinkedIn — publicar post",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2400, 200],
+      "position": [3280, 200],
       "continueOnFail": true,
       "parameters": {
         "method": "POST",
@@ -120,7 +177,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ ({ author: $env.LINKEDIN_AUTHOR_URN, lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: $('Obtener datos del post').first().json.copy_text + '\\n\\n' + ($('Obtener datos del post').first().json.hashtags || '') + '\\n\\n🔗 ' + $('Obtener datos del post').first().json.image_url }, shareMediaCategory: 'NONE' } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
+        "jsonBody": "={{ ({ author: $env.LINKEDIN_AUTHOR_URN, lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: $('Obtener datos del post').first().json.copy_text + '\\n\\n' + ($('Obtener datos del post').first().json.hashtags || '') }, shareMediaCategory: 'IMAGE', media: [{ status: 'READY', description: { text: $('Obtener datos del post').first().json.copy_text }, media: $('LinkedIn — register upload').first().json.value.asset, title: { text: ($('Obtener datos del post').first().json.copy_text || 'JAAGSOLUTIONS').substring(0, 200) } }] } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
         "options": { "timeout": 30000 }
       }
     },
@@ -146,11 +203,23 @@
       }
     },
     {
+      "id": "read-fb-image",
+      "name": "Leer imagen (FB)",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [1740, 200],
+      "continueOnFail": true,
+      "parameters": {
+        "filePath": "=/opt/jaagsolutions/content/{{ $('Parsear callback').first().json.post_id }}.jpg",
+        "dataPropertyName": "data"
+      }
+    },
+    {
       "id": "http-fb-photo",
       "name": "Meta FB — subir foto",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1740, 200],
+      "position": [1960, 200],
       "continueOnFail": true,
       "parameters": {
         "method": "POST",
@@ -162,15 +231,15 @@
           ]
         },
         "sendBody": true,
-        "contentType": "form-urlencoded",
+        "contentType": "multipart-form-data",
         "bodyParameters": {
           "parameters": [
-            { "name": "url", "value": "={{ $('Obtener datos del post').first().json.image_url }}" },
-            { "name": "caption", "value": "={{ $('Obtener datos del post').first().json.copy_text + '\\n\\n' + ($('Obtener datos del post').first().json.hashtags || '') }}" },
-            { "name": "published", "value": "true" }
+            { "parameterType": "formBinaryData", "name": "source", "inputDataFieldName": "data" },
+            { "parameterType": "formData", "name": "caption", "value": "={{ $('Obtener datos del post').first().json.copy_text + '\\n\\n' + ($('Obtener datos del post').first().json.hashtags || '') }}" },
+            { "parameterType": "formData", "name": "published", "value": "true" }
           ]
         },
-        "options": { "timeout": 30000 }
+        "options": { "timeout": 60000 }
       }
     },
     {
@@ -178,7 +247,7 @@
       "name": "Meta IG — crear container",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1960, 200],
+      "position": [2180, 200],
       "continueOnFail": true,
       "parameters": {
         "method": "POST",
@@ -205,7 +274,7 @@
       "name": "Meta IG — publicar",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2180, 200],
+      "position": [2400, 200],
       "continueOnFail": true,
       "parameters": {
         "method": "POST",
@@ -389,18 +458,18 @@
     },
     "¿Es LinkedIn?": {
       "main": [
-        [{ "node": "LinkedIn — publicar post", "type": "main", "index": 0 }],
+        [{ "node": "LinkedIn — register upload", "type": "main", "index": 0 }],
         [{ "node": "¿Es Meta/IG/FB?", "type": "main", "index": 0 }]
       ]
     },
     "¿Es Meta/IG/FB?": {
       "main": [
-        [{ "node": "Meta FB — subir foto", "type": "main", "index": 0 }],
+        [{ "node": "Leer imagen (FB)", "type": "main", "index": 0 }],
         []
       ]
     },
-    "LinkedIn — publicar post": {
-      "main": [[{ "node": "status = published", "type": "main", "index": 0 }]]
+    "Leer imagen (FB)": {
+      "main": [[{ "node": "Meta FB — subir foto", "type": "main", "index": 0 }]]
     },
     "Meta FB — subir foto": {
       "main": [[{ "node": "Meta IG — crear container", "type": "main", "index": 0 }]]
@@ -409,7 +478,19 @@
       "main": [[{ "node": "Meta IG — publicar", "type": "main", "index": 0 }]]
     },
     "Meta IG — publicar": {
+      "main": [[{ "node": "LinkedIn — register upload", "type": "main", "index": 0 }]]
+    },
+    "LinkedIn — register upload": {
+      "main": [[{ "node": "Leer imagen (LinkedIn)", "type": "main", "index": 0 }]]
+    },
+    "Leer imagen (LinkedIn)": {
+      "main": [[{ "node": "LinkedIn — subir imagen", "type": "main", "index": 0 }]]
+    },
+    "LinkedIn — subir imagen": {
       "main": [[{ "node": "LinkedIn — publicar post", "type": "main", "index": 0 }]]
+    },
+    "LinkedIn — publicar post": {
+      "main": [[{ "node": "status = published", "type": "main", "index": 0 }]]
     },
     "status = published": {
       "main": [[{ "node": "Telegram — ✅ Publicado", "type": "main", "index": 0 }]]
