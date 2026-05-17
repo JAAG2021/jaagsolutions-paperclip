@@ -157,8 +157,6 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${dims.w}" height="$
   <rect x="0" y="0" width="${dims.w}" height="${LOGO_HEIGHT + 40}" fill="url(#topFade)"/>
   <text x="${PADDING}" y="60" font-family="DejaVu Sans, Liberation Sans, Arial, sans-serif" font-size="34" font-weight="800" fill="${COLORS.white}" letter-spacing="1.5">JAAG<tspan fill="${COLORS.accent}">·</tspan>SOLUTIONS</text>
   <text x="${PADDING}" y="92" font-family="DejaVu Sans, Liberation Sans, Arial, sans-serif" font-size="18" font-weight="400" fill="${COLORS.brandLight}" opacity="0.9">Automatización inteligente para pymes</text>
-  <text x="${dims.w - PADDING}" y="60" text-anchor="end" font-family="DejaVu Sans, Liberation Sans, Arial, sans-serif" font-size="${META_FONT_SIZE}" font-weight="600" fill="${COLORS.accent}" letter-spacing="2">${escapeXml(plataforma)}</text>
-  <text x="${dims.w - PADDING}" y="88" text-anchor="end" font-family="DejaVu Sans, Liberation Sans, Arial, sans-serif" font-size="${META_FONT_SIZE - 4}" font-weight="400" fill="${COLORS.brandLight}" opacity="0.85">${escapeXml(fechaStr)}</text>
   <rect x="0" y="${TEXT_BOX_Y}" width="${dims.w}" height="${TEXT_BOX_HEIGHT}" fill="url(#bottomFade)"/>
   <rect x="${PADDING}" y="${textStartY - COPY_FONT_SIZE - 25}" width="80" height="6" fill="${COLORS.accent}" rx="3"/>
   <text x="${PADDING}" y="${textStartY}" font-family="DejaVu Sans, Liberation Sans, Arial, sans-serif" font-size="${COPY_FONT_SIZE}" font-weight="700" fill="${COLORS.white}" xml:space="preserve">${copyTspans}</text>
