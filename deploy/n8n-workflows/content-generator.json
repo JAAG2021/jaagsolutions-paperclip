@@ -223,7 +223,7 @@
         220
       ],
       "parameters": {
-        "command": "node /opt/n8n-scripts/compose-image.js \"{{ $json.tmp_path }}\""
+        "command": "NODE_PATH=/opt/n8n-modules/node_modules node /opt/n8n-scripts/compose-image.js \"{{ $json.tmp_path }}\""
       }
     },
     {
