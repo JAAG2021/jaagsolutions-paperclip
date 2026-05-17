@@ -270,11 +270,21 @@
       }
     },
     {
+      "id": "wait-ig-container",
+      "name": "Esperar IG container",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2290, 200],
+      "parameters": {
+        "jsCode": "// Meta requiere unos segundos para procesar el container antes de poder publicarlo.\n// Sin esto, /media_publish devuelve 9007 'Media ID is not available'.\nawait new Promise(r => setTimeout(r, 5000));\nreturn $input.all();"
+      }
+    },
+    {
       "id": "http-ig-publish",
       "name": "Meta IG — publicar",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2400, 200],
+      "position": [2510, 200],
       "continueOnFail": true,
       "parameters": {
         "method": "POST",
@@ -475,6 +485,9 @@
       "main": [[{ "node": "Meta IG — crear container", "type": "main", "index": 0 }]]
     },
     "Meta IG — crear container": {
+      "main": [[{ "node": "Esperar IG container", "type": "main", "index": 0 }]]
+    },
+    "Esperar IG container": {
       "main": [[{ "node": "Meta IG — publicar", "type": "main", "index": 0 }]]
     },
     "Meta IG — publicar": {
