@@ -1,5 +1,5 @@
 # Checklist Maestro — Proyecto JAAGSOLUTIONS
-**Revisión:** 2026-05-12
+**Revisión:** 2026-05-17
 **Rama:** `feature/jaagsolutions`
 **Regla:** LEER ESTE ARCHIVO AL INICIO DE CADA SESIÓN antes de proponer cualquier tarea. Actualizar inmediatamente al completar cada item.
 
@@ -19,68 +19,39 @@
 
 ---
 
-## ⚠️ INICIO PRÓXIMA SESIÓN — LEER PRIMERO (2026-05-13)
+## ✅ ESTADO ACTUAL — CIERRE 2026-05-17
 
-**Estado al cierre de sesión 2026-05-12:**
-El Content Pipeline está en test activo. Se detectó y corrigió FALLA 21 (Google Vision OCR recibía `$json.image_base64` vacío porque un nodo Postgres intermedio borra el stream de datos). El fix está en commit `f5215681` en el worktree local pero **NO está pusheado al remote `jaag2021`**.
+**Pipeline E2E validado en producción.** Post de prueba `4a9a24b4-bb79-4a64-908b-7af12caf2d21` publicado correctamente en Facebook + Instagram + LinkedIn con imagen nativa + copy + hashtags concatenados. Workflow llegó a `status=published`.
 
-**PASO 1 — Push del fix (máquina local, ANTES de cualquier otra cosa):**
+**Cambios desplegados hoy (commits):**
+
+- `2dd41281` — Fase 1: diversidad de imágenes (Auditor con 32 escenas, Ideogram seed + style_type, V_2)
+- Cadenas previas: telegram-approval secuencial FB → IG → LinkedIn, multipart binary FB, LinkedIn Asset Upload nativo, IG container 5s wait, compose-image.js sin labels parásitos, ASPECT_3_4 unificado.
+
+**Workflow IDs activos en n8n (no cambiar — webhooks dependen de ellos):**
+
+- Content Generator: `diB9nJOsjSzYbujt`
+- Telegram Approval → Publisher: `EAfkZIDiZ1KqTPmJ`
+- Formspree Lead → Paperclip Issue: `wGBj1gkmy1JoBfGP`
+
+**Próxima sesión — leer en orden:**
+
+1. Este checklist (sección "PIPELINE AUTOMATIZADO DE CONTENIDO" + "Pendientes Fase 2")
+2. `BITACORA-INFRAESTRUCTURA.md` → sesión 2026-05-17 (FALLAS 22–30 + reglas operativas reforzadas)
+3. `deploy/RUNBOOK.md` → para cualquier comando operativo
+4. `feedback-reset-post-prueba.md` (memoria) — siempre resetear post antes de Execute Workflow
+
+**Comando de reset standard (memorizar):**
+
 ```bash
-cd paperclip/.worktrees/jaagsolutions
-git push jaag2021 feature/jaagsolutions
+docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "UPDATE content_plan SET status='\''pending'\'', image_url=NULL, retry_count=0, error_log=NULL WHERE id='\''<POST_ID>'\'';"' && rm -f /opt/jaagsolutions/content/<POST_ID>.jpg
 ```
-
-**PASO 2 — Pull en VPS + re-import del workflow corregido:**
-```bash
-# En VPS:
-cd /opt/jaagsolutions/repo
-git pull
-
-python3 -c "
-import json
-with open('deploy/n8n-workflows/content-generator.json') as f:
-    wf = json.load(f)
-if isinstance(wf, list):
-    for w in wf: w.pop('tags', None)
-else:
-    wf.pop('tags', None)
-with open('/tmp/content-generator-clean.json', 'w') as f:
-    json.dump(wf, f)
-print('OK')
-"
-docker cp /tmp/content-generator-clean.json deploy-n8n-1:/tmp/content-generator-clean.json
-```
-
-En n8n UI: archivar el "Content Generator" activo → luego:
-```bash
-docker exec deploy-n8n-1 n8n import:workflow --input=/tmp/content-generator-clean.json
-```
-Activar el recién importado (toggle ON).
-
-**PASO 3 — Confirmar estado del post de prueba:**
-```bash
-docker exec deploy-postgres-1 psql -U paperclip -d paperclip -c \
-  "SELECT id, status, retry_count FROM content_plan WHERE id='4a9a24b4-bb79-4a64-908b-7af12caf2d21';"
-```
-Debe mostrar `status=pending, retry_count=0`. Si no, resetear:
-```bash
-docker exec deploy-postgres-1 psql -U paperclip -d paperclip -c \
-  "UPDATE content_plan SET status='pending', retry_count=0 WHERE id='4a9a24b4-bb79-4a64-908b-7af12caf2d21';"
-```
-
-**PASO 4 — Ejecutar workflow en UI y verificar que Google Vision OCR pasa sin error.**
-
-**Verificar en el nodo Google Vision — OCR (JSON body debe verse así en Parameters):**
-```
-$('Guardar imagen en disco').item.json.image_base64
-```
-NO debe decir `$json.image_base64` — si sigue diciendo eso, el import NO tomó el fix.
 
 ---
 
 ---
 
-## RESUMEN EJECUTIVO — 2026-05-11
+## RESUMEN EJECUTIVO — 2026-05-17
 
 | Entregable | Estado | % Completo |
 |-----------|--------|-----------|
@@ -97,7 +68,8 @@ NO debe decir `$json.image_base64` — si sigue diciendo eso, el import NO tomó
 | Perfiles sociales | **Completo** — LinkedIn ✅ Instagram ✅ Facebook Business ✅ (2026-05-11) | 100% |
 | LinkedIn Schedule Mes 1 | **Completo** — 8 posts CSV generado por A4, post #1 publicado ✅ (2026-05-11) | 100% |
 | Meta Semana 1 programada | **Completo** — 3 posts FB+IG programados en Meta Business Suite ✅ (2026-05-11) | 100% |
-| Pipeline automatizado contenido | **En test activo** — workflows importados, SplitInBatches fix + jsonBody fix + Google Vision fix aplicados. Commit `f5215681` pendiente de push/pull al VPS. Post prueba listo en DB (`status=pending`). Bloqueante: push del fix antes de reiniciar test. | 85% |
+| Pipeline automatizado contenido | **LIVE E2E** — Content Generator (Ideogram V_2 + Auditor con 32 escenas + seed/style_type aleatorio + compose-image 4:5) → Telegram approval → publicación FB + IG + LinkedIn con imagen nativa + copy + hashtags concatenados. Validado 2026-05-17. | 100% |
+| Diversidad visual (Fase 1) | **Completo** — Code node `Preparar prompt Auditor` con 32 variantes, Ideogram seed + style_type rotativo, modelo V_2. Commit `2dd41281` ✅ | 100% |
 
 ---
 
@@ -394,6 +366,22 @@ Una vez configurados los secrets, **cualquier push que toque `deploy/n8n-workflo
 | Importar workflow n8n (`formspree-to-paperclip.json`) | ✅ Completo (2026-05-06) — importado desde `/opt/jaagsolutions/repo/deploy/n8n-workflows/` |
 | Activar workflow n8n | ✅ Completo (2026-05-06) — workflow activo en `https://n8n.jaagsolutions.com` |
 | Prueba E2E completa: formulario → Formspree → n8n → issue Paperclip | ✅ Completo (2026-05-06) — issue JAAG-2 creado en Paperclip asignado a Growth Ops (A3) |
+
+---
+
+## PIPELINE AUTOMATIZADO DE CONTENIDO — Fase 2 (pendiente)
+
+**Estado Fase 1:** ✅ Completo (2026-05-17) — generación + aprobación + publicación E2E funcionando, diversidad visual aplicada.
+
+**Fase 2 — tareas en backlog:**
+
+- [ ] **A4 debe poblar `hashtags` en `content_plan`** — actualmente el agente genera `copy_text` + `image_prompt` pero el campo `hashtags` queda NULL. Actualizar el spec/prompt de A4 para que genere 3–5 hashtags relevantes por pilar y los inserte en la columna correspondiente. Sin esto, las publicaciones reales saldrán sin hashtags (el workflow concatena pero el campo viene vacío).
+- [ ] **OCR post-generación (Fix #7 deferred)** — agregar nodo Google Vision después de Ideogram para validar que la imagen no contenga texto baked-in. Si OCR detecta texto, regenerar automáticamente (máx 3 intentos antes de marcar error).
+- [ ] **Variety enforcement DB-side** — crear tabla `content_history` o columna `last_scene_variant` en `content_plan` para evitar repetir la misma escena en ventana de 14 días. Hoy la selección es random pura, sin memoria.
+- [ ] **A4 enriched image_prompt** — actualizar el spec del agente A4 para que genere `image_prompt` más rico: contexto de pilar + audiencia objetivo + emoción + sujeto sugerido (no solo "Professional accounting services for small business").
+- [ ] **Aspect ratio por plataforma** — hoy todos los formatos portrait usan ASPECT_3_4 (1080×1350). Para LinkedIn estricto podría preferirse 1:1, para reels 9:16. Diferir hasta que A4 genere posts específicos por plataforma.
+- [ ] **Sync-n8n-workflows.sh PUT path bug** — el script de sync vía GitHub Actions tiene un bug en el path del PUT al API. Diferido — hoy se usa transplant manual vía REST API.
+- [ ] **Limpiar test post fabricado** — `4a9a24b4-bb79-4a64-908b-7af12caf2d21` quedó publicado en FB/IG/LinkedIn como contenido de test. Si se quiere se puede eliminar de las redes (no urgente — el copy aclara que es test).
 
 ---
 

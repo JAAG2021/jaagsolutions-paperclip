@@ -1,7 +1,7 @@
 # Bitácora de Infraestructura — JAAGSOLUTIONS
 
-**Última actualización:** 2026-05-12
-**Estado del proyecto:** Fase A + Fase B completas — Content Pipeline n8n activo en producción
+**Última actualización:** 2026-05-17
+**Estado del proyecto:** Fase A + Fase B completas — Content Pipeline n8n + Telegram Approval E2E validados en producción (FB + IG + LinkedIn publicando con imagen nativa)
 
 > **LEER ANTES DE CUALQUIER CAMBIO DE INFRAESTRUCTURA.**  
 > Este documento describe el estado real, decisiones tomadas y advertencias críticas del proyecto. Evita duplicar trabajo y romper lo que ya funciona.
@@ -898,3 +898,190 @@ El post está listo para el próximo test E2E una vez deployado el commit `f5215
 4. Para cambios en n8n: leer también `deploy/n8n-workflows/*.json` y `deploy/scripts/sync-n8n-workflows.sh`
 
 **Esto evita repetir errores ya resueltos** (ej. tags en JSON, credenciales hardcoded, indentación de docker-compose.yml, etc.).
+
+---
+
+### Sesión 2026-05-17 — Telegram Approval E2E + Fase 1 diversidad de imágenes
+
+Sesión enfocada en completar el pipeline E2E (generación → aprobación → publicación FB + IG + LinkedIn) y abordar la calidad visual del output (imágenes repetitivas, labels parásitos, fallas de publicación por plataforma). Resultado: pipeline 100% funcional, post de prueba publicado correctamente en las 3 redes con copy + hashtags concatenados.
+
+---
+
+**FALLA 22 — IG nunca se publicaba aunque FB y workflow se completaban "verdes"**
+
+- **Síntoma:** Al aprobar en Telegram, FB se publicaba pero IG no. n8n marcaba `status=published` y enviaba el mensaje "✅ Publicado" en Telegram, así que parecía todo OK, pero IG no recibía nada.
+- **Causa raíz:** n8n ejecuta fan-out **depth-first (secuencial)**, no en paralelo. La rama de FB tenía un nodo Paperclip al final (`Paperclip — log en JAAG-5`) que fallaba con 404 (variable `PAPERCLIP_JAAG5_ISSUE_ID` vacía). El error mataba la ejecución de toda la rama, y como la rama de IG estaba **después** en el orden de ejecución, nunca se llegaba a ejecutar.
+- **Solución aplicada:** Eliminar el nodo Paperclip y reestructurar la cadena como **secuencial encadenada** (FB → IG → LinkedIn) en lugar de fan-out paralelo. Agregar `continueOnFail: true` a cada nodo de publicación para que el fallo de uno no rompa los siguientes.
+- **Regla:** En n8n, asumir siempre ejecución depth-first sequential en fan-outs. Si una rama es no crítica (logging, métricas), va al final o con `continueOnFail`. Nunca poner un nodo que puede fallar antes de otra rama crítica que esperas que se ejecute.
+
+---
+
+**FALLA 23 — FB 500 "Please reduce data" intermitente con `url` field**
+
+- **Síntoma:** Meta Graph API `/photos` rechazaba el upload con 500 cuando se le pasaba `url=https://content.jaagsolutions.com/<id>.jpg`. Pasaba ~30% de las veces, sin patrón claro.
+- **Causa raíz:** El endpoint de URL fetch de Meta tiene rate limits internos y a veces no logra descargar imágenes del dominio en el tiempo permitido. No es debugable desde nuestro lado.
+- **Solución aplicada:** Cambiar a multipart binary upload. Añadir nodo `readBinaryFile` que lee `/opt/jaagsolutions/content/<id>.jpg`, y en `Meta FB — subir foto` usar `parameterType: "formBinaryData"` + `name: "source"` + `inputDataFieldName: "data"`.
+- **Regla:** Para subir imágenes a Meta APIs (FB photos, IG container), preferir multipart binary (`source`) sobre URL fetch cuando se controla el filesystem. Más confiable y desbloquea casos donde la URL no es pública aún.
+
+---
+
+**FALLA 24 — IG `Media ID is not available` (error code 9007) al publicar container**
+
+- **Síntoma:** `/media_publish` retornaba 400 con código 9007 "Media ID is not available" inmediatamente después de crear el container con `/media`.
+- **Causa raíz:** Race condition. Meta necesita ~3–5 segundos para procesar internamente la imagen del container antes de permitir publicarlo. n8n hace el segundo request demasiado rápido (sub-segundo).
+- **Solución aplicada:** Insertar Code node `Esperar IG container` entre crear container y publicar:
+
+  ```js
+  await new Promise(r => setTimeout(r, 5000));
+  return $input.all();
+  ```
+
+- **Regla:** Para flujos asíncronos en Meta Graph API (container → publish), insertar wait ≥5s. No confiar en que el primer response signifique "listo para publicar".
+
+---
+
+**FALLA 25 — LinkedIn `ILLEGAL_ARGUMENT: Request body could not be converted`**
+
+- **Síntoma:** LinkedIn UGC `/v2/ugcPosts` rechazaba el body con 400 cuando se pasaba `shareMediaCategory: 'IMAGE'` + `media[0].media = <https URL del JPG>`. El post se creaba pero solo con el texto, sin imagen embebida.
+- **Causa raíz:** LinkedIn no acepta URLs externas en `media.media`. Requiere subir el binario primero al CDN de LinkedIn vía el flujo de **Asset Upload**, que produce un `urn:li:digitalmediaAsset:...` que sí se acepta.
+- **Solución aplicada:** Implementar el flujo de 3 pasos:
+  1. `POST /v2/assets?action=registerUpload` con `recipes: ['urn:li:digitalmediaRecipe:feedshare-image']` → devuelve `value.asset` (URN) + `value.uploadMechanism.../uploadUrl`.
+  2. `PUT <uploadUrl>` con el binario JPG (Content-Type: image/jpeg).
+  3. `POST /v2/ugcPosts` con `media[0].media = <asset URN del paso 1>`.
+- **Regla:** En LinkedIn, todas las imágenes nativas (no link preview) requieren Asset Upload. URLs directas solo funcionan como link preview, no como `shareMediaCategory: IMAGE`.
+
+---
+
+**FALLA 26 — Ideogram rechaza `ASPECT_4_5` con "not one of [...]"**
+
+- **Síntoma:** Bad Request al llamar `/generate` con `aspect_ratio: 'ASPECT_4_5'`. Ideogram listaba valores válidos pero `ASPECT_4_5` no estaba.
+- **Causa raíz:** Ideogram solo soporta valores discretos del enum: `ASPECT_1_1`, `ASPECT_3_4`, `ASPECT_9_16`, `ASPECT_16_9`, etc. `4:5` (0.80) no es soportado.
+- **Solución aplicada:**
+  1. En `Calcular aspect_ratio` (content-generator.json): todos los formatos portrait → `ASPECT_3_4`.
+  2. En `compose-image.js`: agregar entrada `ASPECT_3_4: { w: 1080, h: 1350 }` al `DIMS` map, mantener `ASPECT_4_5: { w: 1080, h: 1350 }` como alias backward-compat. Sharp resize con `fit: 'cover'` y `position: 'top'` para croppear desde el bottom los ~90px sobrantes — esa zona inferior es la zona calma reservada por el Auditor para el overlay, así que no se pierde sujeto.
+- **Regla:** Las claves del map `DIMS` en compose-image.js deben coincidir 1:1 con los valores que produce `Calcular aspect_ratio`. Salida final en disco siempre 4:5 (1080×1350) para cross-post IG/FB/LinkedIn — Ideogram genera 3:4 y Sharp ajusta.
+
+---
+
+**FALLA 27 — Imágenes con labels "INSTAGRAM" + fecha baked-in**
+
+- **Síntoma:** Las imágenes generadas mostraban en la esquina superior derecha el nombre de la plataforma ("INSTAGRAM") y la fecha programada, baked dentro de la imagen JPG final.
+- **Causa raíz:** `compose-image.js` componía un overlay SVG que incluía 2 `<text>` elements con `platform.toUpperCase()` y `formatDate(scheduled_date)`. Estaba pensado como debug visual de los primeros tests, pero para producción no debe aparecer.
+- **Solución aplicada:** Eliminar los 2 `<text>` elements del SVG en compose-image.js. Mantener solo: logo JAAG·SOLUTIONS top-left, copy + hashtags en bottom overlay, URL del sitio bottom-right.
+- **Regla:** Las imágenes en producción no deben contener metadata visual (plataforma, fecha, debug info). Cualquier overlay textual debe ser branding o copy intencional.
+
+---
+
+**FALLA 28 — Container n8n necesita rebuild cuando cambia `compose-image.js`**
+
+- **Síntoma:** Después de editar `compose-image.js` y hacer `docker compose up -d`, los cambios no se reflejaban en el output.
+- **Causa raíz:** El Dockerfile.n8n incluye `COPY n8n-scripts/ /opt/n8n-scripts/` en build-time. Un `docker compose up -d` recrea el contenedor pero no rebuilda la imagen. Los cambios en archivos COPY'd al image solo se aplican con `docker compose build n8n` antes del `up`.
+- **Solución:** Workflow correcto cuando cambia `compose-image.js`:
+
+  ```bash
+  cd /opt/jaagsolutions/repo/deploy
+  docker compose build n8n
+  docker compose up -d n8n
+  ```
+
+- **Regla:** Cambios en `n8n-scripts/*` requieren `docker compose build n8n`. Cambios en `n8n-workflows/*.json` solo requieren re-import vía API. Cambios en `.env` solo requieren `docker compose up -d`.
+
+---
+
+**FALLA 29 — `n8n import:workflow` falla con `SQLITE_CONSTRAINT: NOT NULL constraint failed: workflows_tags.tagId`**
+
+- **Síntoma:** Importar un workflow JSON con tags definidos rompe el import si los tags no existen previamente en la DB.
+- **Causa raíz:** La tabla `workflows_tags` tiene FK constraint a `tag_entity.id`. Si el tag referenciado por nombre en el JSON no existe, falla.
+- **Solución aplicada:** Antes de importar, strip `tags` del JSON:
+
+  ```python
+  import json
+  with open(path) as f: w = json.load(f)
+  w.pop('tags', None)
+  with open(path_clean, 'w') as f: json.dump(w, f)
+  ```
+
+- **Regla:** Workflow JSON para import vía CLI siempre debe llevar `tags=[]` o no tener la key `tags`. Si se necesitan tags, crearlos en la DB primero o aplicarlos vía UI después del import.
+
+---
+
+**FALLA 30 — `sqlite3` writes from outside the container hit "attempt to write a readonly database"**
+
+- **Síntoma:** Intentar hacer un transplant SQL (UPDATE workflow_entity SET nodes=..., DELETE duplicate) directamente sobre `/opt/jaagsolutions/n8n-data/database.sqlite` desde el host falla con SQLITE readonly.
+- **Causa raíz:** El archivo es owned by `ubuntu:ubuntu`. El usuario SSH (`jaagsolutions`) no tiene write permission. sudo requiere TTY (no disponible vía SSH no interactivo). Además n8n tiene la DB locked por sus propias conexiones.
+- **Solución aplicada (recomendada):** Usar la REST API de n8n para hacer el transplant. Endpoints:
+  - `GET /api/v1/workflows/<NEW_ID>` → nodes + connections
+  - `PUT /api/v1/workflows/<ACTIVE_ID>` con body `{name, nodes, connections, settings, staticData:null}` → conserva el ID activo (no rompe webhooks)
+  - `DELETE /api/v1/workflows/<NEW_ID>` → limpia duplicado
+  - `POST /api/v1/workflows/<ACTIVE_ID>/activate` → activa
+- **API key location:** `deploy/.env` del VPS → `N8N_API_KEY=...` (JWT firmado por n8n).
+- **Regla:** Para modificar workflows activos preservando el webhook ID, usar SIEMPRE la REST API, nunca sqlite3 directo. El "transplant pattern" via API es: GET new → PUT active con sus nodes/connections → DELETE new → POST activate.
+
+---
+
+#### Cambios estructurales de Fase 1 — Diversidad de imágenes
+
+Se aprobó e implementó la Fase 1 del plan de variedad visual (Propuestas 1, 2 y 7 del análisis previo). Objetivo: evitar que todas las imágenes salgan con el mismo "señor latino con laptop en oficina".
+
+**Propuesta 1 — Biblioteca de escenas (Code node `Preparar prompt Auditor`):**
+
+Nuevo Code node insertado entre `Calcular aspect_ratio` y `Auditor de prompt (OpenAI)`. Contiene biblioteca de 8 variantes de escena por pilar (32 total):
+
+- `educacion` / `experto` / `conocimiento`: 8 escenas (oficina con dashboards, café soleado, sala de juntas, IT manager en server room, etc.)
+- `social_proof` / `casos` / `testimonial`: 8 escenas (equipo colaborando, handshake, video call, celebración, etc.)
+- `produccion` / `behind_scenes` / `proceso` / `herramienta`: 8 escenas (macro teclado, abstract data streams, floating UI panels, flat-lay, etc.)
+- `promesa` / `vision` / `aspiracion`: 8 escenas (rooftop golden hour, glass atrium, aerial dawn city, harbor dusk, etc.)
+
+Selección aleatoria por ejecución. El system prompt del Auditor se construye dinámicamente con la escena seleccionada como "BASE SCENE — use this as your creative starting point and enrich it".
+
+**Propuesta 2 — Seed aleatorio + style_type rotativo en Ideogram:**
+
+En el `jsonBody` del nodo Ideogram:
+
+- `seed: Math.floor(Math.random() * 2147483647)` — un valor random distinto por ejecución (no determinístico).
+- `style_type` ponderado: `REALISTIC` 50% / `GENERAL` 33% / `3D_RENDER` 17%, vía `(['REALISTIC','REALISTIC','REALISTIC','GENERAL','GENERAL','3D_RENDER'])[Math.floor(Math.random()*6)]`.
+
+**Propuesta 7 — Modelo Ideogram V_2_TURBO → V_2:**
+
+V_2 tiene mejor calidad y consistencia de composición que V_2_TURBO. Mismo precio, ~50% más lento (~10s vs ~5s) — aceptable para generación nocturna.
+
+**Commit:** `2dd41281` — `feat(content-gen): Fase 1 — diversidad de imágenes (Propuestas 1+2+7)`.
+
+---
+
+#### Validación E2E final (2026-05-17 15:30 COL)
+
+Post de prueba `4a9a24b4-bb79-4a64-908b-7af12caf2d21`:
+
+- `copy_text`: "Test auditor de prompt — imagen debe mostrar composición visual profesional"
+- `hashtags`: `#automatizacion #pymes #productividad #transformaciondigital #ia`
+
+Resultado tras click ✅ Aprobar en Telegram:
+
+| Plataforma | Imagen | Copy | Hashtags | Concatenación |
+|---|---|---|---|---|
+| Facebook | ✅ nativa, JAAG·SOLUTIONS overlay, sin labels parásitos, 4:5 | ✅ | ✅ los 5 hashtags | ✅ línea en blanco entre copy y hashtags |
+| Instagram | ✅ misma imagen | ✅ | ✅ hashtags como links azules clickeables | ✅ |
+| LinkedIn | ✅ **imagen embebida nativa** (Asset Upload OK) | ✅ | ✅ hashtags como links azules | ✅ |
+
+DB final: `status=published`. Workflow completó toda la cadena (LinkedIn register upload → PUT binario → ugcPosts con asset URN → status=published → "✅ Publicado" en Telegram).
+
+---
+
+#### Pendientes para Fase 2 (sesión separada)
+
+1. **A4 debe poblar `hashtags` en `content_plan`** — actualmente el agente Paperclip A4 genera posts con copy + image_prompt pero el campo `hashtags` viene NULL. Requiere actualizar el spec/prompt de A4 para que genere 3–5 hashtags relevantes por pillar y los inserte en la columna correcta.
+2. **OCR post-generación con Google Vision (Fix #7 deferred)** — validar que la imagen generada no contenga texto baked-in antes de enviar a Telegram. Si OCR detecta texto, regenerar automáticamente (hasta 3 intentos).
+3. **Variety enforcement DB-side** — agregar tracking de temas/escenas usadas en los últimos 14 días para evitar repeticiones cercanas. Tabla `content_history` o columna `last_scene_variant` en `content_plan`.
+4. **A4 enriched image_prompt** — incluir en el spec del agente A4 instrucciones más ricas para `image_prompt` (no solo "Professional accounting services for small business" sino contexto de pilar + audiencia + emoción).
+
+---
+
+#### Reglas operativas reforzadas en esta sesión
+
+- **Reset post antes de Execute:** SIEMPRE validar con `SELECT id, status, image_url FROM content_plan WHERE id='...'` y resetear (`UPDATE status='pending', image_url=NULL, retry_count=0, error_log=NULL` + `rm -f /opt/jaagsolutions/content/<id>.jpg`) ANTES de pedir al usuario que ejecute. Si quedó en `generating` o `review` por una corrida anterior, el workflow no lo procesa.
+- **Transplant via API, no sqlite3:** Para actualizar workflows manteniendo webhook IDs, usar REST API de n8n (`PUT /workflows/<id>` + `DELETE /workflows/<dup>` + `POST /workflows/<id>/activate`). Nunca tocar `database.sqlite` directamente.
+- **Strip tags antes de import:** `wf.pop('tags', None)` en Python antes de pasar el JSON al `n8n import:workflow`.
+- **SSH authorized_keys quedó vacío una vez** (causa desconocida 13:56 del 2026-05-17); el script de recuperación: reagregar manualmente `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAWHZ4/huqnWIpsZui02YvKTRcFgke+i9dys9AoE7szP jaagsolutions-vps` al archivo `/home/jaagsolutions/.ssh/authorized_keys` desde la consola serial de Google Cloud.
+
+
