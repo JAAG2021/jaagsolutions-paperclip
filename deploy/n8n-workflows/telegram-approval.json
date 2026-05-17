@@ -150,6 +150,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1740, 200],
+      "continueOnFail": true,
       "parameters": {
         "method": "POST",
         "url": "=https://graph.facebook.com/v19.0/{{ $env.META_PAGE_ID }}/photos",
@@ -163,8 +164,8 @@
         "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
-            { "name": "url", "value": "={{ $json.image_url }}" },
-            { "name": "caption", "value": "={{ $json.copy_text + '\\n\\n' + ($json.hashtags || '') }}" },
+            { "name": "url", "value": "={{ $('Obtener datos del post').first().json.image_url }}" },
+            { "name": "caption", "value": "={{ $('Obtener datos del post').first().json.copy_text + '\\n\\n' + ($('Obtener datos del post').first().json.hashtags || '') }}" },
             { "name": "published", "value": "true" }
           ]
         },
@@ -176,7 +177,8 @@
       "name": "Meta IG — crear container",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1740, 340],
+      "position": [1960, 200],
+      "continueOnFail": true,
       "parameters": {
         "method": "POST",
         "url": "=https://graph.facebook.com/v19.0/{{ $env.META_IG_USER_ID }}/media",
@@ -190,8 +192,8 @@
         "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
-            { "name": "image_url", "value": "={{ $json.image_url }}" },
-            { "name": "caption", "value": "={{ $json.copy_text + '\\n\\n' + ($json.hashtags || '') }}" }
+            { "name": "image_url", "value": "={{ $('Obtener datos del post').first().json.image_url }}" },
+            { "name": "caption", "value": "={{ $('Obtener datos del post').first().json.copy_text + '\\n\\n' + ($('Obtener datos del post').first().json.hashtags || '') }}" }
           ]
         },
         "options": { "timeout": 30000 }
@@ -202,7 +204,8 @@
       "name": "Meta IG — publicar",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1960, 340],
+      "position": [2180, 200],
+      "continueOnFail": true,
       "parameters": {
         "method": "POST",
         "url": "=https://graph.facebook.com/v19.0/{{ $env.META_IG_USER_ID }}/media_publish",
@@ -238,28 +241,6 @@
           "id": "3WAwEY7SXDBTW16f",
           "name": "Postgres account"
         }
-      }
-    },
-    {
-      "id": "http-paperclip-log",
-      "name": "Paperclip — log en JAAG-5",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [2420, 220],
-      "parameters": {
-        "method": "POST",
-        "url": "=http://paperclip:3100/api/companies/{{ $env.PAPERCLIP_COMPANY_ID }}/issues/{{ $env.PAPERCLIP_JAAG5_ISSUE_ID }}/comments",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.PAPERCLIP_API_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ body: '✅ Post publicado\\nPlataforma: ' + $('Obtener datos del post').first().json.platform + '\\nFecha: ' + $('Obtener datos del post').first().json.scheduled_date }) }}",
-        "options": {}
       }
     },
     {
@@ -413,10 +394,7 @@
     },
     "¿Es Meta/IG/FB?": {
       "main": [
-        [
-          { "node": "Meta FB — subir foto", "type": "main", "index": 0 },
-          { "node": "Meta IG — crear container", "type": "main", "index": 0 }
-        ],
+        [{ "node": "Meta FB — subir foto", "type": "main", "index": 0 }],
         []
       ]
     },
@@ -424,7 +402,7 @@
       "main": [[{ "node": "status = published", "type": "main", "index": 0 }]]
     },
     "Meta FB — subir foto": {
-      "main": [[{ "node": "status = published", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Meta IG — crear container", "type": "main", "index": 0 }]]
     },
     "Meta IG — crear container": {
       "main": [[{ "node": "Meta IG — publicar", "type": "main", "index": 0 }]]
@@ -433,9 +411,6 @@
       "main": [[{ "node": "status = published", "type": "main", "index": 0 }]]
     },
     "status = published": {
-      "main": [[{ "node": "Paperclip — log en JAAG-5", "type": "main", "index": 0 }]]
-    },
-    "Paperclip — log en JAAG-5": {
       "main": [[{ "node": "Telegram — ✅ Publicado", "type": "main", "index": 0 }]]
     },
     "status = pending (rechazado)": {
