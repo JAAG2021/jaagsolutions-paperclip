@@ -92,12 +92,19 @@ function formatDate(d) {
   } catch { return ''; }
 }
 
+// IMPORTANTE: las claves de DIMS deben coincidir con los aspect_ratio que produce
+// el workflow (`Calcular aspect_ratio`). Ideogram NO soporta ASPECT_4_5; por eso
+// el workflow envía ASPECT_3_4 (0.75) y aquí lo mapeamos a las dimensiones finales
+// 1080×1350 (4:5). El sharp resize cover con position 'top' croppea desde abajo
+// los ~90px sobrantes — esa franja es la zona calma reservada por el Auditor para
+// el overlay, por lo que no se pierde sujeto.
 const DIMS = {
   ASPECT_1_1:  { w: 1080, h: 1080 },
-  ASPECT_4_5:  { w: 1080, h: 1350 },
+  ASPECT_3_4:  { w: 1080, h: 1350 },  // Ideogram 3:4 → 4:5 final cropping bottom
+  ASPECT_4_5:  { w: 1080, h: 1350 },  // alias backward-compat (uso manual/test)
   ASPECT_9_16: { w: 1080, h: 1920 },
 };
-const dims = DIMS[aspect_ratio] || DIMS.ASPECT_1_1;
+const dims = DIMS[aspect_ratio] || DIMS.ASPECT_3_4;
 
 const COLORS = {
   brandDeep:  '#0D1B2A',
@@ -171,7 +178,10 @@ async function main() {
   const filePath = `${output_dir}/${post_id}.jpg`;
 
   const composedBuffer = await sharp(baseBuffer)
-    .resize(dims.w, dims.h, { fit: 'cover', position: 'centre' })
+    // position 'top': cuando hay que cropear vertical (3:4 → 4:5), recorta desde
+    // el bottom (zona calma reservada por el Auditor), preservando el sujeto
+    // que el prompt posiciona en el top 62%.
+    .resize(dims.w, dims.h, { fit: 'cover', position: 'top' })
     .composite([{ input: Buffer.from(svg), top: 0, left: 0 }])
     .jpeg({ quality: 92, progressive: true })
     .toBuffer();
