@@ -101,8 +101,8 @@ services:
       META_IG_USER_ID: ${META_IG_USER_ID}
       LINKEDIN_ACCESS_TOKEN: ${LINKEDIN_ACCESS_TOKEN}
       PAPERCLIP_JAAG5_ISSUE_ID: ${PAPERCLIP_JAAG5_ISSUE_ID}
-      # URL pública de las imágenes (Caddy las sirve desde /opt/jaagsolutions/content)
-      CONTENT_PUBLIC_URL: https://content.${DOMAIN}
+      # URL pública de las imágenes (Caddy las sirve bajo /static-content/* en el subdominio n8n)
+      CONTENT_PUBLIC_URL: https://n8n.${DOMAIN}/static-content
     volumes:
       - ${N8N_DATA_DIR}:/home/node/.n8n
       - ${CONTENT_DIR:-/opt/jaagsolutions/content}:/opt/jaagsolutions/content

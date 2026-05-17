@@ -13,22 +13,18 @@ paperclip.{$DOMAIN} {
 }
 
 n8n.{$DOMAIN} {
-	reverse_proxy n8n:5678
-	encode gzip
-	log {
-		output stderr
+	# Imágenes generadas por el Content Generator — públicas bajo /static-content/*
+	# (necesario para Meta/LinkedIn que requieren URL accesible para descargar la imagen).
+	# Se sirve bajo el subdominio n8n para evitar agregar DNS nuevo.
+	handle_path /static-content/* {
+		root * /srv/content
+		file_server
+		header Cache-Control "public, max-age=3600"
 	}
-}
-
-# Imágenes generadas por el Content Generator — públicas (necesario para Meta/LinkedIn que
-# requieren URL accesible para descargar la imagen al publicar).
-content.{$DOMAIN} {
-	root * /srv/content
-	file_server browse
+	handle {
+		reverse_proxy n8n:5678
+	}
 	encode gzip
-	# Solo JPG/PNG; bloquea listados de directorio raíz si no se desea.
-	@allowed path *.jpg *.jpeg *.png *.webp
-	header @allowed Cache-Control "public, max-age=3600"
 	log {
 		output stderr
 	}
