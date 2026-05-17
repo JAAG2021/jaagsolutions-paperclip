@@ -98,7 +98,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE content_plan SET status = 'generating' WHERE id = '{{ $json.id }}' RETURNING id",
+        "query": "UPDATE content_plan SET status = 'generating' WHERE id = '{{ $json.id }}' RETURNING *",
         "options": {}
       },
       "credentials": {

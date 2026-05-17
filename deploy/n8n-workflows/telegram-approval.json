@@ -248,7 +248,7 @@
       "position": [2420, 220],
       "parameters": {
         "method": "POST",
-        "url": "=http://paperclip:3100/api/companies/{{ process.env.PAPERCLIP_COMPANY_ID }}/issues/{{ process.env.PAPERCLIP_JAAG5_ISSUE_ID }}/comments",
+        "url": "=http://paperclip:3100/api/companies/{{ $env.PAPERCLIP_COMPANY_ID }}/issues/{{ $env.PAPERCLIP_JAAG5_ISSUE_ID }}/comments",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
