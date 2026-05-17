@@ -105,7 +105,8 @@
       "name": "LinkedIn — publicar post",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1520, 100],
+      "position": [2400, 200],
+      "continueOnFail": true,
       "parameters": {
         "method": "POST",
         "url": "https://api.linkedin.com/v2/ugcPosts",
@@ -119,7 +120,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ ({ author: $env.LINKEDIN_AUTHOR_URN, lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: $json.copy_text + '\\n\\n' + ($json.hashtags || '') + '\\n\\n🔗 ' + $json.image_url }, shareMediaCategory: 'NONE' } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
+        "jsonBody": "={{ ({ author: $env.LINKEDIN_AUTHOR_URN, lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: $('Obtener datos del post').first().json.copy_text + '\\n\\n' + ($('Obtener datos del post').first().json.hashtags || '') + '\\n\\n🔗 ' + $('Obtener datos del post').first().json.image_url }, shareMediaCategory: 'NONE' } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
         "options": { "timeout": 30000 }
       }
     },
@@ -408,7 +409,7 @@
       "main": [[{ "node": "Meta IG — publicar", "type": "main", "index": 0 }]]
     },
     "Meta IG — publicar": {
-      "main": [[{ "node": "status = published", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "LinkedIn — publicar post", "type": "main", "index": 0 }]]
     },
     "status = published": {
       "main": [[{ "node": "Telegram — ✅ Publicado", "type": "main", "index": 0 }]]
