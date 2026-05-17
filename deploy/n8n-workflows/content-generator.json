@@ -271,7 +271,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE content_plan SET status = 'review' WHERE id = '{{ $json.id }}'",
+        "query": "UPDATE content_plan SET status = 'review' WHERE id = '{{ $('Componer imagen final (Sharp + SVG)').first().json.id }}'",
         "options": {}
       },
       "credentials": {
