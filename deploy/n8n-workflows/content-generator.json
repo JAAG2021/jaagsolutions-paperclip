@@ -210,7 +210,7 @@
         220
       ],
       "parameters": {
-        "jsCode": "const fs = require('fs');\nconst ideogramResp = $input.first().json;\nconst prev = $('Calcular aspect_ratio').first().json;\n\nconst imageUrl = ideogramResp.data?.[0]?.url;\nif (!imageUrl) {\n  throw new Error('Ideogram no devolvió imagen: ' + JSON.stringify(ideogramResp).slice(0, 500));\n}\n\nconst tmpPath = `/tmp/compose_${prev.id}.json`;\nfs.writeFileSync(tmpPath, JSON.stringify({\n  image_url: imageUrl,\n  post_id: prev.id,\n  copy_text: prev.copy_text,\n  hashtags: prev.hashtags,\n  platform: prev.platform,\n  scheduled_date: prev.scheduled_date,\n  aspect_ratio: prev.aspect_ratio,\n  output_dir: '/opt/jaagsolutions/content',\n}));\n\nreturn [{ json: { ...prev, tmp_path: tmpPath } }];"
+        "jsCode": "const fs = require('fs');\nconst ideogramResp = $input.first().json;\nconst prev = $('Calcular aspect_ratio').first().json;\n\nconst imageUrl = ideogramResp.data?.[0]?.url;\nif (!imageUrl) {\n  throw new Error('Ideogram no devolvió imagen: ' + JSON.stringify(ideogramResp).slice(0, 500));\n}\n\n// Ruta fija — evita expresiones en Execute Command que no se resuelven\nconst tmpPath = '/tmp/n8n_compose.json';\nfs.writeFileSync(tmpPath, JSON.stringify({\n  image_url: imageUrl,\n  post_id: prev.id,\n  copy_text: prev.copy_text,\n  hashtags: prev.hashtags,\n  platform: prev.platform,\n  scheduled_date: prev.scheduled_date,\n  aspect_ratio: prev.aspect_ratio,\n  output_dir: '/opt/jaagsolutions/content',\n}));\n\nreturn [{ json: { ...prev, tmp_path: tmpPath } }];"
       }
     },
     {
@@ -223,7 +223,7 @@
         220
       ],
       "parameters": {
-        "command": "NODE_PATH=/opt/n8n-modules/node_modules node /opt/n8n-scripts/compose-image.js \"{{ $json.tmp_path }}\""
+        "command": "NODE_PATH=/opt/n8n-modules/node_modules node /opt/n8n-scripts/compose-image.js /tmp/n8n_compose.json"
       }
     },
     {
