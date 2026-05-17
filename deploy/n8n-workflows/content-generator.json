@@ -236,7 +236,7 @@
         220
       ],
       "parameters": {
-        "jsCode": "const execResult = $input.first().json;\nconst prev = $('Preparar input compose').first().json;\n\nconst stdout = (execResult.stdout || '').trim();\nif (!stdout) {\n  const stderr = (execResult.stderr || '').trim();\n  throw new Error('compose-image.js sin output. stderr: ' + stderr.slice(0, 1000));\n}\n\nlet result;\ntry {\n  result = JSON.parse(stdout);\n} catch (e) {\n  throw new Error('JSON inválido de compose-image.js: ' + stdout.slice(0, 500));\n}\n\nif (!result.image_url) {\n  throw new Error('compose-image.js no retornó image_url. Output: ' + JSON.stringify(result).slice(0, 500));\n}\n\nreturn [{ json: { ...prev, image_url: result.image_url, image_base64: result.image_base64, composition_meta: result.composition_meta } }];"
+        "jsCode": "const execResult = $input.first().json;\nconst prev = $('Preparar input compose').first().json;\n\nconst stdout = (execResult.stdout || '').trim();\nif (!stdout) {\n  const stderr = (execResult.stderr || '').trim();\n  throw new Error('compose-image.js sin output. stderr: ' + stderr.slice(0, 1000));\n}\n\nlet result;\ntry {\n  result = JSON.parse(stdout);\n} catch (e) {\n  throw new Error('JSON inválido de compose-image.js: ' + stdout.slice(0, 500));\n}\n\nif (!result.image_url) {\n  throw new Error('compose-image.js no retornó image_url. Output: ' + JSON.stringify(result).slice(0, 500));\n}\n\nreturn [{ json: { ...prev, image_url: result.image_url, image_path: result.image_path, image_base64: result.image_base64, composition_meta: result.composition_meta } }];"
       }
     },
     {
@@ -291,7 +291,7 @@
         140
       ],
       "parameters": {
-        "jsCode": "const postData = $('Componer imagen final (Sharp + SVG)').first().json;\nconst fs = require('fs');\nconst filePath = postData.image_url;\nconst fileBuffer = fs.readFileSync(filePath);\nconst base64 = fileBuffer.toString('base64');\n\nreturn [{\n  json: postData,\n  binary: {\n    photo: {\n      data: base64,\n      mimeType: 'image/jpeg',\n      fileName: `${postData.id}.jpg`\n    }\n  }\n}];"
+        "jsCode": "const postData = $('Componer imagen final (Sharp + SVG)').first().json;\nconst fs = require('fs');\n// image_path es la ruta local en disco; image_url es la URL pública en content.jaagsolutions.com\nconst filePath = postData.image_path;\nconst fileBuffer = fs.readFileSync(filePath);\nconst base64 = fileBuffer.toString('base64');\n\nreturn [{\n  json: postData,\n  binary: {\n    photo: {\n      data: base64,\n      mimeType: 'image/jpeg',\n      fileName: `${postData.id}.jpg`\n    }\n  }\n}];"
       }
     },
     {

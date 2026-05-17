@@ -101,6 +101,8 @@ services:
       META_IG_USER_ID: ${META_IG_USER_ID}
       LINKEDIN_ACCESS_TOKEN: ${LINKEDIN_ACCESS_TOKEN}
       PAPERCLIP_JAAG5_ISSUE_ID: ${PAPERCLIP_JAAG5_ISSUE_ID}
+      # URL pública de las imágenes (Caddy las sirve desde /opt/jaagsolutions/content)
+      CONTENT_PUBLIC_URL: https://content.${DOMAIN}
     volumes:
       - ${N8N_DATA_DIR}:/home/node/.n8n
       - ${CONTENT_DIR:-/opt/jaagsolutions/content}:/opt/jaagsolutions/content
@@ -119,6 +121,8 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+      # Sirve imágenes generadas en content.${DOMAIN} (read-only)
+      - ${CONTENT_DIR:-/opt/jaagsolutions/content}:/srv/content:ro
     environment:
       DOMAIN: ${DOMAIN}
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}

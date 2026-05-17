@@ -20,6 +20,20 @@ n8n.{$DOMAIN} {
 	}
 }
 
+# Imágenes generadas por el Content Generator — públicas (necesario para Meta/LinkedIn que
+# requieren URL accesible para descargar la imagen al publicar).
+content.{$DOMAIN} {
+	root * /srv/content
+	file_server browse
+	encode gzip
+	# Solo JPG/PNG; bloquea listados de directorio raíz si no se desea.
+	@allowed path *.jpg *.jpeg *.png *.webp
+	header @allowed Cache-Control "public, max-age=3600"
+	log {
+		output stderr
+	}
+}
+
 {$DOMAIN} {
 	redir https://www.{$DOMAIN}{uri} permanent
 }

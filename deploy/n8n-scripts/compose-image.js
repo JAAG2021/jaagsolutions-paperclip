@@ -180,8 +180,13 @@ async function main() {
 
   fs.writeFileSync(filePath, composedBuffer);
 
+  // URL pública para Meta/LinkedIn (necesitan descargar la imagen)
+  const publicUrlBase = process.env.CONTENT_PUBLIC_URL || 'https://content.jaagsolutions.com';
+  const publicUrl = `${publicUrlBase.replace(/\/$/, '')}/${post_id}.jpg`;
+
   process.stdout.write(JSON.stringify({
-    image_url: filePath,
+    image_url: publicUrl,
+    image_path: filePath,
     image_base64: composedBuffer.toString('base64'),
     composition_meta: {
       dims,
