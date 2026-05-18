@@ -181,39 +181,6 @@
       }
     },
     {
-      "id": "http-stability",
-      "name": "Ideogram — generar imagen (sin texto)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1740,
-        220
-      ],
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.ideogram.ai/generate",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Api-Key",
-              "value": "={{ $env.IDEOGRAM_API_KEY }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ image_request: { prompt: $json.image_prompt, aspect_ratio: $json.aspect_ratio, model: 'V_2', magic_prompt_option: 'OFF', seed: Math.floor(Math.random() * 2147483647), style_type: (['REALISTIC','REALISTIC','REALISTIC','GENERAL','GENERAL','3D_RENDER'])[Math.floor(Math.random()*6)], negative_prompt: 'text, letters, numbers, words, watermark, logo, caption, label, sign, typography, readable text, signage, signature, written language' } }) }}",
-        "options": {
-          "timeout": 60000
-        }
-      }
-    },
-    {
       "id": "code-write-compose-input",
       "name": "Preparar input compose",
       "type": "n8n-nodes-base.code",
@@ -407,6 +374,89 @@
           "name": "Postgres account"
         }
       }
+    },
+    {
+      "id": "code-ideogram-ocr",
+      "name": "Ideogram + OCR — 3 intentos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1740,
+        220
+      ],
+      "parameters": {
+        "jsCode": "const https = require('https');\nconst prev = $input.first().json;\nconst MAX_ATTEMPTS = 3;\n\nfunction httpsPost(hostname, path, body, extraHeaders) {\n  return new Promise((resolve, reject) => {\n    const bodyStr = JSON.stringify(body);\n    const options = {\n      hostname, path, method: 'POST',\n      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr), ...extraHeaders },\n      timeout: 30000\n    };\n    const req = https.request(options, (res) => {\n      let data = '';\n      res.on('data', chunk => data += chunk);\n      res.on('end', () => {\n        try { resolve(JSON.parse(data)); }\n        catch (e) { reject(new Error('JSON inválido: ' + data.slice(0, 300))); }\n      });\n    });\n    req.on('error', reject);\n    req.on('timeout', () => { req.destroy(); reject(new Error('Request timeout')); });\n    req.write(bodyStr);\n    req.end();\n  });\n}\n\nasync function generateIdeogram(prompt, aspectRatio) {\n  const seed = Math.floor(Math.random() * 2147483647);\n  const styleTypes = ['REALISTIC','REALISTIC','REALISTIC','GENERAL','GENERAL','3D_RENDER'];\n  const styleType = styleTypes[Math.floor(Math.random() * 6)];\n  return httpsPost('api.ideogram.ai', '/generate', {\n    image_request: {\n      prompt, aspect_ratio: aspectRatio, model: 'V_2',\n      magic_prompt_option: 'OFF', seed, style_type: styleType,\n      negative_prompt: 'text, letters, numbers, words, watermark, logo, caption, label, sign, typography, readable text, signage, signature, written language'\n    }\n  }, { 'Api-Key': $env.IDEOGRAM_API_KEY });\n}\n\nasync function checkOCR(imageUrl) {\n  try {\n    const resp = await httpsPost(\n      'vision.googleapis.com',\n      `/v1/images:annotate?key=${$env.GOOGLE_VISION_API_KEY}`,\n      { requests: [{ image: { source: { imageUri: imageUrl } }, features: [{ type: 'TEXT_DETECTION', maxResults: 10 }] }] },\n      {}\n    );\n    const annotations = resp.responses?.[0]?.textAnnotations || [];\n    const description = annotations[0]?.description || '';\n    return { hasText: description.length > 2, detectedText: description.slice(0, 200) };\n  } catch (err) {\n    console.log('[OCR] Vision API error — fail open: ' + err.message);\n    return { hasText: false, detectedText: '' };\n  }\n}\n\nlet cleanImageUrl = null;\nlet lastError = '';\n\nfor (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {\n  const resp = await generateIdeogram(prev.image_prompt, prev.aspect_ratio);\n  const url = resp.data?.[0]?.url;\n  if (!url) throw new Error(`Ideogram sin URL en intento ${attempt}: ` + JSON.stringify(resp).slice(0, 300));\n  const ocr = await checkOCR(url);\n  if (!ocr.hasText) {\n    cleanImageUrl = url;\n    console.log(`[OCR] Intento ${attempt}: imagen limpia ✓`);\n    break;\n  }\n  lastError = `Intento ${attempt}: texto detectado — \"${ocr.detectedText.replace(/\"/g, \"'\").slice(0, 100)}\"`;\n  console.log('[OCR] ' + lastError);\n}\n\nif (cleanImageUrl) {\n  return [{ json: { ...prev, data: [{ url: cleanImageUrl }] } }];\n}\nreturn [{ json: { ...prev, ocr_error: true, ocr_error_log: `OCR 3 intentos fallidos. Último: ${lastError}` } }];"
+      }
+    },
+    {
+      "id": "if-ocr-error",
+      "name": "¿Error OCR?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1960,
+        60
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "check-ocr-error",
+              "leftValue": "={{ String($json.ocr_error) }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "postgres-ocr-error",
+      "name": "status=error (OCR)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2200,
+        60
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE content_plan SET status = 'error', error_log = '{{ $json.ocr_error_log }}' WHERE id = '{{ $json.id }}'",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "id": "telegram-ocr-error",
+      "name": "Telegram: error OCR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2440,
+        60
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $env.TELEGRAM_CHAT_ID, text: '⚠️ Error OCR — post no procesado\\n📅 ' + $json.scheduled_date + ' | ' + ($json.platform||'') + ' — ' + ($json.pillar||'') + '\\n🔍 ' + ($json.ocr_error_log||'') + '\\n🆔 ' + ($json.id||'') + '\\n\\nAcción: revisar en content_plan o resetear para reintentar.' }) }}",
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -548,7 +598,7 @@
       "main": [
         [
           {
-            "node": "Ideogram — generar imagen (sin texto)",
+            "node": "Ideogram + OCR — 3 intentos",
             "type": "main",
             "index": 0
           }
@@ -588,17 +638,6 @@
         ]
       ]
     },
-    "Ideogram — generar imagen (sin texto)": {
-      "main": [
-        [
-          {
-            "node": "Preparar input compose",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Preparar input compose": {
       "main": [
         [
@@ -626,6 +665,57 @@
         [
           {
             "node": "Guardar image_path",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ideogram + OCR — 3 intentos": {
+      "main": [
+        [
+          {
+            "node": "¿Error OCR?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Error OCR?": {
+      "main": [
+        [
+          {
+            "node": "status=error (OCR)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar input compose",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "status=error (OCR)": {
+      "main": [
+        [
+          {
+            "node": "Telegram: error OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram: error OCR": {
+      "main": [
+        [
+          {
+            "node": "Procesar 1 post a la vez",
             "type": "main",
             "index": 0
           }
