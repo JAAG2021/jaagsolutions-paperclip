@@ -125,7 +125,8 @@ const MAX_CHARS_PER_LINE = dims.h >= 1500 ? 28 : 26;
 
 // Imagen solo muestra el headline (primer bloque antes del doble salto de línea).
 // El cuerpo + CTA + hashtags van únicamente en el caption de la publicación.
-const headline = String(copy_text || '').split(/\n\n/)[0].trim();
+// Strip defensivo de hashtags: cubre data vieja con hashtags embebidos en copy_text.
+const headline = String(copy_text || '').split(/\n\n/)[0].replace(/#\S+/g, '').replace(/\s+/g, ' ').trim();
 const copyLines = wrapText(headline, MAX_CHARS_PER_LINE);
 const MAX_LINES = Math.floor((TEXT_BOX_HEIGHT - 200) / COPY_LINE_HEIGHT);
 const visibleLines = copyLines.slice(0, MAX_LINES);
