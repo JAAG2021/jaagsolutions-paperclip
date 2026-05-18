@@ -123,7 +123,10 @@ const HASHTAG_FONT_SIZE = Math.round(COPY_FONT_SIZE * 0.55);
 const META_FONT_SIZE = 22;
 const MAX_CHARS_PER_LINE = dims.h >= 1500 ? 28 : 26;
 
-const copyLines = wrapText(copy_text, MAX_CHARS_PER_LINE);
+// Imagen solo muestra el headline (primer bloque antes del doble salto de línea).
+// El cuerpo + CTA + hashtags van únicamente en el caption de la publicación.
+const headline = String(copy_text || '').split(/\n\n/)[0].trim();
+const copyLines = wrapText(headline, MAX_CHARS_PER_LINE);
 const MAX_LINES = Math.floor((TEXT_BOX_HEIGHT - 200) / COPY_LINE_HEIGHT);
 const visibleLines = copyLines.slice(0, MAX_LINES);
 if (copyLines.length > MAX_LINES) {
@@ -131,23 +134,16 @@ if (copyLines.length > MAX_LINES) {
     visibleLines[visibleLines.length - 1].replace(/[.,;:!?]+$/, '') + '…';
 }
 
-const hashtagsLine = shortenHashtags(hashtags, 4);
 const fechaStr = formatDate(scheduled_date);
 const plataforma = String(platform || '').toUpperCase();
 
-const textBlockHeight =
-  visibleLines.length * COPY_LINE_HEIGHT + (hashtagsLine ? HASHTAG_FONT_SIZE + 20 : 0);
+const textBlockHeight = visibleLines.length * COPY_LINE_HEIGHT;
 const textStartY =
   TEXT_BOX_Y + Math.round((TEXT_BOX_HEIGHT - textBlockHeight) / 2) + COPY_FONT_SIZE;
 
 const copyTspans = visibleLines
   .map((line, i) => `<tspan x="${PADDING}" dy="${i === 0 ? 0 : COPY_LINE_HEIGHT}">${escapeXml(line)}</tspan>`)
   .join('');
-
-const hashtagsY = textStartY + visibleLines.length * COPY_LINE_HEIGHT + 10;
-const hashtagsTspan = hashtagsLine
-  ? `<text x="${PADDING}" y="${hashtagsY}" font-family="DejaVu Sans, Liberation Sans, Arial, sans-serif" font-size="${HASHTAG_FONT_SIZE}" font-weight="500" fill="${COLORS.accent}" opacity="0.95">${escapeXml(hashtagsLine)}</text>`
-  : '';
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${dims.w}" height="${dims.h}" viewBox="0 0 ${dims.w} ${dims.h}">
   <defs>
@@ -167,7 +163,6 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${dims.w}" height="$
   <rect x="0" y="${TEXT_BOX_Y}" width="${dims.w}" height="${TEXT_BOX_HEIGHT}" fill="url(#bottomFade)"/>
   <rect x="${PADDING}" y="${textStartY - COPY_FONT_SIZE - 25}" width="80" height="6" fill="${COLORS.accent}" rx="3"/>
   <text x="${PADDING}" y="${textStartY}" font-family="DejaVu Sans, Liberation Sans, Arial, sans-serif" font-size="${COPY_FONT_SIZE}" font-weight="700" fill="${COLORS.white}" xml:space="preserve">${copyTspans}</text>
-  ${hashtagsTspan}
   <text x="${dims.w - PADDING}" y="${dims.h - PADDING}" text-anchor="end" font-family="DejaVu Sans, Liberation Sans, Arial, sans-serif" font-size="20" font-weight="500" fill="${COLORS.brandLight}" opacity="0.9">jaagsolutions.com</text>
 </svg>`;
 
