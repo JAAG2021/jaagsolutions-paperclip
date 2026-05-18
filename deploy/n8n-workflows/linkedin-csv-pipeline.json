@@ -1,0 +1,244 @@
+{
+  "name": "LinkedIn CSV — Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "50 13 * * 1-5"
+            },
+            {
+              "field": "cronExpression",
+              "expression": "50 19 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "node-001",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// VPS corre UTC. EDT = UTC-4.\n// Cron 13:50 UTC = 9:50 AM ET → slot AM\n// Cron 19:50 UTC = 3:50 PM ET → slot PM\n// Post #1 (May 18) ya publicado — array empieza en index 1.\nconst POSTS = [\n  {\n    index: 1,\n    date: '2026-05-22',\n    slot: 'AM',\n    copy: 'Caso típico: una PYME empezó automatizando recordatorios de cobro y redujo errores manuales y follow-ups olvidados. El resultado más valioso fue liberar tiempo del equipo para atención al cliente y ventas. Pequeños cambios en procesos repetitivos generan mejoras en la experiencia y en el foco del equipo.',\n    hashtags: '#CasosPYME #AutomatizarParaCrecer #Finanzas',\n    cta: '¿Quiere que revisemos su proceso de cobros en 10 minutos? Escriba REVISA y coordinamos.'\n  },\n  {\n    index: 2,\n    date: '2026-05-26',\n    slot: 'AM',\n    copy: 'Checklist para elegir su primer proceso a automatizar: 1) Es repetitivo y manual. 2) Sujeto a errores humanos. 3) Tiene entradas claras (p. ej. formulario, email). 4) Beneficio claro al reducir tiempo/errores. Si cumple 3/4, es candidato ideal.',\n    hashtags: '#Checklist #AutomatizaciónPYME #MejoraContinua',\n    cta: 'Copie este post y marque las casillas que cumple su proceso.'\n  },\n  {\n    index: 3,\n    date: '2026-05-29',\n    slot: 'PM',\n    copy: 'Mito: La automatización es solo para grandes empresas. Realidad: hoy hay herramientas accesibles (no-code y low-code) que permiten automatizar procesos sin equipos IT grandes. Lo importante es empezar con procesos bien definidos. ¿Qué le frena a usted para empezar?',\n    hashtags: '#MitosAutomatización #NoCode #PYME',\n    cta: 'Responda con su mayor barrera y le doy una alternativa práctica.'\n  },\n  {\n    index: 4,\n    date: '2026-06-02',\n    slot: 'AM',\n    copy: 'Tip rápido: automatice una notificación por cada excepción, no todo lo demás. En lugar de intentar automatizar 100% de un proceso complejo, automatice las tareas repetitivas y cree alertas para los casos raros. Así reduce riesgo y gana confianza en la automatización.',\n    hashtags: '#ConsejoDelDía #AutomatizaciónInteligente #PYME',\n    cta: '¿Quiere un ejemplo aplicado a su proceso? Comente EJEMPLO.'\n  },\n  {\n    index: 5,\n    date: '2026-06-05',\n    slot: 'PM',\n    copy: '¿Qué le frena más a la hora de automatizar en su empresa? Vote en la encuesta y comparto recursos según los resultados. Opciones: Falta de tiempo; Miedo a romper procesos; Coste inicial; Falta de conocimiento técnico.',\n    hashtags: '#Encuesta #TransformaciónDigital #PYME',\n    cta: 'Invite a votar y comentar experiencias en la publicación (usar poll nativo de LinkedIn).'\n  },\n  {\n    index: 6,\n    date: '2026-06-09',\n    slot: 'AM',\n    copy: '5 pasos para implementar automatizaciones sin depender de IT: 1) Mapear el proceso. 2) Priorizar por impacto. 3) Probar con un piloto. 4) Medir resultados. 5) Escalar. En el carrusel encontrará una acción clara por paso.',\n    hashtags: '#Carrusel #GuíaPYME #AutomatizaciónPasoAPaso',\n    cta: 'Comente CARRUSEL y le envío las imágenes para publicar.'\n  },\n  {\n    index: 7,\n    date: '2026-06-12',\n    slot: 'PM',\n    copy: 'Si no sabe por dónde empezar, podemos revisar un proceso en 15 minutos y darle 2 propuestas de automatización (sin compromiso). A menudo con pequeñas automatizaciones se liberan horas para enfocarse en crecimiento. Deje QUIERO en los comentarios o envíeme mensaje directo.',\n    hashtags: '#Asesoría #AutomatizaciónPYME #Crecimiento',\n    cta: 'Comentario QUIERO o DM para agendar una revisión de 15 minutos.'\n  }\n];\n\nconst now = new Date();\nconst edtMs = now.getTime() - (4 * 60 * 60 * 1000);\nconst edt = new Date(edtMs);\nconst todayStr = edt.toISOString().slice(0, 10);\nconst hour = edt.getUTCHours();\nconst slot = hour < 12 ? 'AM' : 'PM';\n\nconst post = POSTS.find(p => p.date === todayStr && p.slot === slot);\n\nif (!post) {\n  return [{ json: { found: false, debug: { todayStr, slot } } }];\n}\n\nreturn [{ json: { found: true, ...post } }];"
+      },
+      "id": "node-002",
+      "name": "Filtrar Post del Día",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "found-check",
+              "leftValue": "={{ $json.found }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-003",
+      "name": "¿Post para hoy?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=📋 *LinkedIn CSV — Revisión de Post*\n\n📅 Fecha: {{ $json.date }} | Slot: {{ $json.slot }}\n\n*Copy:*\n{{ $json.copy }}\n\n*Hashtags:* {{ $json.hashtags }}\n\n*CTA:* {{ $json.cta }}\n\n─────────────────\n¿Publicar este post en LinkedIn?\n_(toca el botón — abre browser un instante)_",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "reply_markup": "={{ JSON.stringify({inline_keyboard: [[{text: '✅ Aprobar', url: $resumeWebhookUrl + '?action=approve&index=' + $json.index},{text: '❌ Rechazar', url: $resumeWebhookUrl + '?action=reject&index=' + $json.index}]]}) }}"
+        }
+      },
+      "id": "node-004",
+      "name": "Telegram — Preview",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [900, 220],
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR_CON_ID_CREDENCIAL_TELEGRAM",
+          "name": "Telegram JAAGSOLUTIONS Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {
+          "responseCode": 200,
+          "responseData": "Acción registrada. Puedes cerrar esta pestaña."
+        }
+      },
+      "id": "node-005",
+      "name": "Esperar Aprobación",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1120, 220],
+      "webhookId": "linkedin-csv-wait"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Recupera el post del array usando el index pasado en la URL.\n// La respuesta del Wait node incluye query params en $json.query\nconst POSTS = [\n  {\n    index: 1,\n    date: '2026-05-22',\n    copy: 'Caso típico: una PYME empezó automatizando recordatorios de cobro y redujo errores manuales y follow-ups olvidados. El resultado más valioso fue liberar tiempo del equipo para atención al cliente y ventas. Pequeños cambios en procesos repetitivos generan mejoras en la experiencia y en el foco del equipo.',\n    hashtags: '#CasosPYME #AutomatizarParaCrecer #Finanzas',\n    cta: '¿Quiere que revisemos su proceso de cobros en 10 minutos? Escriba REVISA y coordinamos.'\n  },\n  {\n    index: 2,\n    date: '2026-05-26',\n    copy: 'Checklist para elegir su primer proceso a automatizar: 1) Es repetitivo y manual. 2) Sujeto a errores humanos. 3) Tiene entradas claras (p. ej. formulario, email). 4) Beneficio claro al reducir tiempo/errores. Si cumple 3/4, es candidato ideal.',\n    hashtags: '#Checklist #AutomatizaciónPYME #MejoraContinua',\n    cta: 'Copie este post y marque las casillas que cumple su proceso.'\n  },\n  {\n    index: 3,\n    date: '2026-05-29',\n    copy: 'Mito: La automatización es solo para grandes empresas. Realidad: hoy hay herramientas accesibles (no-code y low-code) que permiten automatizar procesos sin equipos IT grandes. Lo importante es empezar con procesos bien definidos. ¿Qué le frena a usted para empezar?',\n    hashtags: '#MitosAutomatización #NoCode #PYME',\n    cta: 'Responda con su mayor barrera y le doy una alternativa práctica.'\n  },\n  {\n    index: 4,\n    date: '2026-06-02',\n    copy: 'Tip rápido: automatice una notificación por cada excepción, no todo lo demás. En lugar de intentar automatizar 100% de un proceso complejo, automatice las tareas repetitivas y cree alertas para los casos raros. Así reduce riesgo y gana confianza en la automatización.',\n    hashtags: '#ConsejoDelDía #AutomatizaciónInteligente #PYME',\n    cta: '¿Quiere un ejemplo aplicado a su proceso? Comente EJEMPLO.'\n  },\n  {\n    index: 5,\n    date: '2026-06-05',\n    copy: '¿Qué le frena más a la hora de automatizar en su empresa? Vote en la encuesta y comparto recursos según los resultados. Opciones: Falta de tiempo; Miedo a romper procesos; Coste inicial; Falta de conocimiento técnico.',\n    hashtags: '#Encuesta #TransformaciónDigital #PYME',\n    cta: 'Invite a votar y comentar experiencias en la publicación (usar poll nativo de LinkedIn).'\n  },\n  {\n    index: 6,\n    date: '2026-06-09',\n    copy: '5 pasos para implementar automatizaciones sin depender de IT: 1) Mapear el proceso. 2) Priorizar por impacto. 3) Probar con un piloto. 4) Medir resultados. 5) Escalar. En el carrusel encontrará una acción clara por paso.',\n    hashtags: '#Carrusel #GuíaPYME #AutomatizaciónPasoAPaso',\n    cta: 'Comente CARRUSEL y le envío las imágenes para publicar.'\n  },\n  {\n    index: 7,\n    date: '2026-06-12',\n    copy: 'Si no sabe por dónde empezar, podemos revisar un proceso en 15 minutos y darle 2 propuestas de automatización (sin compromiso). A menudo con pequeñas automatizaciones se liberan horas para enfocarse en crecimiento. Deje QUIERO en los comentarios o envíeme mensaje directo.',\n    hashtags: '#Asesoría #AutomatizaciónPYME #Crecimiento',\n    cta: 'Comentario QUIERO o DM para agendar una revisión de 15 minutos.'\n  }\n];\n\nconst query = $input.first().json.query || {};\nconst action = query.action || 'reject';\nconst postIndex = parseInt(query.index || '0', 10);\nconst post = POSTS.find(p => p.index === postIndex) || null;\n\nreturn [{ json: { action, postIndex, post } }];"
+      },
+      "id": "node-006",
+      "name": "Parsear Respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 220]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "approve-check",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "approve",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-007",
+      "name": "¿Aprobado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1560, 220]
+    },
+    {
+      "parameters": {
+        "resource": "share",
+        "text": "={{ $json.post.copy + '\\n\\n' + $json.post.hashtags + '\\n\\n' + $json.post.cta }}",
+        "additionalFields": {}
+      },
+      "id": "node-008",
+      "name": "LinkedIn — Publicar",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [1780, 140],
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "REEMPLAZAR_CON_ID_CREDENCIAL_LINKEDIN",
+          "name": "LinkedIn JAAGSOLUTIONS"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=✅ *LinkedIn CSV — Publicado*\n\nPost #{{ $('Parsear Respuesta').item.json.postIndex }} publicado exitosamente en LinkedIn.\n📅 {{ $('Parsear Respuesta').item.json.post.date }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "node-009",
+      "name": "Telegram — Confirmación",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [2000, 140],
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR_CON_ID_CREDENCIAL_TELEGRAM",
+          "name": "Telegram JAAGSOLUTIONS Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=❌ *LinkedIn CSV — Rechazado*\n\nPost #{{ $json.postIndex }} rechazado. No se publicó nada en LinkedIn.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "node-010",
+      "name": "Telegram — Rechazado",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1780, 320],
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR_CON_ID_CREDENCIAL_TELEGRAM",
+          "name": "Telegram JAAGSOLUTIONS Bot"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "node-011",
+      "name": "Sin post hoy",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [900, 420]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{ "node": "Filtrar Post del Día", "type": "main", "index": 0 }]]
+    },
+    "Filtrar Post del Día": {
+      "main": [[{ "node": "¿Post para hoy?", "type": "main", "index": 0 }]]
+    },
+    "¿Post para hoy?": {
+      "main": [
+        [{ "node": "Telegram — Preview", "type": "main", "index": 0 }],
+        [{ "node": "Sin post hoy", "type": "main", "index": 0 }]
+      ]
+    },
+    "Telegram — Preview": {
+      "main": [[{ "node": "Esperar Aprobación", "type": "main", "index": 0 }]]
+    },
+    "Esperar Aprobación": {
+      "main": [[{ "node": "Parsear Respuesta", "type": "main", "index": 0 }]]
+    },
+    "Parsear Respuesta": {
+      "main": [[{ "node": "¿Aprobado?", "type": "main", "index": 0 }]]
+    },
+    "¿Aprobado?": {
+      "main": [
+        [{ "node": "LinkedIn — Publicar", "type": "main", "index": 0 }],
+        [{ "node": "Telegram — Rechazado", "type": "main", "index": 0 }]
+      ]
+    },
+    "LinkedIn — Publicar": {
+      "main": [[{ "node": "Telegram — Confirmación", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "active": false,
+  "tags": ["linkedin-csv", "jaagsolutions"]
+}
