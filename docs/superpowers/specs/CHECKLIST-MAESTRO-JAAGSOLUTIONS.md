@@ -125,11 +125,14 @@ docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 | Antes/Después "4h → 20 min" | Jue 14 mayo | 4:00 PM | FB + IG |
 | Somos JAAGSOLUTIONS | Vie 15 mayo | 11:00 AM | FB + IG |
 
-### LinkedIn Post publicado
+### LinkedIn Posts publicados
 
-| Post | Fecha | Estado |
-|------|-------|--------|
-| "Mapa rápido: 3 procesos que debes auditar" | Lun 11 mayo | ✅ Publicado cuenta personal |
+| # | Post | Fecha | Estado |
+| - | ---- | ----- | ------ |
+| 1 | "Mapa rápido: 3 procesos que debes auditar" | Lun 11 mayo | ✅ Publicado |
+| 2 | (ver CSV `/paperclip/workspace/linkedin_first8_schedule.csv`) | Lun 18 mayo | ✅ Publicado |
+
+**Pendientes:** Posts 3-8 → Jue 21 mayo → Lun 8 junio (lunes/jueves)
 
 ### Contenido programado Semana 2 (Meta — pipeline automatizado)
 
