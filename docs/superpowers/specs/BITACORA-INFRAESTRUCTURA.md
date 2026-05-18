@@ -1070,10 +1070,11 @@ DB final: `status=published`. Workflow completó toda la cadena (LinkedIn regist
 
 #### Pendientes para Fase 2 (sesión separada)
 
-1. **A4 debe poblar `hashtags` en `content_plan`** — actualmente el agente Paperclip A4 genera posts con copy + image_prompt pero el campo `hashtags` viene NULL. Requiere actualizar el spec/prompt de A4 para que genere 3–5 hashtags relevantes por pillar y los inserte en la columna correcta.
-2. **OCR post-generación con Google Vision (Fix #7 deferred)** — validar que la imagen generada no contenga texto baked-in antes de enviar a Telegram. Si OCR detecta texto, regenerar automáticamente (hasta 3 intentos).
-3. **Variety enforcement DB-side** — agregar tracking de temas/escenas usadas en los últimos 14 días para evitar repeticiones cercanas. Tabla `content_history` o columna `last_scene_variant` en `content_plan`.
-4. **A4 enriched image_prompt** — incluir en el spec del agente A4 instrucciones más ricas para `image_prompt` (no solo "Professional accounting services for small business" sino contexto de pilar + audiencia + emoción).
+1. ~~**A4 debe poblar `hashtags` en `content_plan`**~~ ✅ **COMPLETADO 2026-05-17** — spec de A4 actualizado en `jaagsolutions-seed.json` con tabla de hashtags por pilar + regla crítica. Seed re-corrido via `docker cp` (ver FALLA 31). Backfill SQL ejecutado (`UPDATE 1` sobre post `0927ed25`). Ver checklist para detalle.
+2. ~~**OCR post-generación con Google Vision (Fix #7 deferred)**~~ ✅ **COMPLETADO 2026-05-17** — nodo HTTP Ideogram reemplazado por Code node `Ideogram + OCR — 3 intentos` (3 reintentos misma ejecución, fail-open en Vision API). Rama de error: Postgres `status=error` + Telegram notification. Workflow transplantado vía REST API (23 nodos, ID `diB9nJOsjSzYbujt`). E2E verificado: `status=review`, imagen limpia en Telegram. Commit `f7cd5f34`.
+3. **Calidad visual — evitar uncanny valley en personajes** — Ideogram puede generar figuras humanas con piel plástica/artificial. Solución A: agregar `plastic skin, uncanny valley, doll-like, cgi face` al `negative_prompt` del Code node. Solución B (preferida): actualizar spec de A4 para priorizar composiciones sin rostros en primer plano (pantallas, manos, workspaces abstractos). Ver CHECKLIST para detalle.
+4. **Variety enforcement DB-side** — agregar tracking de temas/escenas usadas en los últimos 14 días para evitar repeticiones cercanas. Tabla `content_history` o columna `last_scene_variant` en `content_plan`.
+5. **A4 enriched image_prompt** — incluir en el spec del agente A4 instrucciones más ricas para `image_prompt` (no solo "Professional accounting services for small business" sino contexto de pilar + audiencia + emoción).
 
 ---
 
@@ -1083,5 +1084,21 @@ DB final: `status=published`. Workflow completó toda la cadena (LinkedIn regist
 - **Transplant via API, no sqlite3:** Para actualizar workflows manteniendo webhook IDs, usar REST API de n8n (`PUT /workflows/<id>` + `DELETE /workflows/<dup>` + `POST /workflows/<id>/activate`). Nunca tocar `database.sqlite` directamente.
 - **Strip tags antes de import:** `wf.pop('tags', None)` en Python antes de pasar el JSON al `n8n import:workflow`.
 - **SSH authorized_keys quedó vacío una vez** (causa desconocida 13:56 del 2026-05-17); el script de recuperación: reagregar manualmente `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAWHZ4/huqnWIpsZui02YvKTRcFgke+i9dys9AoE7szP jaagsolutions-vps` al archivo `/home/jaagsolutions/.ssh/authorized_keys` desde la consola serial de Google Cloud.
+
+---
+
+**FALLA 31 — `git pull` en el host no actualiza archivos baked en imagen Docker de Paperclip**
+
+- **Síntoma:** Se modifica `jaagsolutions-seed.json` en el repo, se hace `git pull` en el VPS, se corre `docker exec deploy-paperclip-1 sh -c "cd /app && pnpm db:seed:jaagsolutions"` y el seed no refleja los cambios (A4 no aparece en output, count incorrecto).
+- **Causa raíz:** El contenedor `deploy-paperclip-1` se construye con `build: context: ..` en el docker-compose. El archivo `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json` queda **baked en la imagen** en tiempo de build. No hay volumen que monte ese directorio — `git pull` solo actualiza el host, no el interior del contenedor.
+- **Solución aplicada:** Copiar el archivo actualizado al interior del contenedor antes de correr el seed:
+
+  ```bash
+  docker cp /opt/jaagsolutions/repo/Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json \
+    deploy-paperclip-1:/app/Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json
+  docker exec deploy-paperclip-1 sh -c "cd /app && pnpm db:seed:jaagsolutions"
+  ```
+
+- **Regla:** Cada vez que se modifique `jaagsolutions-seed.json`, hacer `docker cp` antes de re-correr el seed. Alternativa permanente: rebuild de la imagen (`docker compose up -d --build paperclip`), pero requiere downtime breve.
 
 
