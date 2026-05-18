@@ -1,6 +1,6 @@
 # Bitácora de Infraestructura — JAAGSOLUTIONS
 
-**Última actualización:** 2026-05-17
+**Última actualización:** 2026-05-18
 **Estado del proyecto:** Fase A + Fase B completas — Content Pipeline n8n + Telegram Approval E2E validados en producción (FB + IG + LinkedIn publicando con imagen nativa)
 
 > **LEER ANTES DE CUALQUIER CAMBIO DE INFRAESTRUCTURA.**  
@@ -1100,5 +1100,83 @@ DB final: `status=published`. Workflow completó toda la cadena (LinkedIn regist
   ```
 
 - **Regla:** Cada vez que se modifique `jaagsolutions-seed.json`, hacer `docker cp` antes de re-correr el seed. Alternativa permanente: rebuild de la imagen (`docker compose up -d --build paperclip`), pero requiere downtime breve.
+
+---
+
+## SESIÓN 2026-05-18 — Fixes pipeline + Semana 2 contenido
+
+### Resumen
+
+- Fix pillarMap: 3 aliases DB añadidos (`casos_de_uso`, `prueba_social`, `behind_the_scenes`)
+- Fix negative_prompt Ideogram: supresión de brand text/signage
+- Semana 2 Meta: 3 posts insertados en `content_plan`, post May 18 publicado E2E en FB + IG + LinkedIn
+- Método de inserción: `docker exec deploy-postgres-1 psql` (psycopg2/pip no disponibles en host)
+
+### Cambios en producción
+
+| Commit | Descripción |
+| ------ | ----------- |
+| `c7f5f923` | fix(n8n): pillarMap alineado con valores DB (3 aliases) |
+| `73469488` | fix(n8n): negative_prompt Ideogram extendido (brand/signage) |
+
+---
+
+**FALLA 32 — pillarMap con claves distintas a los valores CHECK de la DB**
+
+- **Síntoma:** Todos los posts con pillar `casos_de_uso`, `prueba_social` o `behind_the_scenes` caían siempre en el pool `educacion` (fallback por defecto). Las 24 escenas de social_proof, produccion y promesa nunca se usaban.
+- **Causa raíz:** El Code node `Preparar prompt Auditor` tenía un `pillarMap` con claves `social_proof`, `produccion`, `promesa` que son los nombres de los pools internos, pero los valores que llegan de la DB son distintos: `casos_de_uso`, `prueba_social`, `behind_the_scenes`. Sin alias, el lookup fallaba silenciosamente y `pillarMap[pillar]` devolvía `undefined` → fallback `'educacion'`.
+- **Solución aplicada:** Añadir 3 aliases al pillarMap en el Code node (n8n UI + commit al JSON del repo):
+  ```js
+  casos_de_uso: 'social_proof',
+  prueba_social: 'social_proof',
+  behind_the_scenes: 'produccion'
+  ```
+- **Regla:** Los valores del pillarMap deben incluir SIEMPRE los valores exactos del CHECK constraint de la DB (`VALID_PILLARS` en `insert-content-plan.py`). Verificar con `\d content_plan` en psql si hay dudas.
+
+---
+
+**FALLA 33 — `pip3` y `psycopg2` no disponibles en host del VPS**
+
+- **Síntoma:** `python3 deploy/scripts/insert-content-plan.py` falla con `ModuleNotFoundError: No module named 'psycopg2'`. `pip3 install psycopg2-binary` falla con `-bash: pip3: command not found`.
+- **Causa raíz:** El host Ubuntu del VPS no tiene pip3 ni el módulo psycopg2 instalados. El script fue diseñado para correr dentro del contenedor Paperclip o en un entorno con psycopg2.
+- **Solución aplicada:** Insertar directamente vía `psql` dentro del contenedor Postgres usando heredoc y dollar-quoting:
+  ```bash
+  docker exec -i deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' << 'SQLEOF'
+  INSERT INTO content_plan (...) VALUES (gen_random_uuid(), ..., $$copy text aquí$$, ..., 'pending') RETURNING id;
+  SQLEOF
+  ```
+- **Regla:** Para inserciones en `content_plan` desde el host del VPS, usar siempre el heredoc psql approach. Usar `$$...$$` (dollar-quoting) para copy_text con caracteres especiales (em dashes, acentos, saltos de línea reales). No intentar instalar pip3 en el host — no está en el scope del setup.
+
+---
+
+**FALLA 34 — Ideogram V_2 hallucina brand text/signage en escenas comerciales/editoriales**
+
+- **Síntoma:** OCR (Google Vision) detecta texto en imágenes generadas: nombres de marca ficticios ("LONI ROLAGE", "SID &G DOODLES", "ORCKO-G"), UI labels ("Invoice", "Dasboard", "39.23"), signage de fondo. El workflow rechaza correctamente la imagen (3 reintentos fallidos → `status=error`).
+- **Causa raíz:** Ideogram V_2 en modo `REALISTIC` tiende a añadir elementos "auténticos" de ambientes comerciales: marcas en paredes, texto en pantallas, signage de fondo. El `negative_prompt` original no cubría estos patrones específicos. Los prompts que mencionan "invoice", "dashboard", "numbered steps" amplifican el problema — Ideogram trata de renderizar esos conceptos con texto literal.
+- **Solución aplicada:**
+  1. Extender `negative_prompt` del Code node `Ideogram + OCR — 3 intentos`:
+     ```
+     ..., brand names, store signs, product labels, background text, environmental signage, fake brand text, decorative lettering
+     ```
+  2. Para el post específico: cambiar `image_prompt` a descripción sin UI/pantallas/facturas. Usar `UPDATE content_plan SET image_prompt='...' WHERE id='...'` + reset status.
+- **Regla:** Evitar en `image_prompt` términos que generen texto: "invoice", "dashboard", "numbered steps", "chart", "graph", "screen showing", "display with". Preferir: "professionals reviewing", "collaborative meeting", "workspace overview", "abstract flow". Si OCR falla 2+ veces seguido en un mismo post, el problema es el prompt — cambiar `image_prompt` vía UPDATE antes del tercer retry.
+
+---
+
+**FALLA 35 — Telegram OCR error notification muestra `undefined | —` (pendiente fix)**
+
+- **Síntoma:** Cuando el nodo `Telegram: error OCR` dispara, el mensaje muestra `undefined | —` en lugar de la fecha, plataforma y ID del post.
+- **Causa raíz:** El nodo de error no accede correctamente a las propiedades del item (probablemente usa `$json.scheduled_date` pero el contexto en ese punto del workflow no tiene esos campos disponibles directamente).
+- **Estado:** ⏳ Pendiente de fix — no bloquea el pipeline (el error queda en DB con `error_log` completo y se puede resetear desde VPS).
+- **Fix propuesto:** Revisar el template del mensaje en el nodo Telegram error OCR. Verificar qué propiedades están disponibles en ese punto usando `{{ $json }}` en modo debug. Probablemente necesita `$('Obtener datos del post').item.json.scheduled_date` o similar referencia explícita al nodo upstream.
+
+---
+
+#### Reglas operativas reforzadas — sesión 2026-05-18
+
+- **Editar Code nodes en n8n UI en vez de transplante** para cambios quirúrgicos (1-3 líneas). Transplante solo cuando el cambio es estructural (nuevos nodos, credenciales, conexiones). La edición UI preserva ID, credenciales y estado activo del workflow.
+- **Commitear JSON del repo después de editar en UI.** El flujo correcto: editar en UI → verificar → copiar el código actualizado al JSON del repo → commit → push. El repo es la fuente de verdad para recovery.
+- **Insertar posts con psql heredoc.** Ver FALLA 33. El script `insert-content-plan.py` es referencia de campos válidos, no el método de inserción en producción desde el host.
+- **Si OCR falla repetidamente:** cambiar `image_prompt` en DB antes de reintentar. El seed aleatorio de Ideogram no ayuda si el prompt sigue pidiendo conceptos que generan texto.
 
 

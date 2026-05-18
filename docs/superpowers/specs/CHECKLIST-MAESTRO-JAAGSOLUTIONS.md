@@ -1,5 +1,5 @@
 # Checklist Maestro — Proyecto JAAGSOLUTIONS
-**Revisión:** 2026-05-17
+**Revisión:** 2026-05-18
 **Rama:** `feature/jaagsolutions`
 **Regla:** LEER ESTE ARCHIVO AL INICIO DE CADA SESIÓN antes de proponer cualquier tarea. Actualizar inmediatamente al completar cada item.
 
@@ -19,11 +19,16 @@
 
 ---
 
-## ✅ ESTADO ACTUAL — CIERRE 2026-05-17
+## ✅ ESTADO ACTUAL — CIERRE 2026-05-18
 
-**Pipeline E2E validado en producción.** Post de prueba `4a9a24b4-bb79-4a64-908b-7af12caf2d21` publicado correctamente en Facebook + Instagram + LinkedIn con imagen nativa + copy + hashtags concatenados. Workflow llegó a `status=published`.
+**Pipeline E2E en producción con posts reales.** Semana 2 Mayo iniciada: post `ef340765` (casos_de_uso, May 18) publicado en FB + IG + LinkedIn vía pipeline completo. Posts May 20 y 21 en `content_plan` status=pending — cron 8AM los procesa automáticamente.
 
-**Cambios desplegados hoy (commits):**
+**Cambios desplegados sesión 2026-05-18 (commits):**
+
+- `c7f5f923` — fix(n8n): pillarMap alineado con valores DB (`casos_de_uso`, `prueba_social`, `behind_the_scenes`)
+- `73469488` — fix(n8n): negative_prompt Ideogram extendido para suprimir brand text/signage
+
+**Cambios desplegados sesión 2026-05-17 (commits):**
 
 - `2dd41281` — Fase 1: diversidad de imágenes (Auditor con 32 escenas, Ideogram seed + style_type, V_2)
 - Cadenas previas: telegram-approval secuencial FB → IG → LinkedIn, multipart binary FB, LinkedIn Asset Upload nativo, IG container 5s wait, compose-image.js sin labels parásitos, ASPECT_3_4 unificado.
@@ -70,6 +75,9 @@ docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 | Meta Semana 1 programada | **Completo** — 3 posts FB+IG programados en Meta Business Suite ✅ (2026-05-11) | 100% |
 | Pipeline automatizado contenido | **LIVE E2E** — Content Generator (Ideogram V_2 + Auditor con 32 escenas + seed/style_type aleatorio + compose-image 4:5) → Telegram approval → publicación FB + IG + LinkedIn con imagen nativa + copy + hashtags concatenados. Validado 2026-05-17. | 100% |
 | Diversidad visual (Fase 1) | **Completo** — Code node `Preparar prompt Auditor` con 32 variantes, Ideogram seed + style_type rotativo, modelo V_2. Commit `2dd41281` ✅ | 100% |
+| pillarMap DB alignment | **Completo** — aliases `casos_de_uso`, `prueba_social`, `behind_the_scenes` añadidos al pillarMap. Commit `c7f5f923` ✅ (2026-05-18) | 100% |
+| negative_prompt Ideogram | **Completo** — extendido con brand names, store signs, product labels, background text, environmental signage, fake brand text, decorative lettering. Commit `73469488` ✅ (2026-05-18) | 100% |
+| Semana 2 Meta (May 18-21) | **EN PROGRESO** — post May 18 publicado ✅, posts May 20 y 21 en `content_plan` status=pending (cron automático) | 67% |
 
 ---
 
@@ -123,12 +131,21 @@ docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 |------|-------|--------|
 | "Mapa rápido: 3 procesos que debes auditar" | Lun 11 mayo | ✅ Publicado cuenta personal |
 
+### Contenido programado Semana 2 (Meta — pipeline automatizado)
+
+| Post | Fecha | Hora | Pilar DB | Status | ID content_plan |
+| ------ | ------- | ------ | ---------- | -------- | ----------------- |
+| Casos de Uso — "De 3h a 18 min: facturación automática" | Mar 18 mayo | 11:00 | `casos_de_uso` | ✅ published | `ef340765-704a-41a7-8793-8b992ba59830` |
+| Behind-the-Scenes — "Así luce un workflow antes de llegar al cliente" | Mier 20 mayo | 08:00 | `behind_the_scenes` | ⏳ pending (cron) | `9f513b84-0f10-4715-a9e3-5b85a968070a` |
+| Educación — "Automatizar no es para grandes. Es para los que crecen." | Jue 21 mayo | 11:00 | `educacion` | ⏳ pending (cron) | `9dd90ed3-ea31-4f0d-a9dc-cdb77a1202b1` |
+
 ### Próximos pasos Brand & Content
 
-1. [ ] **PRIORIDAD MÁXIMA** — Implementar pipeline automatizado de contenido (ver sección abajo)
+1. [x] ~~**PRIORIDAD MÁXIMA** — Implementar pipeline automatizado de contenido~~ ✅ LIVE 2026-05-17
 2. [ ] Programar posts LinkedIn 2-8 del CSV en LinkedIn native scheduler (18 mayo → 11 junio)
-3. [ ] Generar imágenes + copy para Semana 2 Meta (19, 21, 22 mayo)
+3. [x] ~~Generar imágenes + copy para Semana 2 Meta (18, 20, 21 mayo)~~ ✅ Insertados + post #1 publicado 2026-05-18
 4. [ ] Configurar adaptador Codex para A3 (Growth Ops) — mismo proceso que A4
+5. [ ] Fix bug Telegram OCR error: mensaje muestra `undefined | —` (post_id no accesible en el nodo de error)
 
 ---
 
