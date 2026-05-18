@@ -52,16 +52,28 @@
       "parameters": {
         "method": "POST",
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
-        "sendHeaders": true,
-        "headerParameters": {
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "chat_id",
+              "value": "={{ $env.TELEGRAM_CHAT_ID }}"
+            },
+            {
+              "name": "text",
+              "value": "=📋 *LinkedIn CSV — Revisión de Post*\n\n📅 Fecha: {{ $json.date }} | Slot: {{ $json.slot }}\n\n*Copy:*\n{{ $json.copy }}\n\n*Hashtags:* {{ $json.hashtags }}\n\n*CTA:* {{ $json.cta }}\n\n─────────────────\n¿Publicar en LinkedIn? (toca el botón)"
+            },
+            {
+              "name": "parse_mode",
+              "value": "Markdown"
+            },
+            {
+              "name": "reply_markup",
+              "value": "={{ JSON.stringify({ inline_keyboard: [[{ text: '✅ Aprobar', url: $resumeWebhookUrl + '?action=approve&index=' + $json.index }, { text: '❌ Rechazar', url: $resumeWebhookUrl + '?action=reject&index=' + $json.index }]] }) }}"
+            }
           ]
         },
-        "sendBody": true,
-        "contentType": "rawBody",
-        "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ chat_id: $env.TELEGRAM_CHAT_ID, text: '📋 *LinkedIn CSV \\u2014 Revisión de Post*\\n\\n📅 Fecha: ' + $json.date + ' | Slot: ' + $json.slot + '\\n\\n*Copy:*\\n' + $json.copy + '\\n\\n*Hashtags:* ' + $json.hashtags + '\\n\\n*CTA:* ' + $json.cta + '\\n\\n─────────────────\\n¿Publicar este post en LinkedIn?', parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '✅ Aprobar', url: $resumeWebhookUrl + '?action=approve&index=' + $json.index }, { text: '❌ Rechazar', url: $resumeWebhookUrl + '?action=reject&index=' + $json.index }]] } }) }}",
         "options": {}
       },
       "id": "node-004",
@@ -130,9 +142,27 @@
           ]
         },
         "sendBody": true,
-        "contentType": "rawBody",
-        "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ author: $env.LINKEDIN_AUTHOR_URN, lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: $('Parsear Respuesta').item.json.post.copy + '\\n\\n' + $('Parsear Respuesta').item.json.post.hashtags + '\\n\\n' + $('Parsear Respuesta').item.json.post.cta }, shareMediaCategory: 'NONE' } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "author",
+              "value": "={{ $env.LINKEDIN_AUTHOR_URN }}"
+            },
+            {
+              "name": "lifecycleState",
+              "value": "PUBLISHED"
+            },
+            {
+              "name": "specificContent",
+              "value": "={{ { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: $('Parsear Respuesta').item.json.post.copy + '\\n\\n' + $('Parsear Respuesta').item.json.post.hashtags + '\\n\\n' + $('Parsear Respuesta').item.json.post.cta }, shareMediaCategory: 'NONE' } } }}"
+            },
+            {
+              "name": "visibility",
+              "value": "={{ { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }}"
+            }
+          ]
+        },
         "options": {}
       },
       "id": "node-008",
@@ -145,16 +175,24 @@
       "parameters": {
         "method": "POST",
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
-        "sendHeaders": true,
-        "headerParameters": {
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "chat_id",
+              "value": "={{ $env.TELEGRAM_CHAT_ID }}"
+            },
+            {
+              "name": "text",
+              "value": "=✅ *LinkedIn CSV — Publicado*\n\nPost #{{ $('Parsear Respuesta').item.json.postIndex }} publicado en LinkedIn.\n📅 {{ $('Parsear Respuesta').item.json.post.date }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "Markdown"
+            }
           ]
         },
-        "sendBody": true,
-        "contentType": "rawBody",
-        "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ chat_id: $env.TELEGRAM_CHAT_ID, text: '✅ *LinkedIn CSV \\u2014 Publicado*\\n\\nPost #' + $('Parsear Respuesta').item.json.postIndex + ' publicado exitosamente en LinkedIn.\\n📅 ' + $('Parsear Respuesta').item.json.post.date, parse_mode: 'Markdown' }) }}",
         "options": {}
       },
       "id": "node-009",
@@ -167,16 +205,24 @@
       "parameters": {
         "method": "POST",
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
-        "sendHeaders": true,
-        "headerParameters": {
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "chat_id",
+              "value": "={{ $env.TELEGRAM_CHAT_ID }}"
+            },
+            {
+              "name": "text",
+              "value": "=❌ *LinkedIn CSV — Rechazado*\n\nPost #{{ $json.postIndex }} rechazado. No se publicó nada."
+            },
+            {
+              "name": "parse_mode",
+              "value": "Markdown"
+            }
           ]
         },
-        "sendBody": true,
-        "contentType": "rawBody",
-        "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ chat_id: $env.TELEGRAM_CHAT_ID, text: '❌ *LinkedIn CSV \\u2014 Rechazado*\\n\\nPost #' + $json.postIndex + ' rechazado. No se publicó nada en LinkedIn.', parse_mode: 'Markdown' }) }}",
         "options": {}
       },
       "id": "node-010",
