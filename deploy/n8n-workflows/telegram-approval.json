@@ -614,5 +614,5 @@
   "active": false,
   "settings": { "executionOrder": "v1" },
   "meta": { "templateCredsSetupCompleted": false },
-  "tags": ["jaagsolutions", "content-pipeline"]
+  "tags": []
 }
