@@ -1,5 +1,5 @@
 # Checklist Maestro — Proyecto JAAGSOLUTIONS
-**Revisión:** 2026-05-18
+**Revisión:** 2026-05-20
 **Rama:** `feature/jaagsolutions`
 **Regla:** LEER ESTE ARCHIVO AL INICIO DE CADA SESIÓN antes de proponer cualquier tarea. Actualizar inmediatamente al completar cada item.
 
@@ -19,9 +19,9 @@
 
 ---
 
-## ✅ ESTADO ACTUAL — CIERRE 2026-05-18
+## ✅ ESTADO ACTUAL — CIERRE 2026-05-20
 
-**Pipeline E2E en producción con posts reales.** Semana 2 Mayo iniciada: post `ef340765` (casos_de_uso, May 18) publicado en FB + IG + LinkedIn vía pipeline completo. Posts May 20 y 21 en `content_plan` status=pending — cron 8AM los procesa automáticamente.
+**Pipeline E2E en producción con posts reales.** Semana 2 Mayo en curso: posts May 18 (`ef340765`, casos_de_uso) y May 20 (`9f513b84`, behind_the_scenes) publicados en FB + IG + LinkedIn vía pipeline completo. El post May 20 falló primero por OCR (`status=error`), se reintentó con prompt visual más seguro, llegó a Telegram, fue aprobado y quedó publicado en las tres redes. Post May 21 sigue pendiente de cron/aprobación.
 
 **Cambios desplegados sesión 2026-05-18 (commits):**
 
@@ -77,7 +77,7 @@ docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 | Diversidad visual (Fase 1) | **Completo** — Code node `Preparar prompt Auditor` con 32 variantes, Ideogram seed + style_type rotativo, modelo V_2. Commit `2dd41281` ✅ | 100% |
 | pillarMap DB alignment | **Completo** — aliases `casos_de_uso`, `prueba_social`, `behind_the_scenes` añadidos al pillarMap. Commit `c7f5f923` ✅ (2026-05-18) | 100% |
 | negative_prompt Ideogram | **Completo** — extendido con brand names, store signs, product labels, background text, environmental signage, fake brand text, decorative lettering. Commit `73469488` ✅ (2026-05-18) | 100% |
-| Semana 2 Meta (May 18-21) | **EN PROGRESO** — post May 18 publicado ✅, posts May 20 y 21 en `content_plan` status=pending (cron automático) | 67% |
+| Semana 2 Meta (May 18-21) | **EN PROGRESO** — posts May 18 y May 20 publicados ✅, post May 21 pendiente (cron automático) | 67% |
 
 ---
 
@@ -139,24 +139,25 @@ docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 | Post | Fecha | Hora | Pilar DB | Status | ID content_plan |
 | ------ | ------- | ------ | ---------- | -------- | ----------------- |
 | Casos de Uso — "De 3h a 18 min: facturación automática" | Mar 18 mayo | 11:00 | `casos_de_uso` | ✅ published | `ef340765-704a-41a7-8793-8b992ba59830` |
-| Behind-the-Scenes — "Así luce un workflow antes de llegar al cliente" | Mier 20 mayo | 08:00 | `behind_the_scenes` | ⏳ pending (cron) | `9f513b84-0f10-4715-a9e3-5b85a968070a` |
+| Behind-the-Scenes — "Así luce un workflow antes de llegar al cliente" | Mier 20 mayo | 08:00 | `behind_the_scenes` | ✅ published | `9f513b84-0f10-4715-a9e3-5b85a968070a` |
 | Educación — "Automatizar no es para grandes. Es para los que crecen." | Jue 21 mayo | 11:00 | `educacion` | ⏳ pending (cron) | `9dd90ed3-ea31-4f0d-a9dc-cdb77a1202b1` |
 
 ### Próximos pasos Brand & Content
 
 1. [x] ~~**PRIORIDAD MÁXIMA** — Implementar pipeline automatizado de contenido~~ ✅ LIVE 2026-05-17
 2. [ ] Programar posts LinkedIn 2-8 del CSV en LinkedIn native scheduler (18 mayo → 11 junio)
-3. [x] ~~Generar imágenes + copy para Semana 2 Meta (18, 20, 21 mayo)~~ ✅ Insertados + post #1 publicado 2026-05-18
+3. [x] ~~Generar imágenes + copy para Semana 2 Meta (18, 20, 21 mayo)~~ ✅ Insertados + posts #1 y #2 publicados 2026-05-18/20
 4. [ ] Configurar adaptador Codex para A3 (Growth Ops) — mismo proceso que A4
-5. [ ] Fix bug Telegram OCR error: mensaje muestra `undefined | —` (post_id no accesible en el nodo de error)
+5. [ ] Desplegar hardening content pipeline 2026-05-20: alerta OCR confiable, fallback visual seguro, monitor post-cron 08:15 y CTA/link en captions. Patch local en `content-generator.json` + `telegram-approval.json`; falta importar en n8n producción y validar.
+6. [ ] Verificar/prevalidar post May 21 (`9dd90ed3-ea31-4f0d-a9dc-cdb77a1202b1`) antes del cron: confirmar `status=pending`, prompt sin pantallas/gráficos/texto visual, y `cta_url=https://jaagsolutions.com`.
 
 ---
 
-## PIPELINE AUTOMATIZADO DE CONTENIDO — Diseño (pendiente implementar)
+## PIPELINE AUTOMATIZADO DE CONTENIDO — Diseño histórico (implementado)
 
 **Agente responsable:** A2 (Automation Builder)  
 **Herramienta:** n8n  
-**Estado:** ⏳ Diseñado — falta crear issue y construir
+**Estado:** ✅ Implementado y operativo desde 2026-05-17. Mantener esta sección como referencia histórica; el estado real vive en "Estado actual", "Semana 2 Meta" y `BITACORA-INFRAESTRUCTURA.md`.
 
 ### Flujo objetivo
 
@@ -192,7 +193,7 @@ Post publicado automáticamente en fecha/hora
 | Meta Graph API | Programar FB + Instagram | Gratis |
 | LinkedIn API | Programar posts | Gratis (con app registrada) |
 
-### Issue a crear para A2
+### Issue histórico de A2
 
 > **Título:** "Pipeline automatizado de contenido — Meta + LinkedIn + Telegram approval"
 >
@@ -202,25 +203,24 @@ Post publicado automáticamente en fecha/hora
 
 ## PRÓXIMOS PASOS — ordenados por prioridad
 
-### Activar sync automático de workflows n8n (una sola vez)
+### Actualizar workflows n8n
 
-El deploy de workflows n8n es ahora **automático via GitHub Actions** (`sync-n8n.yml`).
-Requiere configuración única de secrets en el repo y API key en n8n:
+**Proceso validado actual:** import manual por CLI desde el VPS. La REST API de n8n sigue bloqueada por `N8N_BASIC_AUTH_ACTIVE=true` y devuelve 401; no confiar en `sync-n8n.yml` hasta resolver ese punto en una sesión separada.
 
-1. [ ] Generar API key en n8n UI: **Settings → n8n API → Create API key**
-2. [ ] Agregar `N8N_API_KEY=<clave>` en `deploy/.env` del VPS
-3. [ ] En repo `JAAG2021/jaagsolutions-paperclip` → **Settings → Secrets → Actions**:
-   - `JAAGSOLUTIONS_N8N_URL` = `https://n8n.jaagsolutions.com`
-   - `JAAGSOLUTIONS_N8N_API_KEY` = `<la clave>`
-4. [ ] Para aplicar el JSON actualizado **ahora** (mientras configuras los secrets):
+Para aplicar el JSON actualizado:
 
-   ```bash
-   # En VPS:
-   cd /opt/jaagsolutions/repo && git pull origin feature/jaagsolutions
-   N8N_API_KEY=<tu_clave> bash deploy/scripts/sync-n8n-workflows.sh
-   ```
+```bash
+# En máquina local:
+cd paperclip/.worktrees/jaagsolutions
+git add deploy/n8n-workflows/ docs/superpowers/specs/
+git commit -m "fix(n8n): harden content pipeline recovery"
+git push jaag2021 feature/jaagsolutions
 
-Una vez configurados los secrets, **cualquier push que toque `deploy/n8n-workflows/*.json` actualiza n8n automáticamente**.
+# En VPS:
+cd /opt/jaagsolutions/repo
+git pull origin feature/jaagsolutions
+# Seguir deploy/RUNBOOK.md sección 1.bis para importar workflows con credenciales.
+```
 
 ### Opcionales
 
@@ -396,7 +396,7 @@ Una vez configurados los secrets, **cualquier push que toque `deploy/n8n-workflo
 **Fase 2 — tareas en backlog:**
 
 - [x] **A4 debe poblar `hashtags` en `content_plan`** — ✅ Completado 2026-05-17: spec de A4 actualizado con tabla de hashtags por pilar, seed re-corrido vía `docker cp` (ver FALLA 31 en BITACORA), backfill SQL ejecutado (`UPDATE 1`). A4 ahora tiene capabilities actualizadas en Paperclip y todos los posts existentes tienen hashtags poblados.
-- [x] **OCR post-generación (Fix #7 deferred)** — ✅ Completado 2026-05-17: nodo HTTP de Ideogram reemplazado por Code node `Ideogram + OCR — 3 intentos` (Google Vision TEXT_DETECTION, fail-open). Rama de error agrega `status=error` en DB + notificación Telegram. Workflow transplantado a producción (23 nodos). E2E verificado: imagen llegó a Telegram con `status=review`, sin texto baked-in. Commit `f7cd5f34`.
+- [x] **OCR post-generación (Fix #7 deferred)** — ✅ Completado 2026-05-17: nodo HTTP de Ideogram reemplazado por Code node `Ideogram + OCR — 3 intentos` (Google Vision TEXT_DETECTION, fail-open). Rama de error agrega `status=error` en DB; la notificación Telegram de errores OCR quedó identificada como bug separado (ver pendiente `Telegram OCR error`). Workflow transplantado a producción (23 nodos). E2E verificado: imagen llegó a Telegram con `status=review`, sin texto baked-in. Commit `f7cd5f34`.
 - [x] **Calidad visual — evitar uncanny valley en personajes** — ✅ Completado + verificado E2E 2026-05-18. (A) `negative_prompt` del Code node `Ideogram + OCR — 3 intentos` actualizado vía REST API + commit `ad24f030`. (B) Spec A4 con sección `COMPOSICION VISUAL` + formato obligatorio 3 bloques para `copy_text` (HEADLINE ≤60 chars / CUERPO / CTA). (C) `compose-image.js`: imagen solo muestra headline (strip defensivo `/#\S+/g` — commit `c58c67be`), hashtags solo en caption. E2E verificado: imagen limpia, headline sin hashtags, caption con hashtags clickeables.
 - [ ] **Variety enforcement DB-side** — crear tabla `content_history` o columna `last_scene_variant` en `content_plan` para evitar repetir la misma escena en ventana de 14 días. Hoy la selección es random pura, sin memoria.
 - [ ] **A4 enriched image_prompt** — actualizar el spec del agente A4 para que genere `image_prompt` más rico: contexto de pilar + audiencia objetivo + emoción + sujeto sugerido (no solo "Professional accounting services for small business").

@@ -131,7 +131,7 @@
         220
       ],
       "parameters": {
-        "jsCode": "const item = $input.first().json;\nconst pillar = (item.pillar || '').toLowerCase();\n\nconst variants = {\n  educacion: [\n    'A mid-30s Latina woman in business casual stands at a modern standing desk with dual monitors showing colorful data dashboards. Bright minimal open-plan office, large windows with city view, soft natural light. Editorial real-photo style.',\n    'A Latino male consultant in his 40s presents to colleagues in a sleek boardroom. Large blank display screen behind him, three attentive professionals at the table. Cinematic overhead lighting, cool tones.',\n    'A young Latina entrepreneur works at a sunlit café table, laptop open, coffee cup nearby. Warm golden-hour light streams through large windows behind her. Candid, natural, aspirational.',\n    'Close-up portrait of a confident Latino business professional in his 30s holding a tablet. Blurred open-plan tech office bokeh behind him. Shallow depth of field, cool palette.',\n    'A Latino executive in his 50s stands in a glass-walled corner office, city skyline visible through floor-to-ceiling windows at dusk. Premium editorial photography, deep navy tones.',\n    'A Latina woman in her 30s facilitates a small workshop for three colleagues, gesturing toward a blank whiteboard. Modern bright training room, engaged team, natural light.',\n    'A Latino IT manager in his 40s reviews infrastructure in a cool blue-lit server room. LED ambient glow, professional focused expression, tech precision mood.',\n    'A mature Latino business owner at a polished wood desk, reviewing documents under warm desk lamp. Bookshelves behind, evening atmosphere, intimate and accomplished.'\n  ],\n  social_proof: [\n    'Two Latina professionals in their 30s sit at a modern café table, laptops open, smiling at a shared screen. Warm natural light, casual professional vibe, genuine connection.',\n    'A diverse team of three professionals — mixed gender, Latino — in a standing meeting around a glass wall with abstract sticky notes. Panoramic city view, bright modern office.',\n    'A Latino small business owner in his 40s shakes hands with a consultant in a modern reception area. Both smiling, professional setting, warm light.',\n    'A mixed team of four colleagues — diverse ages, Latino — collaborating in a casual breakout space. Engaged conversation, coffee cups, relaxed but professional atmosphere.',\n    'Overhead close-up: two hands — one male, one female — pointing at a glowing tablet screen on a conference table. Blurred professional backgrounds.',\n    'A Latina business owner in her 40s on a video call in a well-designed home office. Bookshelf background, ring light glow, natural and professional expression.',\n    'A team of five celebrating around a conference table, diverse Latino professionals, genuine smiles, golden evening light streaming through windows.',\n    'A Latino SME owner in his 40s walks through his warehouse with a tablet, employees working purposefully in the background. Real documentary editorial style.'\n  ],\n  produccion: [\n    'Extreme macro close-up of fingers typing on a backlit mechanical keyboard in a dark room. Razor-thin depth of field, cool blue highlights, subtle motion blur on keys.',\n    'Abstract visualization of flowing blue and teal data streams over a soft circuit-board bokeh background. Modern digital, no text, cinematic.',\n    'Floating semi-transparent UI dashboard panels in mid-air, dark gradient background, cool blue and white palette. Futuristic but minimal and clean.',\n    'Overhead flat-lay of an open laptop, blank spiral notebook, espresso cup, and smartphone on white marble desk. Clean minimal composition, soft natural shadows.',\n    'Long perspective shot of a data center server rack corridor, LEDs glowing in red and blue, polished floor reflection. Cool tech atmosphere.',\n    'Dual composition: left half shows analog paper-based process in warm tones, right half shows clean digital minimalist interface in cool tones. No text.',\n    'Abstract glowing network of interconnected nodes and light lines in deep space. Blue and white, representing connectivity and intelligence. Clean sci-fi.',\n    'Time-lapse style office scene: motion-blurred background activity, one pair of focused hands sharp on keyboard in foreground, warm amber light trails.'\n  ],\n  promesa: [\n    'A confident Latina entrepreneur in her 30s stands on a rooftop terrace at golden hour, arms slightly open, Latin American city skyline stretching behind her. Cinematic warm light.',\n    'A Latino business owner in his 40s stands at a floor-to-ceiling window at dawn, looking out at the city below. Silhouette-forward composition, hopeful expansive mood.',\n    'A mid-40s Latino man in a well-fitted suit walks purposefully through a modern glass atrium. Motion-blurred background, sharp subject, strong architectural lines.',\n    'A Latina CEO in professional attire stands at a glass building entrance, sunrise reflected in the facade, briefcase in hand. Aspirational editorial photography.',\n    'Wide aerial dawn shot of a modern Latin American city skyline, one warmly lit office window glowing in a high-rise tower. Symbolic, expansive, quiet ambition.',\n    'A Latino professional in his 30s in business casual stands on a hilltop overlook, cityscape below, symbolic elevation. Natural warm light, cinematic shallow DOF.',\n    'Dramatic silhouette of a confident business professional against a vivid orange-pink sunset sky, suspension bridge and city behind. Aspirational and dynamic.',\n    'A Latina entrepreneur in her 30s stands at a harbor at dusk, calm water with city reflections, looking forward confidently. Peaceful, accomplished, elegant.'\n  ]\n};\n\nconst pillarMap = {\n  educacion: 'educacion', experto: 'educacion', conocimiento: 'educacion',\n  social_proof: 'social_proof', casos: 'social_proof', testimonial: 'social_proof', casos_de_uso: 'social_proof', prueba_social: 'social_proof',\n  produccion: 'produccion', behind_scenes: 'produccion', proceso: 'produccion', herramienta: 'produccion', behind_the_scenes: 'produccion',\n  promesa: 'promesa', vision: 'promesa', aspiracion: 'promesa'\n};\n\nconst key = pillarMap[pillar] || 'educacion';\nconst pool = variants[key];\nconst scene = pool[Math.floor(Math.random() * pool.length)];\n\nconst systemPrompt = `You are a senior art director for B2B SaaS brand JAAGSOLUTIONS (an agency that builds automation systems for Latin American SMEs). Your job is to transform a generic image idea into a rich, production-quality prompt for Ideogram V_2.\\n\\nCRITICAL RULES:\\n\\n1. ABSOLUTELY NO TEXT, LETTERS, NUMBERS, WORDS, OR TYPOGRAPHY IN THE IMAGE. The image must be 100% text-free. No watermarks, no captions, no labels, no signage with readable words, no books with readable text, no screens showing readable text. The text overlay is added separately by post-processing.\\n\\n2. COMPOSITION MUST RESERVE NEGATIVE SPACE for a text overlay covering the BOTTOM 38% of the frame. The main subject and visual interest must be in the TOP 62%. The bottom area should be visually calm (sky, plain wall, gradient, soft bokeh, table surface) so dark text on a translucent overlay reads clearly.\\n\\n3. BRAND MOOD: confident, modern, clean, technological but human. Color palette leans cool (deep navy blues, slate, off-white) with optional warm accent. Lighting: soft, natural, professional.\\n\\n4. BASE SCENE — use this as your creative starting point and enrich it:\\n   \"${scene}\"\\n\\n5. STYLE DESCRIPTORS to include: \"professional editorial photography\", \"cinematic lighting\", \"shallow depth of field\", \"ultra-detailed\", \"high-end commercial style\", \"soft natural light\", \"color grading slightly cool with warm highlights\".\\n\\n6. NEGATIVE INSTRUCTIONS to include: \"no text, no letters, no logos, no watermarks, no captions, no signage, no readable typography, no numbers\".\\n\\n7. ETHNICITY: prefer Latino / Hispanic subjects. Diverse but always plausibly Latin American.\\n\\n8. LENGTH: 90-160 words. Concrete, sensory, no fluff.\\n\\n9. OUTPUT FORMAT: return ONLY the final prompt in English, single paragraph, no preamble, no quotes, no explanation.`;\n\nreturn [{ json: { ...item, auditor_system_prompt: systemPrompt, scene_variant: scene } }];"
+        "jsCode": "const item = $input.first().json;\nconst pillar = (item.pillar || '').toLowerCase();\n\nconst variants = {\n  educacion: [\n    'A mid-30s Latina woman in business casual stands at a modern standing desk with dual monitors showing colorful data dashboards. Bright minimal open-plan office, large windows with city view, soft natural light. Editorial real-photo style.',\n    'A Latino male consultant in his 40s presents to colleagues in a sleek boardroom. Large blank display screen behind him, three attentive professionals at the table. Cinematic overhead lighting, cool tones.',\n    'A young Latina entrepreneur works at a sunlit café table, laptop open, coffee cup nearby. Warm golden-hour light streams through large windows behind her. Candid, natural, aspirational.',\n    'Close-up portrait of a confident Latino business professional in his 30s holding a tablet. Blurred open-plan tech office bokeh behind him. Shallow depth of field, cool palette.',\n    'A Latino executive in his 50s stands in a glass-walled corner office, city skyline visible through floor-to-ceiling windows at dusk. Premium editorial photography, deep navy tones.',\n    'A Latina woman in her 30s facilitates a small workshop for three colleagues, gesturing toward a blank whiteboard. Modern bright training room, engaged team, natural light.',\n    'A Latino IT manager in his 40s reviews infrastructure in a cool blue-lit server room. LED ambient glow, professional focused expression, tech precision mood.',\n    'A mature Latino business owner at a polished wood desk, reviewing documents under warm desk lamp. Bookshelves behind, evening atmosphere, intimate and accomplished.'\n  ],\n  social_proof: [\n    'Two Latina professionals in their 30s sit at a modern café table, laptops open, smiling at a shared screen. Warm natural light, casual professional vibe, genuine connection.',\n    'A diverse team of three professionals — mixed gender, Latino — in a standing meeting around a glass wall with abstract sticky notes. Panoramic city view, bright modern office.',\n    'A Latino small business owner in his 40s shakes hands with a consultant in a modern reception area. Both smiling, professional setting, warm light.',\n    'A mixed team of four colleagues — diverse ages, Latino — collaborating in a casual breakout space. Engaged conversation, coffee cups, relaxed but professional atmosphere.',\n    'Overhead close-up: two hands — one male, one female — pointing at a glowing tablet screen on a conference table. Blurred professional backgrounds.',\n    'A Latina business owner in her 40s on a video call in a well-designed home office. Bookshelf background, ring light glow, natural and professional expression.',\n    'A team of five celebrating around a conference table, diverse Latino professionals, genuine smiles, golden evening light streaming through windows.',\n    'A Latino SME owner in his 40s walks through his warehouse with a tablet, employees working purposefully in the background. Real documentary editorial style.'\n  ],\n  produccion: [\n    'Two Latino automation consultants stand over a clear glass conference table with simple colored path lines reflected across the surface. Warm modern meeting room, blank wall background, no devices, no papers, no signage. Editorial real-photo style.',\n    'Overhead view of a clean frosted-glass table with smooth colored process lines and small plain geometric markers. Hands rest near the table edges, no screens, no notebooks, no labels. Calm premium workspace.',\n    'A small Latino operations team studies a minimalist process layout made from colored cords on a large table. Bright office, soft daylight, plain surfaces, no documents, no monitors, no readable marks.',\n    'Close-up of two professionals pointing at abstract colored workflow lines printed as pure shapes on a transparent acrylic board. The board has no symbols, letters, numbers, arrows, or labels.',\n    'Wide modern conference room with two consultants discussing a blank wall-sized process map represented only by soft colored lines and circular nodes. No text, no screens, no whiteboard writing.',\n    'Abstract automation scene: smooth blue and teal light trails flowing through simple geometric nodes over a clean dark surface. No interface panels, no charts, no numbers, no typography.',\n    'Human-centered operations scene: consultant arranging plain colored tokens along curved lines on a glass table while a business owner watches. Elegant office, natural light, no paper or devices.',\n    'Minimal process workshop environment with a large empty table, colored cords forming a clean route, and blurred professionals in the background. Calm lower area for overlay, no readable details.'\n  ],\n  promesa: [\n    'A confident Latina entrepreneur in her 30s stands on a rooftop terrace at golden hour, arms slightly open, Latin American city skyline stretching behind her. Cinematic warm light.',\n    'A Latino business owner in his 40s stands at a floor-to-ceiling window at dawn, looking out at the city below. Silhouette-forward composition, hopeful expansive mood.',\n    'A mid-40s Latino man in a well-fitted suit walks purposefully through a modern glass atrium. Motion-blurred background, sharp subject, strong architectural lines.',\n    'A Latina CEO in professional attire stands at a glass building entrance, sunrise reflected in the facade, briefcase in hand. Aspirational editorial photography.',\n    'Wide aerial dawn shot of a modern Latin American city skyline, one warmly lit office window glowing in a high-rise tower. Symbolic, expansive, quiet ambition.',\n    'A Latino professional in his 30s in business casual stands on a hilltop overlook, cityscape below, symbolic elevation. Natural warm light, cinematic shallow DOF.',\n    'Dramatic silhouette of a confident business professional against a vivid orange-pink sunset sky, suspension bridge and city behind. Aspirational and dynamic.',\n    'A Latina entrepreneur in her 30s stands at a harbor at dusk, calm water with city reflections, looking forward confidently. Peaceful, accomplished, elegant.'\n  ]\n};\n\nconst pillarMap = {\n  educacion: 'educacion', experto: 'educacion', conocimiento: 'educacion',\n  social_proof: 'social_proof', casos: 'social_proof', testimonial: 'social_proof', casos_de_uso: 'social_proof', prueba_social: 'social_proof',\n  produccion: 'produccion', behind_scenes: 'produccion', proceso: 'produccion', herramienta: 'produccion', behind_the_scenes: 'produccion',\n  promesa: 'promesa', vision: 'promesa', aspiracion: 'promesa'\n};\n\nconst key = pillarMap[pillar] || 'educacion';\nconst pool = variants[key];\nconst scene = pool[Math.floor(Math.random() * pool.length)];\n\nconst systemPrompt = `You are a senior art director for B2B SaaS brand JAAGSOLUTIONS (an agency that builds automation systems for Latin American SMEs). Your job is to transform a generic image idea into a rich, production-quality prompt for Ideogram V_2.\\n\\nCRITICAL RULES:\\n\\n1. ABSOLUTELY NO TEXT, LETTERS, NUMBERS, WORDS, OR TYPOGRAPHY IN THE IMAGE. The image must be 100% text-free. No watermarks, no captions, no labels, no signage with readable words, no books with readable text, no screens showing readable text. The text overlay is added separately by post-processing.\\n\\n2. COMPOSITION MUST RESERVE NEGATIVE SPACE for a text overlay covering the BOTTOM 38% of the frame. The main subject and visual interest must be in the TOP 62%. The bottom area should be visually calm (sky, plain wall, gradient, soft bokeh, table surface) so dark text on a translucent overlay reads clearly.\\n\\n3. BRAND MOOD: confident, modern, clean, technological but human. Color palette leans cool (deep navy blues, slate, off-white) with optional warm accent. Lighting: soft, natural, professional.\\n\\n4. BASE SCENE — use this as your creative starting point and enrich it:\\n   \"${scene}\"\\n\\n5. STYLE DESCRIPTORS to include: \"professional editorial photography\", \"cinematic lighting\", \"shallow depth of field\", \"ultra-detailed\", \"high-end commercial style\", \"soft natural light\", \"color grading slightly cool with warm highlights\".\\n\\n6. NEGATIVE INSTRUCTIONS to include: \"no text, no letters, no logos, no watermarks, no captions, no signage, no readable typography, no numbers\".\\n\\n7. ETHNICITY: prefer Latino / Hispanic subjects. Diverse but always plausibly Latin American.\\n\\n8. LENGTH: 90-160 words. Concrete, sensory, no fluff.\\n\\n9. OUTPUT FORMAT: return ONLY the final prompt in English, single paragraph, no preamble, no quotes, no explanation.`;\n\nreturn [{ json: { ...item, auditor_system_prompt: systemPrompt, scene_variant: scene } }];"
       }
     },
     {
@@ -296,7 +296,7 @@
             },
             {
               "name": "caption",
-              "value": "={{ '📅 *' + new Date($json.scheduled_date).toLocaleDateString('es-CO', {day:'2-digit', month:'long', year:'numeric'}) + ' ' + ($json.scheduled_time || '') + '*\\n📱 ' + ($json.platform || '').toUpperCase() + ' — ' + ($json.pillar || '') + '\\n\\n' + ($json.copy_text || '') + '\\n\\n' + ($json.hashtags || '') }}"
+              "value": "={{ (() => { const cta = (($json.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = $json.copy_text || ''; const hashtags = ($json.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return '📅 *' + new Date($json.scheduled_date).toLocaleDateString('es-CO', {day:'2-digit', month:'long', year:'numeric'}) + ' ' + ($json.scheduled_time || '') + '*\\n📱 ' + ($json.platform || '').toUpperCase() + ' — ' + ($json.pillar || '') + '\\n\\n' + [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }}"
             },
             {
               "name": "parse_mode",
@@ -377,7 +377,7 @@
     },
     {
       "id": "code-ideogram-ocr",
-      "name": "Ideogram + OCR — 3 intentos",
+      "name": "Ideogram + OCR - fallback seguro",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -385,7 +385,7 @@
         220
       ],
       "parameters": {
-        "jsCode": "const https = require('https');\nconst prev = $input.first().json;\nconst MAX_ATTEMPTS = 3;\n\nfunction httpsPost(hostname, path, body, extraHeaders) {\n  return new Promise((resolve, reject) => {\n    const bodyStr = JSON.stringify(body);\n    const options = {\n      hostname, path, method: 'POST',\n      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr), ...extraHeaders },\n      timeout: 30000\n    };\n    const req = https.request(options, (res) => {\n      let data = '';\n      res.on('data', chunk => data += chunk);\n      res.on('end', () => {\n        try { resolve(JSON.parse(data)); }\n        catch (e) { reject(new Error('JSON inválido: ' + data.slice(0, 300))); }\n      });\n    });\n    req.on('error', reject);\n    req.on('timeout', () => { req.destroy(); reject(new Error('Request timeout')); });\n    req.write(bodyStr);\n    req.end();\n  });\n}\n\nasync function generateIdeogram(prompt, aspectRatio) {\n  const seed = Math.floor(Math.random() * 2147483647);\n  const styleTypes = ['REALISTIC','REALISTIC','REALISTIC','GENERAL','GENERAL','3D_RENDER'];\n  const styleType = styleTypes[Math.floor(Math.random() * 6)];\n  return httpsPost('api.ideogram.ai', '/generate', {\n    image_request: {\n      prompt, aspect_ratio: aspectRatio, model: 'V_2',\n      magic_prompt_option: 'OFF', seed, style_type: styleType,\n      negative_prompt: 'text, letters, numbers, words, watermark, logo, caption, label, sign, typography, readable text, signage, signature, written language, plastic skin, uncanny valley, doll-like, cgi face, artificial skin, deformed face, distorted proportions, wax figure, overly smooth skin, lifeless eyes, brand names, store signs, product labels, background text, environmental signage, fake brand text, decorative lettering'\n    }\n  }, { 'Api-Key': $env.IDEOGRAM_API_KEY });\n}\n\nasync function checkOCR(imageUrl) {\n  try {\n    const resp = await httpsPost(\n      'vision.googleapis.com',\n      `/v1/images:annotate?key=${$env.GOOGLE_VISION_API_KEY}`,\n      { requests: [{ image: { source: { imageUri: imageUrl } }, features: [{ type: 'TEXT_DETECTION', maxResults: 10 }] }] },\n      {}\n    );\n    const annotations = resp.responses?.[0]?.textAnnotations || [];\n    const description = annotations[0]?.description || '';\n    return { hasText: description.length > 2, detectedText: description.slice(0, 200) };\n  } catch (err) {\n    console.log('[OCR] Vision API error — fail open: ' + err.message);\n    return { hasText: false, detectedText: '' };\n  }\n}\n\nlet cleanImageUrl = null;\nlet lastError = '';\n\nfor (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {\n  const resp = await generateIdeogram(prev.image_prompt, prev.aspect_ratio);\n  const url = resp.data?.[0]?.url;\n  if (!url) throw new Error(`Ideogram sin URL en intento ${attempt}: ` + JSON.stringify(resp).slice(0, 300));\n  const ocr = await checkOCR(url);\n  if (!ocr.hasText) {\n    cleanImageUrl = url;\n    console.log(`[OCR] Intento ${attempt}: imagen limpia ✓`);\n    break;\n  }\n  lastError = `Intento ${attempt}: texto detectado — \"${ocr.detectedText.replace(/\"/g, \"'\").slice(0, 100)}\"`;\n  console.log('[OCR] ' + lastError);\n}\n\nif (cleanImageUrl) {\n  return [{ json: { ...prev, data: [{ url: cleanImageUrl }] } }];\n}\nreturn [{ json: { ...prev, ocr_error: true, ocr_error_log: `OCR 3 intentos fallidos. Último: ${lastError}` } }];"
+        "jsCode": "const https = require('https');\nconst prev = $input.first().json;\nconst MAX_ATTEMPTS = 4;\n\nfunction httpsPost(hostname, path, body, extraHeaders) {\n  return new Promise((resolve, reject) => {\n    const bodyStr = JSON.stringify(body);\n    const options = {\n      hostname, path, method: 'POST',\n      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr), ...extraHeaders },\n      timeout: 30000\n    };\n    const req = https.request(options, (res) => {\n      let data = '';\n      res.on('data', chunk => data += chunk);\n      res.on('end', () => {\n        try { resolve(JSON.parse(data)); }\n        catch (e) { reject(new Error('JSON invalido: ' + data.slice(0, 300))); }\n      });\n    });\n    req.on('error', reject);\n    req.on('timeout', () => { req.destroy(); reject(new Error('Request timeout')); });\n    req.write(bodyStr);\n    req.end();\n  });\n}\n\nfunction safeFallbackPrompt(item) {\n  const headline = (item.copy_text || '').split('\\\\n').find(Boolean) || 'JAAGSOLUTIONS automation workflow';\n  return 'Professional editorial photo for JAAGSOLUTIONS, a B2B automation agency for Latin American SMEs. Two Latino consultants review an abstract process flow made only of smooth colored lines and plain circular nodes on a clean glass conference table. Modern warm office, soft natural light, premium human-tech mood, calm empty lower area for overlay. No screens, no laptops, no keyboards, no documents, no sticky notes, no whiteboards, no signage, no interface panels, no charts, no graphs, no letters, no numbers, no symbols, no logos, no typography. Visual theme: ' + headline.slice(0, 80);\n}\n\nasync function generateIdeogram(prompt, aspectRatio, safeMode) {\n  const seed = Math.floor(Math.random() * 2147483647);\n  const styleTypes = safeMode ? ['GENERAL', 'GENERAL', 'REALISTIC'] : ['REALISTIC', 'REALISTIC', 'GENERAL', 'GENERAL'];\n  const styleType = styleTypes[Math.floor(Math.random() * styleTypes.length)];\n  return httpsPost('api.ideogram.ai', '/generate', {\n    image_request: {\n      prompt, aspect_ratio: aspectRatio, model: 'V_2',\n      magic_prompt_option: 'OFF', seed, style_type: styleType,\n      negative_prompt: 'text, letters, numbers, words, watermark, logo, caption, label, sign, typography, readable text, signage, signature, written language, glyphs, symbols, interface, UI, screen, monitor, laptop, keyboard, notebook, document, paper, sticky notes, whiteboard, chart, graph, dashboard, brand names, store signs, product labels, background text, environmental signage, fake brand text, decorative lettering, plastic skin, uncanny valley, doll-like, cgi face, artificial skin, deformed face, distorted proportions, wax figure, overly smooth skin, lifeless eyes'\n    }\n  }, { 'Api-Key': $env.IDEOGRAM_API_KEY });\n}\n\nasync function checkOCR(imageUrl) {\n  try {\n    const resp = await httpsPost(\n      'vision.googleapis.com',\n      `/v1/images:annotate?key=${$env.GOOGLE_VISION_API_KEY}`,\n      { requests: [{ image: { source: { imageUri: imageUrl } }, features: [{ type: 'TEXT_DETECTION', maxResults: 10 }] }] },\n      {}\n    );\n    const annotations = resp.responses?.[0]?.textAnnotations || [];\n    const description = annotations[0]?.description || '';\n    return { hasText: description.length > 2, detectedText: description.slice(0, 200) };\n  } catch (err) {\n    console.log('[OCR] Vision API error - fail open: ' + err.message);\n    return { hasText: false, detectedText: '' };\n  }\n}\n\nlet cleanImageUrl = null;\nlet lastError = '';\nlet usedSafeFallback = false;\n\nfor (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {\n  const safeMode = attempt >= 3;\n  const prompt = safeMode ? safeFallbackPrompt(prev) : prev.image_prompt;\n  usedSafeFallback = usedSafeFallback || safeMode;\n  const resp = await generateIdeogram(prompt, prev.aspect_ratio, safeMode);\n  const url = resp.data?.[0]?.url;\n  if (!url) throw new Error('Ideogram sin URL en intento ' + attempt + ': ' + JSON.stringify(resp).slice(0, 300));\n  const ocr = await checkOCR(url);\n  if (!ocr.hasText) {\n    cleanImageUrl = url;\n    console.log('[OCR] Intento ' + attempt + (safeMode ? ' fallback seguro' : '') + ': imagen limpia');\n    break;\n  }\n  lastError = 'Intento ' + attempt + (safeMode ? ' fallback seguro' : '') + ': texto detectado - \"' + ocr.detectedText.replace(/\"/g, \"'\").slice(0, 100) + '\"';\n  console.log('[OCR] ' + lastError);\n}\n\nif (cleanImageUrl) {\n  return [{ json: { ...prev, data: [{ url: cleanImageUrl }], used_safe_fallback: usedSafeFallback } }];\n}\nreturn [{ json: { ...prev, ocr_error: true, used_safe_fallback: usedSafeFallback, ocr_error_log: 'OCR ' + MAX_ATTEMPTS + ' intentos fallidos. Ultimo: ' + lastError } }];"
       }
     },
     {
@@ -430,7 +430,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE content_plan SET status = 'error', error_log = '{{ $json.ocr_error_log }}' WHERE id = '{{ $json.id }}'",
+        "query": "UPDATE content_plan SET status = 'error', error_log = $ocr${{ $json.ocr_error_log }}$ocr$ WHERE id = '{{ $json.id }}' RETURNING id, scheduled_date, scheduled_time, platform, pillar, status, error_log",
         "options": {}
       },
       "credentials": {
@@ -454,7 +454,79 @@
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ chat_id: $env.TELEGRAM_CHAT_ID, text: '⚠️ Error OCR — post no procesado\\n📅 ' + $json.scheduled_date + ' | ' + ($json.platform||'') + ' — ' + ($json.pillar||'') + '\\n🔍 ' + ($json.ocr_error_log||'') + '\\n🆔 ' + ($json.id||'') + '\\n\\nAcción: revisar en content_plan o resetear para reintentar.' }) }}",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $env.TELEGRAM_CHAT_ID, text: 'ERROR OCR - post no procesado\\nFecha: ' + ($json.scheduled_date || '') + ' ' + ($json.scheduled_time || '') + '\\nCanal: ' + (($json.platform || '').toUpperCase()) + ' - ' + ($json.pillar || '') + '\\nDetalle: ' + ($json.error_log || $json.ocr_error_log || '') + '\\nID: ' + ($json.id || '') + '\\n\\nAccion: revisar content_plan, ajustar image_prompt y resetear para reintentar.' }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "schedule-monitor-0815",
+      "name": "Monitor post-cron 8:15",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        740
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "15 8 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "postgres-monitor-stuck-posts",
+      "name": "Monitor: posts atascados hoy",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        420,
+        740
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, scheduled_date, scheduled_time, platform, pillar, status, retry_count, error_log FROM content_plan WHERE scheduled_date = CURRENT_DATE AND status IN ('pending','generating','error') ORDER BY scheduled_time, id",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "id": "code-monitor-alert-text",
+      "name": "Monitor: preparar alerta Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        740
+      ],
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json);\nif (!rows.length) return [];\nconst lines = rows.map(r => {\n  const detail = r.error_log ? ' | ' + String(r.error_log).slice(0, 180) : '';\n  return '- ' + r.scheduled_time + ' ' + (r.platform || '').toUpperCase() + ' ' + r.pillar + ' | ' + r.status + ' | ' + r.id + detail;\n});\nreturn [{ json: { text: 'ALERTA post-cron JAAGSOLUTIONS 08:15\\nPosts de hoy atascados o con error:\\n' + lines.join('\\n') + '\\n\\nAccion: revisar content_plan / n8n executions antes de que se pierda la publicacion.' } }];"
+      }
+    },
+    {
+      "id": "telegram-monitor-alert",
+      "name": "Telegram: alerta post-cron",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        860,
+        740
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $env.TELEGRAM_CHAT_ID, text: $json.text }) }}",
         "options": {}
       }
     }
@@ -598,7 +670,7 @@
       "main": [
         [
           {
-            "node": "Ideogram + OCR — 3 intentos",
+            "node": "Ideogram + OCR - fallback seguro",
             "type": "main",
             "index": 0
           }
@@ -671,17 +743,6 @@
         ]
       ]
     },
-    "Ideogram + OCR — 3 intentos": {
-      "main": [
-        [
-          {
-            "node": "¿Error OCR?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "¿Error OCR?": {
       "main": [
         [
@@ -716,6 +777,50 @@
         [
           {
             "node": "Procesar 1 post a la vez",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ideogram + OCR - fallback seguro": {
+      "main": [
+        [
+          {
+            "node": "¿Error OCR?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monitor post-cron 8:15": {
+      "main": [
+        [
+          {
+            "node": "Monitor: posts atascados hoy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monitor: posts atascados hoy": {
+      "main": [
+        [
+          {
+            "node": "Monitor: preparar alerta Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monitor: preparar alerta Telegram": {
+      "main": [
+        [
+          {
+            "node": "Telegram: alerta post-cron",
             "type": "main",
             "index": 0
           }

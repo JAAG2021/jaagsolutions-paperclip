@@ -1,6 +1,6 @@
 # Bitácora de Infraestructura — JAAGSOLUTIONS
 
-**Última actualización:** 2026-05-18
+**Última actualización:** 2026-05-20
 **Estado del proyecto:** Fase A + Fase B completas — Content Pipeline n8n + Telegram Approval E2E validados en producción (FB + IG + LinkedIn publicando con imagen nativa)
 
 > **LEER ANTES DE CUALQUIER CAMBIO DE INFRAESTRUCTURA.**  
@@ -832,6 +832,27 @@ Continuación del deploy y testing del Content Pipeline. Se detectaron y corrigi
 
 ---
 
+## SESIÓN 2026-05-20 — Recuperación post Behind-the-Scenes + diagnóstico OCR
+
+### Resumen
+
+- Post Semana 2 Meta May 20 (`9f513b84-0f10-4715-a9e3-5b85a968070a`, `behind_the_scenes`) no salió en el cron inicial porque quedó en `status=error`.
+- DB confirmó causa: `OCR 3 intentos fallidos`, con texto detectado por Google Vision en la imagen generada.
+- Se reintentó con prompt visual más seguro, el post llegó a Telegram, fue aprobado y se publicó correctamente en Facebook, Instagram y LinkedIn.
+- Se confirmó que la rama `Telegram: error OCR` no estaba notificando de forma confiable: el nodo Postgres `status=error (OCR)` hacía `UPDATE` sin `RETURNING`, por lo que el nodo Telegram posterior podía no recibir `id`, `scheduled_date`, `platform`, `pillar` ni `error_log`.
+- Patch local aplicado en `deploy/n8n-workflows/content-generator.json`: `status=error (OCR)` ahora devuelve la fila con `RETURNING` y el mensaje Telegram usa `error_log`. Pendiente: desplegar/importar en n8n producción y validar con una rama de error real o prueba controlada.
+- Se detectó que el texto publicado no incluía el link de la página: `cta_url` existe en `content_plan`, pero Telegram preview y los publicadores FB/IG/LinkedIn armaban captions con `copy_text + hashtags` solamente. Patch local aplicado en `content-generator.json` y `telegram-approval.json` para insertar `cta_url` entre copy y hashtags, con fallback `https://jaagsolutions.com`. Pendiente: desplegar/importar y validar en producción.
+- Hardening local adicional en `content-generator.json`: el pool `produccion`/`behind_the_scenes` reemplaza escenas riesgosas (dashboard, UI, laptop, teclado, documentos) por escenas abstractas/humanas sin texto; el nodo OCR ahora usa 4 intentos y cambia a prompt seguro desde el intento 3 antes de marcar `status=error`.
+- Monitor post-cron local agregado al workflow: trigger diario 08:15 (`America/Bogota`) consulta posts de hoy en `pending`, `generating` o `error` y envía alerta Telegram si encuentra alguno. Pendiente: importar en n8n producción y activar/verificar.
+
+### Regla operativa reforzada
+
+- Para cualquier nodo Postgres intermedio que alimente una notificación o siguiente paso con datos del post, usar `RETURNING` explícito o referenciar un nodo upstream estable. En n8n, un `executeQuery` puede reemplazar el stream y dejar sin contexto al nodo siguiente.
+- Para prompts de imagen de `behind_the_scenes`/`produccion`, evitar pantallas, dashboards, documentos, teclados, laptops, whiteboards con marcas, charts y UI panels. Si OCR falla repetidamente, el workflow debe intentar un prompt visual seguro antes de enviar error.
+- Después del cron diario, el sistema debe avisar proactivamente si un post de hoy queda en `pending`, `generating` o `error`; no depender de revisar DB manualmente.
+
+---
+
 **FALLA 19 — SplitInBatches v3: output index 0 = "done", index 1 = "loop"**
 - **Síntoma:** El workflow ejecutaba `Procesar 1 post a la vez` y todos los nodos posteriores mostraban "Node executed successfully" en el toast pero sin output — execution se detenía silenciosamente.
 - **Causa raíz:** `SplitInBatches` en typeVersion 3 tiene **dos salidas**: index 0 = "done" (se ejecuta una vez al terminar todos los batches) e index 1 = "loop" (se ejecuta por cada batch). El workflow original conectaba todo al index 0 (done), así que solo se ejecutaba cuando ya no había items — momento en que no había nada que procesar.
@@ -866,13 +887,7 @@ Continuación del deploy y testing del Content Pipeline. Se detectaron y corrigi
   $('Guardar imagen en disco').item.json.image_base64
   ```
   en lugar de `$json.image_base64`.
-- **⚠️ PENDIENTE AL 2026-05-12:** El commit `f5215681` **NO está pusheado** al remote `jaag2021`. El VPS no lo tiene. Al comenzar la próxima sesión, este commit debe ser pusheado PRIMERO antes de hacer cualquier `git pull` en el VPS.
-  ```bash
-  # En máquina local:
-  git push jaag2021 feature/jaagsolutions
-  # En VPS:
-  cd /opt/jaagsolutions/repo && git pull
-  ```
+- **Estado 2026-05-20:** referencia histórica superada. El pipeline E2E ya fue validado en producción con posts reales; los pendientes actuales son los patches locales de hardening 2026-05-20 documentados al inicio de esta bitácora.
 - **Regla general:** Después de cualquier nodo Postgres `executeQuery`, `$json` es el resultado del query, NO los datos previos del pipeline. Para acceder a datos de un nodo anterior, usar `$('Nombre del nodo').item.json.campo`.
 
 ---
@@ -885,7 +900,7 @@ retry_count: 0
 format:      imagen_copy
 platform:    instagram
 ```
-El post está listo para el próximo test E2E una vez deployado el commit `f5215681`.
+Referencia histórica: este test post pertenece a la etapa de validación inicial. El pipeline ya avanzó a posts reales en producción; ver sesión 2026-05-20 para pendientes actuales.
 
 ---
 
@@ -1071,7 +1086,7 @@ DB final: `status=published`. Workflow completó toda la cadena (LinkedIn regist
 #### Pendientes para Fase 2 (sesión separada)
 
 1. ~~**A4 debe poblar `hashtags` en `content_plan`**~~ ✅ **COMPLETADO 2026-05-17** — spec de A4 actualizado en `jaagsolutions-seed.json` con tabla de hashtags por pilar + regla crítica. Seed re-corrido via `docker cp` (ver FALLA 31). Backfill SQL ejecutado (`UPDATE 1` sobre post `0927ed25`). Ver checklist para detalle.
-2. ~~**OCR post-generación con Google Vision (Fix #7 deferred)**~~ ✅ **COMPLETADO 2026-05-17** — nodo HTTP Ideogram reemplazado por Code node `Ideogram + OCR — 3 intentos` (3 reintentos misma ejecución, fail-open en Vision API). Rama de error: Postgres `status=error` + Telegram notification. Workflow transplantado vía REST API (23 nodos, ID `diB9nJOsjSzYbujt`). E2E verificado: `status=review`, imagen limpia en Telegram. Commit `f7cd5f34`.
+2. ~~**OCR post-generación con Google Vision (Fix #7 deferred)**~~ ✅ **COMPLETADO 2026-05-17** — nodo HTTP Ideogram reemplazado por Code node `Ideogram + OCR — 3 intentos` (3 reintentos misma ejecución, fail-open en Vision API). Rama de error: Postgres `status=error`; la notificación Telegram de errores OCR quedó como bug separado confirmado el 2026-05-20. Workflow transplantado vía REST API (23 nodos, ID `diB9nJOsjSzYbujt`). E2E verificado: `status=review`, imagen limpia en Telegram. Commit `f7cd5f34`.
 3. **Calidad visual — evitar uncanny valley en personajes** — Ideogram puede generar figuras humanas con piel plástica/artificial. Solución A: agregar `plastic skin, uncanny valley, doll-like, cgi face` al `negative_prompt` del Code node. Solución B (preferida): actualizar spec de A4 para priorizar composiciones sin rostros en primer plano (pantallas, manos, workspaces abstractos). Ver CHECKLIST para detalle.
 4. **Variety enforcement DB-side** — agregar tracking de temas/escenas usadas en los últimos 14 días para evitar repeticiones cercanas. Tabla `content_history` o columna `last_scene_variant` en `content_plan`.
 5. **A4 enriched image_prompt** — incluir en el spec del agente A4 instrucciones más ricas para `image_prompt` (no solo "Professional accounting services for small business" sino contexto de pilar + audiencia + emoción).
@@ -1163,12 +1178,12 @@ DB final: `status=published`. Workflow completó toda la cadena (LinkedIn regist
 
 ---
 
-**FALLA 35 — Telegram OCR error notification muestra `undefined | —` (pendiente fix)**
+**FALLA 35 — Telegram OCR error notification muestra `undefined | —` / puede no avisar**
 
 - **Síntoma:** Cuando el nodo `Telegram: error OCR` dispara, el mensaje muestra `undefined | —` en lugar de la fecha, plataforma y ID del post.
 - **Causa raíz:** El nodo de error no accede correctamente a las propiedades del item (probablemente usa `$json.scheduled_date` pero el contexto en ese punto del workflow no tiene esos campos disponibles directamente).
-- **Estado:** ⏳ Pendiente de fix — no bloquea el pipeline (el error queda en DB con `error_log` completo y se puede resetear desde VPS).
-- **Fix propuesto:** Revisar el template del mensaje en el nodo Telegram error OCR. Verificar qué propiedades están disponibles en ese punto usando `{{ $json }}` en modo debug. Probablemente necesita `$('Obtener datos del post').item.json.scheduled_date` o similar referencia explícita al nodo upstream.
+- **Estado:** Patch local aplicado 2026-05-20; pendiente desplegar/importar en n8n producción y validar con error OCR controlado.
+- **Fix aplicado localmente:** `status=error (OCR)` ahora hace `UPDATE ... RETURNING id, scheduled_date, scheduled_time, platform, pillar, status, error_log`, y `Telegram: error OCR` lee `error_log` devuelto por Postgres.
 
 ---
 

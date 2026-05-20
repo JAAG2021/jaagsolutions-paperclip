@@ -6,7 +6,7 @@
 
 ---
 
-## ESTADO ACTUAL (2026-05-13)
+## ESTADO ACTUAL (2026-05-20)
 
 | Servicio | URL | Estado |
 |---------|-----|--------|
@@ -14,10 +14,10 @@
 | Paperclip | `https://paperclip.jaagsolutions.com` | ✅ Live — VPS Docker |
 | n8n | `https://n8n.jaagsolutions.com` | ✅ Live — VPS Docker |
 | Workflow leads | Formspree Lead → Paperclip Issue | ✅ Activo |
-| Workflow content gen | Content Generator (Cron → Stability AI → Vision → Telegram) | ⚠️ Activo — fix `f5215681` pendiente de push+pull+re-import |
-| Workflow telegram approval | Telegram Approval → Meta + LinkedIn | ✅ Activo |
+| Workflow content gen | Content Generator (Cron → Ideogram + OCR → Telegram) | ⚠️ Activo — hardening 2026-05-20 pendiente de importar |
+| Workflow telegram approval | Telegram Approval → Meta + LinkedIn | ⚠️ Activo — CTA/link captions + LinkedIn Org pendientes de importar |
 
-**⚠️ ACCIÓN REQUERIDA AL INICIO DE PRÓXIMA SESIÓN:** Ver sección en CHECKLIST-MAESTRO — push de commit `f5215681` + re-import del content-generator.
+**⚠️ ACCIÓN REQUERIDA:** importar workflows actualizados después del próximo push: `content-generator.json` y `telegram-approval.json`.
 
 **VPS:** Google Cloud `jaagsolutions-vps` — e2-medium Ubuntu 22.04 — IP `34.41.171.138`  
 **SSH:** `ssh jaagsolutions-vps` (atajo configurado en `~/.ssh/config`) o `ssh -i C:\Users\jalva\.ssh\jaagsolutions_vps jaagsolutions@34.41.171.138`
@@ -170,6 +170,79 @@ En n8n UI: activar el nuevo workflow (toggle verde). Abrir cualquier nodo Postgr
 **No re-seleccionar credenciales en la UI** — los cambios manuales en la UI no son confiables. La fuente de verdad es el JSON del repo.
 
 ---
+
+---
+
+## 1.ter CÓMO DESPLEGAR HARDENING CONTENT PIPELINE 2026-05-20
+
+**Usar cuando:** se quiera aplicar el fix de alerta OCR, fallback visual seguro, monitor post-cron 08:15 y captions con `cta_url`.
+
+### Paso 1 — Importar Content Generator
+
+Antes de importar, en n8n UI archivar el workflow activo anterior **Content Generator — Ideogram + Sharp Compose → Telegram** para liberar el webhook `regenerate-single`. No borrar credenciales.
+
+```bash
+cd /opt/jaagsolutions/repo
+git pull origin feature/jaagsolutions
+
+python3 -c "
+import json
+d = json.load(open('deploy/n8n-workflows/content-generator.json'))
+d.pop('tags', None)
+json.dump(d, open('/tmp/content-generator.json', 'w'))
+"
+docker cp /tmp/content-generator.json deploy-n8n-1:/tmp/content-generator.json
+docker exec deploy-n8n-1 n8n import:workflow --input=/tmp/content-generator.json
+```
+
+En n8n UI: confirmar que **Content Generator — Ideogram + Sharp Compose → Telegram** quede activo. Si se crea duplicado, archivar el anterior y activar el importado.
+
+### Paso 2 — Importar Telegram Approval
+
+Antes de importar, en n8n UI archivar el workflow activo anterior **Telegram Approval → Meta + LinkedIn Publisher** para liberar el webhook `telegram-approval`.
+
+```bash
+python3 -c "
+import json
+d = json.load(open('deploy/n8n-workflows/telegram-approval.json'))
+d.pop('tags', None)
+json.dump(d, open('/tmp/telegram-approval.json', 'w'))
+"
+docker cp /tmp/telegram-approval.json deploy-n8n-1:/tmp/telegram-approval.json
+docker exec deploy-n8n-1 n8n import:workflow --input=/tmp/telegram-approval.json
+```
+
+En n8n UI: confirmar que **Telegram Approval → Meta + LinkedIn Publisher** quede activo y que el webhook `telegram-approval` siga apuntando al workflow activo.
+
+### Paso 3 — Prevalidar post May 21
+
+```bash
+docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -x -c "SELECT id, scheduled_date, scheduled_time, platform, pillar, status, cta_url, image_prompt, error_log FROM content_plan WHERE id='\''9dd90ed3-ea31-4f0d-a9dc-cdb77a1202b1'\'';"'
+```
+
+Si el `image_prompt` menciona `dashboard`, `screen`, `laptop`, `keyboard`, `document`, `chart`, `graph`, `whiteboard` o texto visual, reemplazarlo antes del cron:
+
+```bash
+docker exec -i deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' <<'SQLEOF'
+UPDATE content_plan
+SET image_prompt = $$Professional editorial photo for JAAGSOLUTIONS: two Latino business consultants reviewing an abstract automation process made only of smooth colored lines and plain circular nodes on a clean glass conference table. Modern warm office, soft natural light, calm empty lower area for overlay. No screens, no laptops, no keyboards, no documents, no signage, no charts, no graphs, no letters, no numbers, no symbols, no typography.$$,
+    cta_url = COALESCE(NULLIF(cta_url, ''), 'https://jaagsolutions.com'),
+    status = 'pending',
+    image_url = NULL,
+    retry_count = 0,
+    error_log = NULL,
+    telegram_msg_id = NULL
+WHERE id = '9dd90ed3-ea31-4f0d-a9dc-cdb77a1202b1'
+RETURNING id, scheduled_date, scheduled_time, platform, pillar, status, cta_url;
+SQLEOF
+rm -f /opt/jaagsolutions/content/9dd90ed3-ea31-4f0d-a9dc-cdb77a1202b1.jpg
+```
+
+### Paso 4 — Validar señales esperadas
+
+- Telegram preview debe incluir `https://jaagsolutions.com` entre copy y hashtags.
+- Si OCR falla, Telegram debe recibir mensaje `ERROR OCR - post no procesado` con ID, fecha, canal, pilar y `error_log`.
+- A las 08:15 `America/Bogota`, si hay posts de hoy en `pending`, `generating` o `error`, debe llegar alerta `ALERTA post-cron JAAGSOLUTIONS 08:15`.
 
 ---
 

@@ -177,7 +177,88 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ ({ author: $env.LINKEDIN_AUTHOR_URN, lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: $('Obtener datos del post').first().json.copy_text + '\\n\\n' + ($('Obtener datos del post').first().json.hashtags || '') }, shareMediaCategory: 'IMAGE', media: [{ status: 'READY', description: { text: $('Obtener datos del post').first().json.copy_text }, media: $('LinkedIn — register upload').first().json.value.asset, title: { text: ($('Obtener datos del post').first().json.copy_text || 'JAAGSOLUTIONS').substring(0, 200) } }] } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
+        "jsonBody": "={{ ({ author: $env.LINKEDIN_AUTHOR_URN, lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: (() => { const post = $('Obtener datos del post').first().json; const cta = ((post.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = post.copy_text || ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }, shareMediaCategory: 'IMAGE', media: [{ status: 'READY', description: { text: $('Obtener datos del post').first().json.copy_text }, media: $('LinkedIn — register upload').first().json.value.asset, title: { text: ($('Obtener datos del post').first().json.copy_text || 'JAAGSOLUTIONS').substring(0, 200) } }] } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
+        "options": { "timeout": 30000 }
+      }
+    },
+    {
+      "id": "http-linkedin-org-register",
+      "name": "LinkedIn Org — register upload",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3500, 200],
+      "continueOnFail": true,
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.linkedin.com/v2/assets?action=registerUpload",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ ({ registerUploadRequest: { recipes: ['urn:li:digitalmediaRecipe:feedshare-image'], owner: $env.LINKEDIN_ORGANIZATION_URN, serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }] } }) }}",
+        "options": { "timeout": 30000 }
+      }
+    },
+    {
+      "id": "read-linkedin-org-image",
+      "name": "Leer imagen (LinkedIn Org)",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [3720, 200],
+      "continueOnFail": true,
+      "parameters": {
+        "filePath": "=/opt/jaagsolutions/content/{{ $('Parsear callback').first().json.post_id }}.jpg",
+        "dataPropertyName": "data"
+      }
+    },
+    {
+      "id": "http-linkedin-org-upload",
+      "name": "LinkedIn Org — subir imagen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3940, 200],
+      "continueOnFail": true,
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('LinkedIn Org — register upload').first().json.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": { "timeout": 60000 }
+      }
+    },
+    {
+      "id": "http-linkedin-org",
+      "name": "LinkedIn Org — publicar post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4160, 200],
+      "continueOnFail": true,
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.linkedin.com/v2/ugcPosts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-Restli-Protocol-Version", "value": "2.0.0" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ ({ author: $env.LINKEDIN_ORGANIZATION_URN, lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: (() => { const post = $('Obtener datos del post').first().json; const cta = ((post.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = post.copy_text || ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }, shareMediaCategory: 'IMAGE', media: [{ status: 'READY', description: { text: $('Obtener datos del post').first().json.copy_text }, media: $('LinkedIn Org — register upload').first().json.value.asset, title: { text: ($('Obtener datos del post').first().json.copy_text || 'JAAGSOLUTIONS').substring(0, 200) } }] } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
         "options": { "timeout": 30000 }
       }
     },
@@ -235,7 +316,7 @@
         "bodyParameters": {
           "parameters": [
             { "parameterType": "formBinaryData", "name": "source", "inputDataFieldName": "data" },
-            { "parameterType": "formData", "name": "caption", "value": "={{ $('Obtener datos del post').first().json.copy_text + '\\n\\n' + ($('Obtener datos del post').first().json.hashtags || '') }}" },
+            { "parameterType": "formData", "name": "caption", "value": "={{ (() => { const post = $('Obtener datos del post').first().json; const cta = ((post.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = post.copy_text || ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }}" },
             { "parameterType": "formData", "name": "published", "value": "true" }
           ]
         },
@@ -263,7 +344,7 @@
         "bodyParameters": {
           "parameters": [
             { "name": "image_url", "value": "={{ $('Obtener datos del post').first().json.image_url }}" },
-            { "name": "caption", "value": "={{ $('Obtener datos del post').first().json.copy_text + '\\n\\n' + ($('Obtener datos del post').first().json.hashtags || '') }}" }
+            { "name": "caption", "value": "={{ (() => { const post = $('Obtener datos del post').first().json; const cta = ((post.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = post.copy_text || ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }}" }
           ]
         },
         "options": { "timeout": 30000 }
@@ -503,6 +584,18 @@
       "main": [[{ "node": "LinkedIn — publicar post", "type": "main", "index": 0 }]]
     },
     "LinkedIn — publicar post": {
+      "main": [[{ "node": "LinkedIn Org — register upload", "type": "main", "index": 0 }]]
+    },
+    "LinkedIn Org — register upload": {
+      "main": [[{ "node": "Leer imagen (LinkedIn Org)", "type": "main", "index": 0 }]]
+    },
+    "Leer imagen (LinkedIn Org)": {
+      "main": [[{ "node": "LinkedIn Org — subir imagen", "type": "main", "index": 0 }]]
+    },
+    "LinkedIn Org — subir imagen": {
+      "main": [[{ "node": "LinkedIn Org — publicar post", "type": "main", "index": 0 }]]
+    },
+    "LinkedIn Org — publicar post": {
       "main": [[{ "node": "status = published", "type": "main", "index": 0 }]]
     },
     "status = published": {
