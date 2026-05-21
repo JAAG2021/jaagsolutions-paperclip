@@ -32,7 +32,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT * FROM content_plan WHERE status = 'pending' AND scheduled_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 2 ORDER BY scheduled_date, scheduled_time LIMIT 10",
+        "query": "SELECT * FROM content_plan WHERE status = 'pending' AND scheduled_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 2 ORDER BY scheduled_date, scheduled_time LIMIT 1",
         "options": {}
       },
       "credentials": {
@@ -558,7 +558,7 @@
       "main": [
         [
           {
-            "node": "Procesar 1 post a la vez",
+            "node": "status = generating",
             "type": "main",
             "index": 0
           }
@@ -568,14 +568,8 @@
     },
     "Procesar 1 post a la vez": {
       "main": [
-        null,
-        [
-          {
-            "node": "status = generating",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [],
+        []
       ]
     },
     "status = generating": {
@@ -701,13 +695,7 @@
     },
     "Guardar telegram_msg_id": {
       "main": [
-        [
-          {
-            "node": "Procesar 1 post a la vez",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Preparar input compose": {
@@ -774,13 +762,7 @@
     },
     "Telegram: error OCR": {
       "main": [
-        [
-          {
-            "node": "Procesar 1 post a la vez",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Ideogram + OCR - fallback seguro": {
