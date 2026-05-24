@@ -8,11 +8,14 @@
 
 Crear una composicion visual animada que convierta los dos workflows principales de n8n en un producto vendible: un motor de automatizacion de contenido que toma una estrategia editorial, genera piezas visuales con IA, conserva aprobacion humana y publica en canales sociales.
 
-La pieza base sera un video comercial corto de 45-60 segundos. Desde esa pieza se derivan:
+La pieza base sera un video comercial corto para redes sociales. El alcance actual no incluye modificar la landing, componentes web ni assets del sitio. Desde esta pieza se derivan un paquete de clips y artes para publicar en:
 
-- Hero animado para `jaagsolutions.com`
-- Version vertical para LinkedIn, Instagram y WhatsApp
-- Storyboard estatico para propuestas comerciales y decks
+- LinkedIn
+- Facebook
+- Instagram
+- WhatsApp / mensajes comerciales si se requiere
+
+El storyboard estatico se usara solo como herramienta de produccion interna para ordenar escenas, prompts y aprobaciones visuales.
 - Prompts reutilizables para generar escenas visuales de cada nodo
 
 ## Concepto Maestro
@@ -192,11 +195,11 @@ Final commercial outcome of an automated content engine. A modern business team 
 
 ## Versiones A Producir
 
-### Video Comercial Maestro
+### Video Comercial Maestro Para Redes
 
 - Formato: 16:9, 1920x1080
 - Duracion: 45-60 segundos
-- Uso: reuniones comerciales, landing, presentaciones
+- Uso: LinkedIn y Facebook feed
 - Contenido: 10 escenas narrativas con copy breve
 - Estilo: cinematic SaaS/product video, no tutorial tecnico
 
@@ -204,22 +207,15 @@ Final commercial outcome of an automated content engine. A modern business team 
 
 - Formato: 9:16, 1080x1920
 - Duracion: 30-45 segundos
-- Uso: LinkedIn mobile, Instagram Reels, WhatsApp
+- Uso: Instagram Reels, Facebook Reels, LinkedIn mobile y WhatsApp
 - Adaptacion: menos texto, mas ritmo, CTA final claro
 
-### Hero Web Loop
+### Version Cuadrada
 
-- Formato recomendado existente: 896x1200 o proporcion cercana al marco actual del hero
-- Duracion: 8-12 segundos en loop
-- Uso: `jaagsolutions-web/public/hero-automation-hub.mp4` o nuevo asset equivalente
-- Contenido: Plan -> IA -> Aprobacion -> Publicacion, sin explicaciones largas
-
-### Storyboard Comercial
-
-- Formato: 10 slides o 5 slides dobles
-- Uso: PDF, propuesta, deck
-- Cada slide incluye: escena, que automatiza, valor para negocio
-- Debe poder entenderse sin mostrar la configuracion interna de n8n
+- Formato: 1:1, 1080x1080
+- Duracion: 30-45 segundos
+- Uso: publicaciones cuadradas en Instagram/Facebook y versiones recortadas para carrusel
+- Adaptacion: composicion centrada, textos grandes, menos elementos laterales
 
 ## Copy Comercial Por Version
 
@@ -295,13 +291,13 @@ Crear 10 imagenes base, una por escena, usando los prompts anteriores. Validar t
 
 Animar las escenas con lineas de flujo, zooms suaves, transiciones de luz y copy en pantalla. Exportar 16:9 y 9:16.
 
-### Fase 3 - Hero Web
+### Fase 3 - Adaptaciones Sociales
 
-Reducir la narrativa a un loop de 8-12 segundos y reemplazar o complementar el asset actual del hero web.
+Exportar versiones 16:9, 9:16 y 1:1 con safe zones para cada red. No modificar `jaagsolutions.com` ni componentes de la landing en este alcance.
 
-### Fase 4 - Deck Comercial
+### Fase 4 - Paquete De Publicacion
 
-Convertir el storyboard en 5-10 slides con mensajes de negocio y un cierre de demo.
+Preparar caption, hashtags, thumbnail/cover y texto corto para LinkedIn, Facebook e Instagram.
 
 ## Criterios De Aceptacion
 
@@ -309,7 +305,7 @@ Convertir el storyboard en 5-10 slides con mensajes de negocio y un cierre de de
 - Se reconocen claramente dos motores: generacion y aprobacion/publicacion.
 - El cliente percibe un producto vendible, no una automatizacion interna.
 - La aprobacion humana queda visible como ventaja de control.
-- La pieza puede adaptarse a video, web y deck sin rehacer el concepto.
+- La pieza puede publicarse en LinkedIn, Facebook e Instagram sin rehacer el concepto.
 - No se exponen datos sensibles ni detalles operativos innecesarios.
 
 ## Riesgos Y Mitigaciones
@@ -323,5 +319,5 @@ Convertir el storyboard en 5-10 slides con mensajes de negocio y un cierre de de
 **Riesgo:** que las imagenes IA incluyan texto falso.  
 **Mitigacion:** prompts con prohibicion explicita de texto y agregar copy despues en edicion.
 
-**Riesgo:** que el hero web pese demasiado.  
-**Mitigacion:** exportar loop corto optimizado y mantener fallback estatico/Lottie.
+**Riesgo:** que las proporciones recorten informacion importante entre redes.  
+**Mitigacion:** disenar primero con safe zones y exportar variantes 16:9, 9:16 y 1:1 desde el mismo storyboard.
