@@ -238,7 +238,13 @@ De un plan editorial a publicaciones listas en LinkedIn, Instagram y Facebook, c
 ### CTA
 
 ```text
-Solicitar demo del motor de contenido
+Solicitar diagnostico de contenido automatizado
+```
+
+### Texto De Apoyo Para CTA
+
+```text
+Revisamos como produces contenido hoy y te proponemos un flujo automatizado para generar, aprobar y publicar con menos trabajo manual.
 ```
 
 ### Alternativas De Mensaje
