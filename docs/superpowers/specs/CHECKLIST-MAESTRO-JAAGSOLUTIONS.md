@@ -7,8 +7,22 @@
 1. Este checklist (estado actual + tareas pendientes)
 2. `BITACORA-INFRAESTRUCTURA.md` (decisiones + 18+ gotchas históricos resueltos)
 3. `deploy/RUNBOOK.md` (procesos validados, sección 1.bis para imports con credenciales)
+4. `2026-05-25-jaagsolutions-production-sync-design.md` (modelo operativo v2 para agentes + sincronizacion Paperclip)
 
 ---
+
+## ACTUALIZACION OPERATIVA - 2026-05-25
+
+Se corrige la desincronizacion entre Paperclip y la realidad productiva:
+
+- `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json` ahora refleja 5 agentes, 6 goals, 4 proyectos y 21 issues.
+- Se agrega el proyecto `P4 - Content Automation Production Ops`.
+- A4 `Social & Content Lead` queda obligado por capabilities a respetar el workflow `content_plan -> Content Generator -> Telegram Approval -> Meta + LinkedIn Publisher`.
+- El pipeline de contenido queda reconocido como `done` con issue historico: `Pipeline automatizado de contenido - Meta + LinkedIn + Telegram approval`.
+- Los issues vivos ahora son operativos: calendario editorial, health diario de n8n, sync semanal Paperclip, reporte semanal de contenido/leads, prevalidacion de `content_plan`, aprobacion humana Telegram y hardening 2026-05-20.
+- El documento rector de esta sincronizacion es `docs/superpowers/specs/2026-05-25-jaagsolutions-production-sync-design.md`.
+
+**Regla nueva:** antes de crear tareas de contenido, revisar si el trabajo debe entrar como registro en `content_plan`, como issue de P4 o como incidente en `BITACORA-INFRAESTRUCTURA.md`. No duplicar issues de setup ya cerrados.
 
 ## PROTOCOLO DE SESIÓN
 
@@ -60,13 +74,13 @@ docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 
 | Entregable | Estado | % Completo |
 |-----------|--------|-----------|
-| Seed Paperclip | **Completo** — 5 agentes, 5 goals, 3 proyectos, 13 issues en producción ✅ (2026-05-07) | 100% |
+| Seed Paperclip | **Completo + sincronizado v2** — 5 agentes, 6 goals, 4 proyectos, 21 issues en producción/sync pendiente de aplicar si Paperclip no fue re-seedeado ✅ (2026-05-25) | 100% |
 | Landing Web (código) | **Completo** — formulario 4 pasos + PDF + antispam + A11y + legales + email contacto | 100% |
 | Landing Web (deploy) | **LIVE** — `jaagsolutions.com` + SSL + GA4 activo ✅ (2026-05-07) | 100% |
 | Dominio + DNS | **Completo** — Hostinger → Cloudflare NS + Custom Domains activos ✅ | 100% |
 | Email corporativo | **Completo** — routing `contacto@jaagsolutions.com` → Gmail ✅ | 100% |
 | Infraestructura VPS / n8n | **Completo** — VPS + Docker + n8n + workflow activo + E2E verificado ✅ (2026-05-06) | 100% |
-| Agente Marketing (A4) | **Completo** — Social & Content Lead creado con G4/P3/5 issues ✅ (2026-05-07) | 100% |
+| Agente Marketing (A4) | **Completo + reforzado** — Social & Content Lead creado y actualizado con mandato obligatorio de workflow de contenido ✅ (2026-05-25) | 100% |
 | Auditoría seguridad + bugs | **Completo** — 2 críticos + 4 importantes + 4 menores corregidos ✅ (2026-05-07) | 100% |
 | A4 apply_patch fix | **Completo** — `codex-run.sh` con `--dangerously-bypass-approvals-and-sandbox` ✅ (2026-05-10) | 100% |
 | Estrategia contenido Mes 1 | **Completo** — CSV Buffer + handoff + blog generados por A4 ✅ (2026-05-10) | 100% |
@@ -236,7 +250,7 @@ git pull origin feature/jaagsolutions
 
 | Archivo | Estado |
 |---------|--------|
-| `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json` | ✅ Completo — company, 5 agentes (A0–A4), 5 goals, 3 proyectos, 13 issues |
+| `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json` | ✅ Completo — company, 5 agentes (A0–A4), 6 goals, 4 proyectos, 21 issues |
 | `packages/db/src/seed-jaagsolutions.ts` | ✅ Completo — loader idempotente con upserts |
 | `packages/db/package.json` → script `seed:jaagsolutions` | ✅ Completo |
 | `package.json` (root) → script `db:seed:jaagsolutions` | ✅ Completo |
@@ -248,9 +262,9 @@ git pull origin feature/jaagsolutions
 - [x] Script `pnpm db:seed:jaagsolutions` configurado
 - [x] ✅ Company JAAGSOLUTIONS visible en UI de Paperclip (2026-05-07)
 - [x] ✅ 5 agentes con jerarquía correcta (CEO → PM → Engineer; CEO → Growth Ops → Social Lead)
-- [x] ✅ 5 goals con parentId correcto
-- [x] ✅ 3 proyectos con lead asignado (P1 Delivery, P2 Demand Engine, P3 Brand & Content)
-- [x] ✅ 13 issues distribuidos correctamente
+- [x] ✅ 6 goals con parentId correcto
+- [x] ✅ 4 proyectos con lead asignado (P1 Delivery, P2 Demand Engine, P3 Brand & Content, P4 Content Automation Production Ops)
+- [x] ✅ 21 issues distribuidos correctamente
 - [x] ✅ Script idempotente verificado (segunda ejecución: 0 creados, actualizados)
 
 ---

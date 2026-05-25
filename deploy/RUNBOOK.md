@@ -19,6 +19,8 @@
 
 **⚠️ ACCIÓN REQUERIDA:** importar workflows actualizados después del próximo push: `content-generator.json` y `telegram-approval.json`.
 
+**Actualizacion 2026-05-25:** Paperclip debe sincronizarse con `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json` v2. Ese seed reconoce la operacion real: 5 agentes, 6 goals, 4 proyectos y 21 issues, incluyendo `P4 - Content Automation Production Ops`. El agente A4 tiene mandato explicito de respetar el workflow `content_plan -> Content Generator -> Telegram Approval -> Meta + LinkedIn Publisher`.
+
 **VPS:** Google Cloud `jaagsolutions-vps` — e2-medium Ubuntu 22.04 — IP `34.41.171.138`  
 **SSH:** `ssh jaagsolutions-vps` (atajo configurado en `~/.ssh/config`) o `ssh -i C:\Users\jalva\.ssh\jaagsolutions_vps jaagsolutions@34.41.171.138`
 **Clave SSH local:** `C:\Users\jalva\.ssh\jaagsolutions_vps` — exclusiva para este proyecto, fingerprint `SHA256:tbhHTHiJB+hazSUuVL4DiEAY+kjjz3d5HrWLq6oJxU4`
@@ -48,6 +50,16 @@
   sudo chown -R 1000:1000 /opt/jaagsolutions/paperclip-data
   sudo docker restart deploy-paperclip-1
   ```
+- La fuente de verdad de agentes/goals/proyectos/issues es `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json`.
+- Despues de modificar el seed, aplicar la seccion 2 de este runbook y verificar en `https://paperclip.jaagsolutions.com`.
+- No volver al seed historico de 4 agentes: la operacion actual usa A4 `Social & Content Lead` y P4 `Content Automation Production Ops`.
+
+### En automatizacion de contenido
+- A4 no debe publicar ni regenerar contenido por fuera del pipeline aprobado.
+- A2 es el dueno tecnico de workflows n8n, credenciales, webhooks, OCR y alertas.
+- A1 sincroniza Paperclip semanalmente con publicaciones reales.
+- A3 traduce resultados de contenido a demanda comercial.
+- Todo cambio productivo debe quedar reflejado en `CHECKLIST-MAESTRO-JAAGSOLUTIONS.md`.
 
 ---
 
@@ -250,6 +262,20 @@ rm -f /opt/jaagsolutions/content/9dd90ed3-ea31-4f0d-a9dc-cdb77a1202b1.jpg
 
 **Usar cuando:** se agrega o modifica un agente, goal, proyecto o issue en `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json`.
 
+**Estado esperado desde 2026-05-25:** el seed debe cargar 5 agentes, 6 goals, 4 proyectos y 21 issues. Si el dashboard muestra menos, Paperclip esta desincronizado y hay que re-ejecutar esta seccion.
+
+### Verificacion local previa
+
+```bash
+node -e "const s=require('./Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json'); console.log({agents:s.agents.length, goals:s.goals.length, projects:s.projects.length, issues:s.issues.length})"
+```
+
+Output esperado:
+
+```text
+{ agents: 5, goals: 6, projects: 4, issues: 21 }
+```
+
 ### Paso 1 — Commit y push desde máquina local
 
 ```bash
@@ -283,6 +309,27 @@ Output esperado: `X creados, Y actualizados` (el seed es idempotente — correrl
 ### Verificar
 
 Ir a `https://paperclip.jaagsolutions.com` → confirmar agentes/goals/proyectos en el dashboard.
+
+### Alternativa API - sincronizador v2
+
+Si Paperclip esta accesible por API y tienes un token valido, puedes aplicar la sincronizacion sin entrar directo a la DB:
+
+```bash
+cd /opt/jaagsolutions/repo
+PAPERCLIP_API_URL=https://paperclip.jaagsolutions.com \
+PAPERCLIP_API_KEY=<token> \
+node scripts/sync-jaagsolutions-production.mjs --apply --wake
+```
+
+Primero se puede simular sin cambios:
+
+```bash
+PAPERCLIP_API_URL=https://paperclip.jaagsolutions.com \
+PAPERCLIP_API_KEY=<token> \
+node scripts/sync-jaagsolutions-production.mjs
+```
+
+Este script actualiza agentes, goals, proyectos e issues desde `jaagsolutions-seed.json`, agrega comentario de evidencia cuando cierra issues a `done` y opcionalmente despierta a los agentes con `--wake`.
 
 ---
 
