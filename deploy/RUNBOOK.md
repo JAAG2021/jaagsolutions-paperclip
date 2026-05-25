@@ -53,6 +53,7 @@
 - La fuente de verdad de agentes/goals/proyectos/issues es `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json`.
 - Despues de modificar el seed, aplicar la seccion 2 de este runbook y verificar en `https://paperclip.jaagsolutions.com`.
 - No volver al seed historico de 4 agentes: la operacion actual usa A4 `Social & Content Lead` y P4 `Content Automation Production Ops`.
+- Mantener `adapterConfig.command` en los agentes. Si queda vacio, `Run Heartbeat` falla con `Process adapter missing command` y puede marcar issues como `blocked`.
 
 ### En automatizacion de contenido
 - A4 no debe publicar ni regenerar contenido por fuera del pipeline aprobado.

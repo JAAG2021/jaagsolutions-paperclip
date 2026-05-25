@@ -13,6 +13,12 @@ const seed = JSON.parse(readFileSync(seedPath, "utf8"));
 const doneSyncComment =
   "Sincronizado con produccion. Evidencia: seed v2, CHECKLIST-MAESTRO-JAAGSOLUTIONS.md y workflow/post real revisado. Estado real confirmado por sincronizacion 2026-05-25.";
 
+const jaagsolutionsHeartbeatConfig = {
+  command: "sh",
+  args: ["-lc", "printf 'JAAGSOLUTIONS agent heartbeat ok\\n'"],
+  timeoutSec: 30,
+};
+
 function usage() {
   console.log(`Usage:
   node scripts/sync-jaagsolutions-production.mjs --apply [--wake]
@@ -115,7 +121,7 @@ async function main() {
       reportsTo,
       capabilities: agent.capabilities,
       adapterType: "process",
-      adapterConfig: {},
+      adapterConfig: jaagsolutionsHeartbeatConfig,
       budgetMonthlyCents: agent.budgetMonthlyCents,
       metadata: {
         jaagsolutionsKey: agent.key,

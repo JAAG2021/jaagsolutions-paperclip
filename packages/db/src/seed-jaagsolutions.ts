@@ -83,6 +83,12 @@ const db = createDb(url);
 let created = 0;
 let updated = 0;
 
+const jaagsolutionsHeartbeatConfig = {
+  command: "sh",
+  args: ["-lc", "printf 'JAAGSOLUTIONS agent heartbeat ok\\n'"],
+  timeoutSec: 30,
+};
+
 function track(action: "created" | "updated") {
   if (action === "created") created++;
   else updated++;
@@ -126,7 +132,7 @@ async function upsertAgent(
     reportsTo,
     capabilities: agentSeed.capabilities,
     adapterType: "process" as const,
-    adapterConfig: {} as Record<string, unknown>,
+    adapterConfig: jaagsolutionsHeartbeatConfig,
     budgetMonthlyCents: agentSeed.budgetMonthlyCents,
     status: "idle",
   };
