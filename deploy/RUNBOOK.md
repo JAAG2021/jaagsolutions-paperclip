@@ -255,7 +255,7 @@ rm -f /opt/jaagsolutions/content/9dd90ed3-ea31-4f0d-a9dc-cdb77a1202b1.jpg
 
 - Telegram preview debe incluir `https://jaagsolutions.com` entre copy y hashtags.
 - Si OCR falla, Telegram debe recibir mensaje `ERROR OCR - post no procesado` con ID, fecha, canal, pilar y `error_log`.
-- A las 08:15 `America/Bogota`, si hay posts de hoy en `pending`, `generating` o `error`, debe llegar alerta `ALERTA post-cron JAAGSOLUTIONS 08:15`.
+- A las 08:15 `America/Santiago`, si hay posts de hoy en `pending`, `generating` o `error`, debe llegar alerta `ALERTA post-cron JAAGSOLUTIONS 08:15`.
 
 ---
 
