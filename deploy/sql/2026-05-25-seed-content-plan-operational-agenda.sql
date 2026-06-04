@@ -92,10 +92,10 @@ WITH planned_raw (
    '#Asesoría #AutomatizaciónPYME #Operaciones'),
 
   (DATE '2026-06-15', TIME '10:00', 'educacion', 'valor',
-   'Intentar automatizar todo al mismo tiempo es uno de los errores más costosos que vemos.',
-   'En procesos complejos, empezar por el cien por ciento aumenta el riesgo. Automatice lo repetitivo y cree alertas para los casos raros. Así el equipo gana control primero.',
-   '¿Tienen alguna excepción operativa que se detecta tarde? ¿Cómo la manejan hoy?',
-   '#ControlOperativo #AutomatizaciónInteligente #PYME'),
+   'Su empresa está activa en redes. ¿O solo intenta estarlo?',
+   'Tener redes sociales y tener presencia en redes son dos cosas distintas. Una cuenta que publica cuando hay tiempo, que tiene semanas sin actividad o que depende de que alguien recuerde hacerlo, no está construyendo audiencia. Está perdiendo el terreno que tardó meses en ganar.',
+   '¿Cuántos días pasaron desde la última publicación de su empresa en redes? Cuéntenme abajo.',
+   '#automatizacion #pymes #productividad #eficiencia #jaagsolutions'),
 
   (DATE '2026-06-17', TIME '10:00', 'behind_the_scenes', 'valor',
    'Antes de tocar una sola herramienta, hacemos este ejercicio de 10 minutos. Cambia todo.',
@@ -110,10 +110,10 @@ WITH planned_raw (
    '#Reportes #AutomatizaciónPYME #Productividad'),
 
   (DATE '2026-06-22', TIME '10:00', 'educacion', 'valor',
-   'No todo se puede automatizar. Pero estas tres señales le dicen cuándo vale la pena intentarlo.',
-   'Si una tarea se repite, usa datos parecidos y termina con una decisión clara, probablemente puede automatizarse. Empiece por ahí antes de rediseñar toda la operación.',
-   '¿Tienen una tarea que cumpla esas tres señales? Descríbanla en los comentarios.',
-   '#ProcesosAutomatizables #Productividad #PYME'),
+   'Publicar a mano tiene un costo que no está en la factura.',
+   'Si alguien dedica dos horas semanales a redactar, diseñar y publicar en redes, eso son ocho horas al mes de trabajo en tareas repetitivas. Multiplicado por doce meses: casi dos semanas de trabajo al año. Un sistema automatizado genera el copy, crea la imagen y publica en el horario correcto. Sin que nadie lo recuerde cada vez.',
+   '¿Quién en su empresa hace esa tarea hoy? ¿Es el mejor uso de su tiempo?',
+   '#automatizacion #pymes #productividad #eficiencia #jaagsolutions'),
 
   (DATE '2026-06-24', TIME '10:00', 'behind_the_scenes', 'valor',
    'Vimos una automatización costosa fallar porque nadie la probó con datos reales antes de escalar.',
@@ -127,11 +127,11 @@ WITH planned_raw (
    '¿Cuál fue el proceso más lento o frustrante de junio en su empresa? Cuéntenme en los comentarios.',
    '#RevisiónOperativa #AutomatizaciónPYME #Crecimiento'),
 
-  (DATE '2026-06-29', TIME '10:00', 'educacion', 'valor',
-   'La herramienta no es el problema. El proceso sin definir sí lo es.',
-   'La herramienta no arregla un proceso indefinido. Primero escriba el disparador, los datos necesarios, la acción esperada y cómo medirá el resultado.',
-   '¿Compraron alguna herramienta que terminó sin usar? ¿Qué pasó?',
-   '#HerramientasNoCode #Procesos #Automatización'),
+  (DATE '2026-06-29', TIME '10:00', 'casos_de_uso', 'valor',
+   'Presencia en tres redes, generada y publicada en automático.',
+   'El flujo funciona así: el equipo aprueba el contenido del mes, el sistema genera las imágenes, programa las publicaciones y las distribuye en Instagram, Facebook y LinkedIn sin intervención manual adicional. Si entra un lead desde las redes, el sistema lo registra y avisa al equipo. La empresa aparece. El equipo trabaja en otra cosa.',
+   '¿Cuál es el paso que más tiempo consume hoy cuando intentan publicar en redes? Cuéntenme.',
+   '#casoexito #automatizacion #pymes #resultados #jaagsolutions'),
 
   (DATE '2026-07-01', TIME '10:00', 'casos_de_uso', 'valor',
    'El primer mes con un cliente nuevo define si se queda o se va. ¿Cuántos pasos dependen de que alguien no olvide?',
@@ -145,11 +145,11 @@ WITH planned_raw (
    '¿Qué proceso quieren mejorar en julio? Comenten PROCESO y lo analizamos juntos.',
    '#AutomatizaciónPYME #Crecimiento #Operaciones'),
 
-  (DATE '2026-07-06', TIME '10:00', 'educacion', 'valor',
-   'Copiar y pegar parece gratis. No lo es. Aquí están los números.',
-   'Copiar datos entre sistemas parece pequeño, pero se acumula en horas, errores y retrasos. Automatizar ese puente suele ser una mejora rápida y visible.',
-   '¿En cuántos lugares distintos vive el mismo dato en su empresa? (CRM, Excel, WhatsApp, correo...)',
-   '#Productividad #Automatización #PYME'),
+  (DATE '2026-07-06', TIME '10:00', 'casos_de_uso', 'valor',
+   'El marketing de su PYME también puede correr en automático.',
+   'La mayoría de las empresas sabe que debe estar activa en redes, pero publica de forma irregular o depende de una sola persona para no detenerse. Un sistema automatizado toma su mensaje, genera el contenido, lo distribuye en los canales correctos y mantiene la cadencia aunque el equipo esté ocupado en otra cosa. La marca no para. La operación tampoco.',
+   '¿Tiene hoy una publicación programada para la próxima semana? Si no, cuéntenme cuál es el bloqueo principal.',
+   '#casoexito #automatizacion #pymes #resultados #jaagsolutions'),
 
   (DATE '2026-07-08', TIME '10:00', 'behind_the_scenes', 'valor',
    'Conectar dos aplicaciones sin este checklist es como construir sin planos. Funciona hasta que no funciona.',
@@ -158,10 +158,10 @@ WITH planned_raw (
    '#Integraciones #Workflow #Automatización'),
 
   (DATE '2026-07-10', TIME '10:00', 'casos_de_uso', 'valor',
-   'WhatsApp, correo, llamada, mensaje directo. Si las solicitudes entran por cuatro canales, algo se pierde siempre.',
-   'Cuando las solicitudes llegan por chats, correos y llamadas, el seguimiento se dispersa. Un flujo único puede ordenar entradas, priorizar y asignar responsables.',
-   '¿Por cuántos canales entran solicitudes en su empresa hoy? ¿Cuál genera más confusión?',
-   '#Operaciones #Solicitudes #AutomatizaciónPYME'),
+   'Tres redes publicadas solas. Sin que nadie lo haga a mano.',
+   'Una empresa puede tener presencia activa en Instagram, Facebook y LinkedIn sin que alguien dedique horas semanales a publicar. El flujo automatizado toma el contenido aprobado, genera la imagen, adapta el copy por canal y publica en el horario correcto. El equipo solo revisa y aprueba. El sistema hace el resto.',
+   '¿Cuántas redes gestiona hoy su empresa y cuánto tiempo consume eso cada semana?',
+   '#casoexito #automatizacion #pymes #resultados #jaagsolutions'),
 
   (DATE '2026-07-13', TIME '10:00', 'educacion', 'valor',
    'Las alertas que no importan entrenan al equipo a ignorar las que sí importan.',
@@ -176,10 +176,10 @@ WITH planned_raw (
    '#CalidadDeDatos #Automatización #PYME'),
 
   (DATE '2026-07-17', TIME '10:00', 'prueba_social', 'conversion',
-   'A mitad de julio ya hay señales claras de dónde se pierde tiempo. ¿Las están leyendo?',
-   'A mitad de mes ya hay señales claras: tareas repetidas, seguimientos atrasados y errores evitables. Una revisión express permite escoger la mejora con más impacto.',
-   '¿Cuál ha sido el cuello de botella más claro en julio hasta ahora? Comenten EXPRESS y lo revisamos.',
-   '#Asesoría #AutomatizaciónPYME #MejoraOperativa'),
+   'Esto que ven publicado corre completamente en automático.',
+   'Cada publicación de JAAGSOLUTIONS pasa por un sistema propio: el contenido se genera, un humano lo revisa y aprueba en menos de dos minutos, y se publica en tres plataformas sin intervención manual adicional. Llevamos semanas operando así. Ese mismo sistema puede estar trabajando para su empresa desde este mes.',
+   '¿Les gustaría ver cómo funciona aplicado a su negocio? Comenten MARKETING y les enviamos el detalle.',
+   '#jaagsolutions #automatizacion #resultados #crecimiento #clientes'),
 
   (DATE '2026-07-20', TIME '10:00', 'educacion', 'valor',
    'Automatizar un proceso que cada persona hace diferente no ahorra tiempo. Lo congela.',
