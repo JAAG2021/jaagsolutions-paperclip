@@ -311,17 +311,38 @@
         },
         "options": {}
       },
-      "onError": "continueErrorOutput"
+      "continueOnFail": true
+    },
+    {
+      "id": "code-check-telegram-error",
+      "name": "¿Falló Telegram send?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [3500, 140],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "check-telegram-error",
+              "leftValue": "={{ $json.error !== undefined }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
     },
     {
       "id": "postgres-telegram-send-error",
       "name": "DB: error Telegram send",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [3500, 300],
+      "position": [3720, 60],
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE content_plan SET status = 'error', error_log = $err$Telegram sendPhoto falló: {{ ($json.error?.message || 'Bad Request').replace(/'/g, '') }}$err$ WHERE id = '{{ $('Componer imagen final (Sharp + SVG)').first().json.id }}' RETURNING id, scheduled_date, scheduled_time, platform, pillar, status, error_log",
+        "query": "UPDATE content_plan SET status = 'error', error_log = 'Telegram sendPhoto failed' WHERE id = '{{ $('Componer imagen final (Sharp + SVG)').first().json.id }}'",
         "options": {}
       },
       "credentials": {
@@ -336,13 +357,13 @@
       "name": "Telegram: alerta fallo envío",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [3720, 300],
+      "position": [3940, 60],
       "parameters": {
         "method": "POST",
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ chat_id: $env.TELEGRAM_CHAT_ID, text: '🚨 FALLO Telegram send\\nFecha: ' + ($('Componer imagen final (Sharp + SVG)').first().json.scheduled_date || '') + ' ' + ($('Componer imagen final (Sharp + SVG)').first().json.scheduled_time || '') + '\\nCanal: ' + (($('Componer imagen final (Sharp + SVG)').first().json.platform || '').toUpperCase()) + ' - ' + ($('Componer imagen final (Sharp + SVG)').first().json.pillar || '') + '\\nError: ' + ($json.error?.message || 'Bad Request') + '\\nID: ' + ($('Componer imagen final (Sharp + SVG)').first().json.id || '') + '\\n\\nImagen generada OK pero NO llego a Telegram. Revisar n8n executions y resetear post.' }) }}",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $env.TELEGRAM_CHAT_ID, text: '🚨 FALLO Telegram send\\nFecha: ' + ($('Componer imagen final (Sharp + SVG)').first().json.scheduled_date || '') + ' ' + ($('Componer imagen final (Sharp + SVG)').first().json.scheduled_time || '') + '\\nCanal: ' + (($('Componer imagen final (Sharp + SVG)').first().json.platform || '').toUpperCase()) + ' - ' + ($('Componer imagen final (Sharp + SVG)').first().json.pillar || '') + '\\nID: ' + ($('Componer imagen final (Sharp + SVG)').first().json.id || '') + '\\n\\nImagen generada OK pero NO llego a Telegram. Revisar n8n executions y resetear post.' }) }}",
         "options": {}
       }
     },
@@ -672,14 +693,25 @@
       "main": [
         [
           {
-            "node": "Guardar telegram_msg_id",
+            "node": "¿Falló Telegram send?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Falló Telegram send?": {
+      "main": [
+        [
+          {
+            "node": "DB: error Telegram send",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "DB: error Telegram send",
+            "node": "Guardar telegram_msg_id",
             "type": "main",
             "index": 0
           }
