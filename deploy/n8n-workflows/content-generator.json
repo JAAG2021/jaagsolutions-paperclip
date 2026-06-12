@@ -296,11 +296,7 @@
             },
             {
               "name": "caption",
-              "value": "={{ (() => { const cta = (($json.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = $json.copy_text || ''; const hashtags = ($json.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return '📅 *' + new Date($json.scheduled_date + 'T12:00:00').toLocaleDateString('es-CO', {day:'2-digit', month:'long', year:'numeric'}) + ' ' + ($json.scheduled_time || '') + '*\\n📱 ' + ($json.platform || '').toUpperCase() + ' — ' + ($json.pillar || '') + '\\n\\n' + [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }}"
-            },
-            {
-              "name": "parse_mode",
-              "value": "Markdown"
+              "value": "={{ (() => { const cta = (($json.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = $json.copy_text || ''; const hashtags = ($json.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return '📅 ' + new Date($json.scheduled_date).toLocaleDateString('es-CO', {day:'2-digit', month:'long', year:'numeric'}) + ' ' + ($json.scheduled_time || '') + '\\n📱 ' + ($json.platform || '').toUpperCase() + ' — ' + ($json.pillar || '') + '\\n\\n' + [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }}"
             },
             {
               "name": "reply_markup",
@@ -313,6 +309,40 @@
             }
           ]
         },
+        "options": {}
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "postgres-telegram-send-error",
+      "name": "DB: error Telegram send",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [3500, 300],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE content_plan SET status = 'error', error_log = $err$Telegram sendPhoto falló: {{ ($json.error?.message || 'Bad Request').replace(/'/g, '') }}$err$ WHERE id = '{{ $('Componer imagen final (Sharp + SVG)').first().json.id }}' RETURNING id, scheduled_date, scheduled_time, platform, pillar, status, error_log",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "id": "telegram-send-fail-alert",
+      "name": "Telegram: alerta fallo envío",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3720, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $env.TELEGRAM_CHAT_ID, text: '🚨 FALLO Telegram send\\nFecha: ' + ($('Componer imagen final (Sharp + SVG)').first().json.scheduled_date || '') + ' ' + ($('Componer imagen final (Sharp + SVG)').first().json.scheduled_time || '') + '\\nCanal: ' + (($('Componer imagen final (Sharp + SVG)').first().json.platform || '').toUpperCase()) + ' - ' + ($('Componer imagen final (Sharp + SVG)').first().json.pillar || '') + '\\nError: ' + ($json.error?.message || 'Bad Request') + '\\nID: ' + ($('Componer imagen final (Sharp + SVG)').first().json.id || '') + '\\n\\nImagen generada OK pero NO llego a Telegram. Revisar n8n executions y resetear post.' }) }}",
         "options": {}
       }
     },
@@ -489,7 +519,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id, scheduled_date, scheduled_time, platform, pillar, status, retry_count, error_log FROM content_plan WHERE scheduled_date = CURRENT_DATE AND status IN ('pending','generating','error') ORDER BY scheduled_time, id",
+        "query": "SELECT id, scheduled_date, scheduled_time, platform, pillar, status, retry_count, error_log FROM content_plan WHERE scheduled_date = CURRENT_DATE AND (status IN ('pending','generating','error') OR (status = 'review' AND telegram_msg_id IS NULL)) ORDER BY scheduled_time, id",
         "options": {}
       },
       "credentials": {
@@ -643,6 +673,24 @@
         [
           {
             "node": "Guardar telegram_msg_id",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DB: error Telegram send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB: error Telegram send": {
+      "main": [
+        [
+          {
+            "node": "Telegram: alerta fallo envío",
             "type": "main",
             "index": 0
           }
