@@ -1295,4 +1295,13 @@ Mapa `SVGICONS` agregado en `buildDiagramSVG()`: reemplaza abreviaciones de text
 - Con el `id` baked-in, `n8n import:workflow --input=content-generator.json` actualiza el workflow existente sin crear duplicados.
 - Para borrar workflows (no hay `delete:workflow` en CLI): detener n8n, backup de la DB, borrar con SQLite (todas las tablas con `workflowId`: ver lista abajo), `integrity_check`, reiniciar. Tablas: `execution_data`/`execution_metadata`/`execution_annotations` (por `executionId`), luego `execution_entity`, `workflows_tags`, `workflow_statistics`, `workflow_history`, `webhook_entity`, `shared_workflow`, `processed_data`, `insights_metadata`, `test_run`, y finalmente `workflow_entity`.
 
+#### Pillar seguros — identidad visual y upgrade de modelo
+
+- **Dirección visual seguros:** relación de asesoría — corredor atendiendo a un **grupo de 3-4 clientes** en sala/oficina. No solo, no abstracto, no glamour. La `rule 2c` del Auditor prohíbe composiciones de exactamente 2 personas (se leen como pareja) → siempre grupo de 3-5.
+- **Upgrade Ideogram V_2 → V_3** (resuelve manos/dedos deformes, defecto crónico de V_2):
+  - Endpoint nuevo: `POST https://api.ideogram.ai/v1/ideogram-v3/generate` con **multipart/form-data** (NO JSON). Helper `httpsPostMultipart` en `code-ideogram-ocr`.
+  - Params V_3: `prompt`, `aspect_ratio` (formato `3x4`/`9x16`, NO `ASPECT_3_4`), `rendering_speed` (FLASH/TURBO/DEFAULT/QUALITY — usamos TURBO), `magic_prompt=OFF`, `style_type`, `seed`, `negative_prompt`.
+  - Respuesta `data[0].url` idéntica a V_2 → downstream sin cambios. OCR (Google Vision) y anatomy check (OpenAI) siguen con `httpsPost` JSON.
+  - Validado en vivo: HTTP 200, 864x1152 (3:4). La API key existente tiene acceso a V_3.
+
 
