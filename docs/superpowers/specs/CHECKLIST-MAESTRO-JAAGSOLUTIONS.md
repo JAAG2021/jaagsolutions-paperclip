@@ -12,6 +12,22 @@
 
 ---
 
+## ACTUALIZACION OPERATIVA — 2026-06-15
+
+- `compose-image.js` desplegado en contenedor con mapa `SVGICONS`: nodos periféricos del diagrama hub-and-spoke muestran iconos SVG reconocibles (IG, LI, FB, WA, TK, MAIL, GS, CAL, CRM) en lugar de abreviaciones de texto. Escala con `transform="translate(x,y) scale(nodeR/10)"`. Commit `ee6a9c0c5`.
+- **Vertical seguros implementada:** columna `vertical TEXT NOT NULL DEFAULT 'jaagsolutions_core'` agregada a `content_plan` (aditiva, nada existente se rompe). Primer post piloto insertado para 2026-06-16 Martes 10:00 (`vertical='seguros_servicio'`, Concepto A — foto editorial corredor latino, oficina moderna, luz ámbar).
+- Carril Martes/Jueves confirmado libre (0 filas en 8 fechas objetivo). Trigger `0 8 * * *` corre todos los días — Martes y Jueves funcionan sin cambios en workflow.
+- SSH `authorized_keys`: llave `~/.ssh/jaagsolutions_vps` registrada en VPS. SCP desde Windows funciona via alias `jaagsolutions-vps`. Usar siempre `scp ... jaagsolutions-vps:~/archivo` (no IP directa).
+- Sesión 2026-06-12: fixes `parse_mode`, `continueOnFail`, scene pool social_proof, composición diagrama (commits `0753cdd92`–`482e9a65f`).
+- Sesión 2026-06-04: seed `content_plan` con posts de marketing automation Jun-Jul 2026 (commit `88bce38c1`).
+
+**Próxima sesión — verificar:**
+1. Post seguros 16-jun llegó a Telegram y fue aprobado/publicado
+2. Cargar siguientes piezas del carril Martes (23-jun, 30-jun, 07-jul) en `content_plan`
+3. Decidir cadencia Martes solo vs Martes+Jueves para seguros
+
+---
+
 ## ACTUALIZACION OPERATIVA - 2026-05-25
 
 Se corrige la desincronizacion entre Paperclip y la realidad productiva:

@@ -1194,4 +1194,66 @@ DB final: `status=published`. Workflow completó toda la cadena (LinkedIn regist
 - **Insertar posts con psql heredoc.** Ver FALLA 33. El script `insert-content-plan.py` es referencia de campos válidos, no el método de inserción en producción desde el host.
 - **Si OCR falla repetidamente:** cambiar `image_prompt` en DB antes de reintentar. El seed aleatorio de Ideogram no ayuda si el prompt sigue pidiendo conceptos que generan texto.
 
+---
+
+### Sesión 2026-06-04 — Seed agenda Jun-Jul 2026
+
+- Commit `88bce38c1`: seed de `content_plan` con posts de marketing automation para Lunes/Miércoles/Viernes de Jun 15 al 17 julio (Jun 15, 22, 29, Jul 6, 10, 17).
+- Posts con temática de automatización para PYMEs, `pillar=educacion/casos_de_uso`, `platform='meta'`.
+
+---
+
+### Sesión 2026-06-12 — Fixes pipeline: parse_mode, continueOnFail, scene pool, diagrama
+
+Cuatro commits de estabilización y nuevas funcionalidades:
+
+**`0753cdd92` — fix(n8n): remove parse_mode, fix date, add Telegram send error handler + monitor fix**
+- Eliminado `parse_mode: 'Markdown'` del nodo Telegram (causaba que mensajes con caracteres especiales fallaran silenciosamente).
+- Fix de fecha en overlay SVG: mostraba fecha incorrecta por zona horaria.
+- Nodo de error en Telegram ahora envía alerta cuando la cadena falla.
+- Monitor 08:15 corregido para detectar posts atascados.
+
+**`594ecd9f7` — fix(n8n): replace onError with continueOnFail + IF node for v1.112 compat**
+- n8n 1.112 deprecó el campo `onError` en nodos; reemplazado por `continueOnFail: true` + nodo IF downstream para distinguir éxito/error.
+- Afecta nodos de publicación FB, IG, LinkedIn en `telegram-approval.json`.
+
+**`5f8c6c3a9` — fix(n8n): replace social_proof scene pool + add anti-romantic negative prompts**
+- Pool de escenas `social_proof` reemplazado: las escenas anteriores generaban imágenes románticas/pareja no relacionadas con B2B.
+- `negative_prompt` extendido con: `romantic, couple, love, dating, hugging, kissing, personal relationship`.
+- Nuevas escenas: equipo multicultural revisando métricas, handshake en sala de juntas, panel de expertos, etc.
+
+**`482e9a65f` — fix(n8n): enforce group composition, table/diagram protagonist, 6 attempts**
+- Aumentados intentos OCR de 3 a 6 para posts de diagrama/tabla donde el texto en imagen es intencional.
+- Composición de grupo reforzada en prompts: sujeto principal debe ser el grupo/equipo, no individuo aislado.
+- Modo diagrama: cuando `diagram_type` está presente, el workflow genera foto de personas (fondo) + overlay SVG diagrama (en `compose-image.js`).
+
+---
+
+### Sesión 2026-06-15 — SVG icons en diagrama + vertical seguros
+
+**`ee6a9c0c5` — feat(n8n): add SVG tool icons to diagram nodes + seguros vertical pilot**
+
+#### compose-image.js — Iconos SVG en nodos del diagrama
+
+Mapa `SVGICONS` agregado en `buildDiagramSVG()`: reemplaza abreviaciones de texto (IG, LI, FB, WA, TK, MAIL, GS, CAL, CRM) por iconos SVG reconocibles. Todos diseñados en espacio de coordenadas ±7 unidades, centrados en origen. Escala con `transform="translate(x,y) scale(nodeR/10)"`. Nodos sin entrada en SVGICONS (Leads, Ventas, Tiempo, etc.) siguen renderizando texto como fallback.
+
+#### Vertical Seguros — implementación DB
+
+- `ALTER TABLE content_plan ADD COLUMN IF NOT EXISTS vertical TEXT NOT NULL DEFAULT 'jaagsolutions_core'` ejecutado en producción.
+- Post piloto 16-jun insertado: `scheduled_time='10:00'`, `platform='meta'`, `pillar='educacion'`, `post_type='valor'`, `vertical='seguros_servicio'`. ID: `403aaae2-d57a-4638-ad3d-12a5c510f87f`.
+- Trigger `0 8 * * *` confirmado: corre todos los días, Martes/Jueves funcionan sin cambios de workflow.
+- Carril Martes/Jueves verificado vacío (8 fechas: 16-jun al 09-jul, 0 filas en conflicto).
+
+#### SSH desde Windows — fix autorización
+
+- **Síntoma:** `scp` fallaba con `Permission denied (publickey)` desde PowerShell Windows.
+- **Causa:** La llave `~/.ssh/jaagsolutions_vps` (ed25519, generada 2026-05-24) nunca fue registrada en `~/.ssh/authorized_keys` del VPS. La consola web de GCP usa sus propias llaves de OS Login, independientes de las llaves SSH locales.
+- **Solución:** Desde la consola web del VPS: `echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAWHZ4/huqnWIpsZui02YvKTRcFgke+i9dys9AoE7szP jaagsolutions-vps" >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys`.
+- **Regla:** Para transferencias SCP desde Windows, usar el alias del config SSH: `scp ... jaagsolutions-vps:~/archivo`. La llave ya está registrada y el config apunta a `~/.ssh/jaagsolutions_vps`.
+
+#### Eliminados archivos legacy
+
+- `deploy/n8n-workflows/linkedin-csv-pipeline.json` — pipeline CSV reemplazado por PostgreSQL.
+- `deploy/scripts/linkedin_first8_schedule_v2.csv` y `migrate-csv-to-db.py` — scripts de migración ya ejecutados.
+
 

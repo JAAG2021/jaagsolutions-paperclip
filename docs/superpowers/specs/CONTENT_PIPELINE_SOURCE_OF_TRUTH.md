@@ -1,0 +1,165 @@
+# Content Pipeline Source Of Truth
+
+**Estado:** Canonico  
+**Ultima actualizacion:** 2026-06-15  
+**Alcance:** Operacion de contenido JAAGSOLUTIONS en n8n.
+
+---
+
+## Regla Principal
+
+```text
+Si no esta en content_plan, no esta agendado.
+```
+
+La unica fuente operacional para publicaciones futuras es la tabla PostgreSQL `content_plan`.
+
+Los documentos de estrategia explican contexto editorial. No agendan publicaciones.
+Los archivos locales fuera de `content_plan` no son fuente viva.
+Los workflows oficiales no deben leer calendarios paralelos ni listas hardcodeadas.
+
+---
+
+## Workflows Oficiales
+
+| Workflow | Ruta repo | Rol |
+|---|---|---|
+| Content Generator | `deploy/n8n-workflows/content-generator.json` | Lee `content_plan`, genera imagen, valida y envia a Telegram. |
+| Telegram Approval -> Publisher | `deploy/n8n-workflows/telegram-approval.json` | Recibe aprobacion/rechazo, publica y actualiza `content_plan`. |
+| Formspree Lead -> Paperclip Issue | `deploy/n8n-workflows/formspree-to-paperclip.json` | Convierte leads del sitio en issues operativos. |
+
+No debe existir otro workflow de publicacion de contenido en `deploy/n8n-workflows/`.
+
+---
+
+## Tabla Operacional
+
+Schema:
+
+```text
+deploy/sql/content-plan-schema.sql
+```
+
+Campos minimos para que un post pueda entrar al cron:
+
+| Campo | Requisito |
+|---|---|
+| `scheduled_date` | Fecha objetivo de publicacion. |
+| `scheduled_time` | Hora objetivo de publicacion. |
+| `platform` | `linkedin`, `instagram`, `facebook` o `meta`. |
+| `format` | Formato valido del schema. |
+| `pillar` | Pilar valido del schema. |
+| `post_type` | `valor` o `conversion`. |
+| `copy_text` | Copy final del post. |
+| `image_prompt` | Prompt visual para generacion. |
+| `hashtags` | Campo separado, no incrustado en `copy_text`. |
+| `cta_url` | URL de CTA, fallback `https://jaagsolutions.com`. |
+| `status` | Debe ser `pending` para que el cron lo procese. |
+| `vertical` | Etiqueta de vertical. Default `'jaagsolutions_core'`. Seguros usa `'seguros_servicio'`. No afecta ruteo — solo metadata/filtros. |
+
+---
+
+## Entrada De Contenido
+
+El unico script autorizado para agregar nuevos posts desde automatizacion o agente A4 es:
+
+```text
+deploy/scripts/insert-content-plan.py
+```
+
+El script inserta nuevas filas con `status = 'pending'`.
+
+Para cargas operativas puntuales desde el VPS se permite ejecutar SQL directo contra
+`content_plan`, siempre que inserte en la tabla oficial y no cree otra fuente viva.
+La carga de agenda posterior a la auditoria 2026-05-25 esta en:
+
+```text
+deploy/sql/2026-05-25-seed-content-plan-operational-agenda.sql
+```
+
+Ese archivo es idempotente y solo sirve para poblar `content_plan`. Despues de
+ejecutarlo, la fuente de verdad vuelve a ser exclusivamente la tabla.
+
+Cadencia vigente desde 2026-05-25 hasta 2026-07-31:
+
+```text
+Core JAAGSOLUTIONS (vertical='jaagsolutions_core'):
+  Lunes    10:00
+  Miercoles 10:00
+  Viernes  16:00
+
+Seguros JAAGSOLUTIONS (vertical='seguros_servicio') — desde 2026-06-16:
+  Martes   10:00  (carril propio, no toca el core)
+  Jueves   10:00  (expansion futura — pendiente decision)
+```
+
+La agenda usa `platform = 'meta'` porque el workflow oficial publica primero en
+Facebook/Instagram y luego continua hacia LinkedIn. Usar `platform = 'linkedin'`
+limita la salida a LinkedIn.
+
+El SQL operativo completa todos los lunes, miercoles y viernes de junio y julio
+2026, mas el arranque de la semana actual desde lunes 2026-05-25.
+
+---
+
+## Consulta Del Cron
+
+El workflow `Content Generator` toma posts con esta logica:
+
+```sql
+SELECT *
+FROM content_plan
+WHERE status = 'pending'
+AND scheduled_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 2
+ORDER BY scheduled_date, scheduled_time
+LIMIT 1;
+```
+
+Implicaciones:
+
+- Una fila futura debe existir en `content_plan`.
+- La fila debe estar en `pending`.
+- Fechas vencidas no vuelven a entrar automaticamente.
+- Estados `review`, `generating`, `published` o `error` requieren intervencion operativa.
+
+---
+
+## Verificacion Operativa
+
+Ver lo que el cron puede procesar:
+
+```bash
+docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT id, scheduled_date, scheduled_time, platform, pillar, status FROM content_plan WHERE status = '\''pending'\'' AND scheduled_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 2 ORDER BY scheduled_date, scheduled_time;"'
+```
+
+Ver agenda futura real:
+
+```bash
+docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT id, scheduled_date, scheduled_time, platform, pillar, status FROM content_plan WHERE scheduled_date >= CURRENT_DATE ORDER BY scheduled_date, scheduled_time;"'
+```
+
+Ver estados atascados:
+
+```bash
+docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT id, scheduled_date, scheduled_time, platform, pillar, status, error_log FROM content_plan WHERE status IN ('\''review'\'','\''generating'\'','\''error'\'') ORDER BY scheduled_date, scheduled_time;"'
+```
+
+---
+
+## Modo Diagrama
+
+Cuando `diagram_type` está presente en un post de `content_plan`, el workflow activa el modo diagrama:
+
+- Ideogram genera una **foto de personas** (fondo editorial) usando prompts del pool `_DIAG_PROMPTS` en el nodo `code-ideogram-ocr`.
+- `compose-image.js` superpone un **overlay SVG hub-and-spoke** sobre la foto: nodo central JAAGSOLUTIONS + nodos periféricos de herramientas con iconos SVG reconocibles (IG, LI, FB, WA, TK, MAIL, GS, CAL, CRM).
+- Los iconos escalan con `scale(nodeR/10)` — coordenadas diseñadas en espacio ±7 unidades.
+- Nodos sin entrada en `SVGICONS` (Leads, Ventas, Tiempo, etc.) renderizan texto como fallback.
+
+---
+
+## Politica De Limpieza
+
+No se aceptan workflows de publicacion paralelos.
+No se aceptan listas hardcodeadas de posts dentro de workflows.
+No se aceptan calendarios externos como fuente viva.
+No se aceptan scripts de importacion que creen otra ruta de agenda.
