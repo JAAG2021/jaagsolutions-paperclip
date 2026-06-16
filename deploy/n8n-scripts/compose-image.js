@@ -155,8 +155,8 @@ function buildDiagramSVG(diagramType, dims) {
   const cx      = Math.round(dims.w / 2);
   const cy      = Math.round(dims.h * 0.36);
   const spokeR  = Math.round(dims.w * 0.235);
-  const hubR    = Math.round(dims.w * 0.072);
-  const nodeR   = Math.round(dims.w * 0.050);
+  const hubR    = Math.round(dims.w * 0.038);
+  const nodeR   = Math.round(dims.w * 0.025);
   const baseFs  = Math.round(dims.w * 0.028);
   const lineW   = Math.max(2, Math.round(dims.w * 0.002));
   const toRad   = d => d * Math.PI / 180;
@@ -167,8 +167,10 @@ function buildDiagramSVG(diagramType, dims) {
     IG: `<rect x="-7" y="-5.5" width="14" height="11" rx="3" fill="none" stroke="white" stroke-width="1.4"/>
          <circle cy="0.3" r="3.5" fill="none" stroke="white" stroke-width="1.4"/>
          <circle cx="5" cy="-4" r="1.4" fill="white"/>`,
-    LI: `<text y="0" text-anchor="middle" dominant-baseline="middle" font-family="Arial,sans-serif" font-size="4" font-weight="900" fill="white">in</text>`,
-    FB: `<text y="0" text-anchor="middle" dominant-baseline="middle" font-family="Georgia,serif" font-size="5.5" font-weight="700" fill="white">f</text>`,
+    LI: `<circle cx="-4.5" cy="-5.5" r="2" fill="white"/>
+         <rect x="-6" y="-2.5" width="3" height="9.5" fill="white"/>
+         <path d="M-2,-2.5 L0.5,-2.5 L0.5,-1 C1,-2 2.5,-3 4,-3 C6,-3 7,-1.5 7,1.5 L7,7 L4.5,7 L4.5,2 C4.5,0.5 4,-1 3,-1 C2,-1 2,0.5 2,2 L2,7 L-0.5,7 L-0.5,-2.5 Z" fill="white"/>`,
+    FB: `<path d="M1.5,-7 C3.5,-7 5,-6 5,-4 L2.5,-4 C2.5,-5 2,-5.5 1.5,-5.5 C1,-5.5 0.5,-5 0.5,-4 L0.5,-2.5 L4.5,-2.5 L4,0 L0.5,0 L0.5,7 L-2,7 L-2,0 L-4,0 L-4,-2.5 L-2,-2.5 L-2,-4 C-2,-6.5 -0.5,-7 1.5,-7 Z" fill="white"/>`,
     WA: `<path d="M0,-7 C-4,-7 -7,-4 -7,0 C-7,2.5 -5.5,4.5 -3,5.5 L-3.5,8 L-0.5,6.5 C-0.2,6.5 0,7 0,7 C4,7 7,4 7,0 C7,-4 4,-7 0,-7 Z" fill="none" stroke="white" stroke-width="1.4"/>
           <circle r="2" fill="white"/>`,
     TK: `<path d="M2,-7 C5,-6.5 7,-4 7,-1 L4.5,-1 C4.5,-3 3,-4.5 2,-5 L2,3 C2,5 0.5,7 -1.5,7 C-3.5,7 -5,5.5 -5,3.5 C-5,1.5 -3.5,0 -1.5,0 C-1,0 -0.5,0.1 0,0.3 L0,-2 C-0.5,-2.1 -1,-2 -1.5,-2 C-4.5,-2 -7,0.5 -7,3.5 C-7,6.5 -4.5,9 -1.5,9 C1.5,9 4,6.5 4,3.5 L4,-7 Z" fill="white"/>`,
@@ -197,34 +199,22 @@ function buildDiagramSVG(diagramType, dims) {
   const s = [];
   s.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${dims.w}" height="${dims.h}" viewBox="0 0 ${dims.w} ${dims.h}">`);
   s.push(`<defs>
-    <filter id="nglow" x="-70%" y="-70%" width="240%" height="240%">
-      <feGaussianBlur stdDeviation="12" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="sglow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="5" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
+    <radialGradient id="dvig" cx="${cx}" cy="${Math.round(dims.h * 0.36)}" r="${Math.round(dims.w * 0.52)}" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#000000" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
   </defs>`);
-
-  // Subtle dark vignette behind diagram area so labels read over any photo
-  s.push(`<radialGradient id="dvig" cx="50%" cy="36%" r="52%" gradientUnits="userSpaceOnUse" gradientTransform="scale(1,1.35) translate(0,-${Math.round(dims.h*0.12)})">
-    <stop offset="0%"   stop-color="#000000" stop-opacity="0.52"/>
-    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
-  </radialGradient>`);
   s.push(`<rect width="${dims.w}" height="${dims.h}" fill="url(#dvig)"/>`);
 
   // Connection lines
   for (const { x, y } of nodePos) {
-    s.push(`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(255,255,255,0.35)" stroke-width="${lineW * 2}" stroke-dasharray="${lineW * 6} ${lineW * 3}"/>`);
+    s.push(`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#F0A030" stroke-width="1.5" stroke-opacity="0.60" stroke-dasharray="${lineW * 5} ${lineW * 2}"/>`);
   }
 
-  // Hub glow ring
-  s.push(`<circle cx="${cx}" cy="${cy}" r="${hubR + 20}" fill="${cfg.center.fill}" opacity="0.35" filter="url(#nglow)"/>`);
-  // Hub circle — slightly transparent so photo shows through
-  s.push(`<circle cx="${cx}" cy="${cy}" r="${hubR}" fill="${cfg.center.fill}" fill-opacity="0.88" stroke="${cfg.center.stroke}" stroke-width="3"/>`);
+  // Hub circle — semi-transparent dark with amber border
+  s.push(`<circle cx="${cx}" cy="${cy}" r="${hubR}" fill="rgba(8,12,30,0.72)" stroke="#F0A030" stroke-width="2"/>`);
   // Hub label
-  const hfs = Math.round(baseFs * 0.80);
+  const hfs = Math.round(Math.min(baseFs * 0.80, hubR * 0.40));
   const hlh = Math.round(hfs * 1.25);
   const hly = cy - ((cfg.center.lines.length - 1) * hlh / 2) + Math.round(hfs * 0.38);
   cfg.center.lines.forEach((line, i) => {
@@ -232,10 +222,9 @@ function buildDiagramSVG(diagramType, dims) {
   });
 
   // Peripheral nodes
-  const iconScale = (nodeR / 10).toFixed(3);
+  const iconScale = (nodeR / 7).toFixed(3);
   for (const { lines, fill, x, y } of nodePos) {
-    s.push(`<circle cx="${x}" cy="${y}" r="${nodeR + 16}" fill="${fill}" opacity="0.28" filter="url(#nglow)"/>`);
-    s.push(`<circle cx="${x}" cy="${y}" r="${nodeR}" fill="${fill}" fill-opacity="0.85" stroke="rgba(255,255,255,0.70)" stroke-width="2.5" filter="url(#sglow)"/>`);
+    s.push(`<circle cx="${x}" cy="${y}" r="${nodeR}" fill="rgba(8,12,30,0.58)" stroke="#F0A030" stroke-width="1.5" stroke-opacity="0.80"/>`);
     const iconKey = lines[0];
     if (SVGICONS[iconKey]) {
       s.push(`<g transform="translate(${x},${y}) scale(${iconScale})">${SVGICONS[iconKey]}</g>`);
