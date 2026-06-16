@@ -1,7 +1,7 @@
 # Content Pipeline Source Of Truth
 
 **Estado:** Canonico  
-**Ultima actualizacion:** 2026-06-15  
+**Ultima actualizacion:** 2026-06-16  
 **Alcance:** Operacion de contenido JAAGSOLUTIONS en n8n.
 
 ---
@@ -29,6 +29,32 @@ Los workflows oficiales no deben leer calendarios paralelos ni listas hardcodead
 | Formspree Lead -> Paperclip Issue | `deploy/n8n-workflows/formspree-to-paperclip.json` | Convierte leads del sitio en issues operativos. |
 
 No debe existir otro workflow de publicacion de contenido en `deploy/n8n-workflows/`.
+
+### IDs estables de workflow (anti-duplicados)
+
+Cada JSON oficial lleva un campo `id` fijo que coincide con el workflow en n8n producción:
+
+| Workflow | `id` n8n |
+|---|---|
+| Content Generator | `FjeJW9Qb8vNiDwz5` |
+| Telegram Approval → Publisher | `KkMSaxsZ2KFZopzU` |
+| Formspree Lead → Paperclip Issue | `wGBj1gkmy1JoBfGP` |
+
+Con el `id` baked-in, `n8n import:workflow --input=<archivo>.json` **actualiza el workflow existente**, no crea copias.
+
+**Procedimiento de import (correcto):**
+
+```text
+1. docker cp deploy/n8n-workflows/content-generator.json deploy-n8n-1:/tmp/wf.json
+2. docker exec deploy-n8n-1 n8n import:workflow --input=/tmp/wf.json
+3. Reactivar: el CLI SIEMPRE deja el workflow inactivo (ignora "active" del JSON).
+   - Opción A (preferida): toggle Active en la UI de n8n.
+   - Opción B: docker stop n8n → UPDATE workflow_entity SET active=1 WHERE id=... → docker start n8n.
+```
+
+- El JSON ya trae `tags: []` → NO requiere ninguna transformación previa.
+- ⚠️ PROHIBIDO aplicar `re.sub(r'<[^>]+>', '', ...)` sobre el JSON: ese regex borra contenido de nodos y deja conexiones colgantes (incidente 2026-06-16, 6 nodos perdidos).
+- El CLI no tiene `delete:workflow`. Para borrar duplicados: detener n8n, backup de `database.sqlite`, borrar con SQLite, `PRAGMA integrity_check`, reiniciar.
 
 ---
 

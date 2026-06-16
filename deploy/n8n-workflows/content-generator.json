@@ -1,4 +1,5 @@
 {
+  "id": "FjeJW9Qb8vNiDwz5",
   "name": "Content Generator — Ideogram + Sharp Compose → Telegram",
   "nodes": [
     {
@@ -1371,7 +1372,7 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },

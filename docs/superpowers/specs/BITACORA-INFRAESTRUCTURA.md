@@ -1,6 +1,6 @@
 # Bitácora de Infraestructura — JAAGSOLUTIONS
 
-**Última actualización:** 2026-05-20
+**Última actualización:** 2026-06-16
 **Estado del proyecto:** Fase A + Fase B completas — Content Pipeline n8n + Telegram Approval E2E validados en producción (FB + IG + LinkedIn publicando con imagen nativa)
 
 > **LEER ANTES DE CUALQUIER CAMBIO DE INFRAESTRUCTURA.**  
@@ -796,7 +796,7 @@ APIs requeridas: Ideogram, Google Vision, Telegram Bot, Meta Graph API, LinkedIn
 2. **Commit + push** al repo.
 3. **En VPS:**
    - `cd /opt/jaagsolutions/repo && git pull` (resolver conflictos si los hay — ver FALLA 16).
-   - Strip `tags` del JSON con Python (los tags rompen import — gotcha histórico).
+   - ⚠️ NO usar regex `<[^>]+>` para "strip" — corrompe los nodos (ver Sesión 2026-06-16). El JSON del repo ya trae `tags: []` y un `id` fijo: se importa directo, sin transformar.
    - `docker cp /tmp/<workflow>.json deploy-n8n-1:/tmp/<workflow>.json`
 4. **En n8n UI:** Archivar el workflow viejo para liberar el webhook path (FALLA 18).
 5. **En VPS:** `docker exec deploy-n8n-1 n8n import:workflow --input=/tmp/<workflow>.json`
@@ -1007,16 +1007,17 @@ Sesión enfocada en completar el pipeline E2E (generación → aprobación → p
 
 - **Síntoma:** Importar un workflow JSON con tags definidos rompe el import si los tags no existen previamente en la DB.
 - **Causa raíz:** La tabla `workflows_tags` tiene FK constraint a `tag_entity.id`. Si el tag referenciado por nombre en el JSON no existe, falla.
-- **Solución aplicada:** Antes de importar, strip `tags` del JSON:
+- **Solución aplicada:** El JSON debe llevar la **clave** `tags` vacía o ausente. Manipulación a nivel JSON (NO regex de texto):
 
   ```python
   import json
   with open(path) as f: w = json.load(f)
-  w.pop('tags', None)
+  w.pop('tags', None)          # quita la CLAVE tags — NO confundir con strip de '<...>'
   with open(path_clean, 'w') as f: json.dump(w, f)
   ```
 
 - **Regla:** Workflow JSON para import vía CLI siempre debe llevar `tags=[]` o no tener la key `tags`. Si se necesitan tags, crearlos en la DB primero o aplicarlos vía UI después del import.
+- ⚠️ **NO confundir con un "strip de tags HTML".** Aplicar `re.sub(r'<[^>]+>', '', raw)` sobre el JSON crudo es un error grave: borra contenido de los nodos y deja conexiones colgantes (ver Sesión 2026-06-16, incidente de los 6 nodos perdidos). El archivo del repo ya trae `tags: []`, así que no requiere ningún strip.
 
 ---
 
@@ -1096,8 +1097,8 @@ DB final: `status=published`. Workflow completó toda la cadena (LinkedIn regist
 #### Reglas operativas reforzadas en esta sesión
 
 - **Reset post antes de Execute:** SIEMPRE validar con `SELECT id, status, image_url FROM content_plan WHERE id='...'` y resetear (`UPDATE status='pending', image_url=NULL, retry_count=0, error_log=NULL` + `rm -f /opt/jaagsolutions/content/<id>.jpg`) ANTES de pedir al usuario que ejecute. Si quedó en `generating` o `review` por una corrida anterior, el workflow no lo procesa.
-- **Transplant via API, no sqlite3:** Para actualizar workflows manteniendo webhook IDs, usar REST API de n8n (`PUT /workflows/<id>` + `DELETE /workflows/<dup>` + `POST /workflows/<id>/activate`). Nunca tocar `database.sqlite` directamente.
-- **Strip tags antes de import:** `wf.pop('tags', None)` en Python antes de pasar el JSON al `n8n import:workflow`.
+- **Transplant via API, no sqlite3 (en caliente):** Para actualizar workflows con n8n CORRIENDO, preferir REST API. Si hay que tocar `database.sqlite` (p.ej. borrar workflows, que el CLI no soporta), hacerlo SIEMPRE con n8n detenido + backup + `PRAGMA integrity_check` (ver Sesión 2026-06-16). Nunca editar el sqlite mientras n8n está activo.
+- **Import sin transformar:** el JSON del repo trae `id` fijo (`FjeJW9Qb8vNiDwz5` para content-generator) y `tags: []`. Importar directo con `n8n import:workflow --input=...` → ACTUALIZA en sitio, sin duplicar. NO aplicar regex `<[^>]+>` (corrompe nodos).
 - **SSH authorized_keys quedó vacío una vez** (causa desconocida 13:56 del 2026-05-17); el script de recuperación: reagregar manualmente `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAWHZ4/huqnWIpsZui02YvKTRcFgke+i9dys9AoE7szP jaagsolutions-vps` al archivo `/home/jaagsolutions/.ssh/authorized_keys` desde la consola serial de Google Cloud.
 
 ---
@@ -1255,5 +1256,43 @@ Mapa `SVGICONS` agregado en `buildDiagramSVG()`: reemplaza abreviaciones de text
 
 - `deploy/n8n-workflows/linkedin-csv-pipeline.json` — pipeline CSV reemplazado por PostgreSQL.
 - `deploy/scripts/linkedin_first8_schedule_v2.csv` y `migrate-csv-to-db.py` — scripts de migración ya ejecutados.
+
+---
+
+### Sesión 2026-06-16 — Rediseño diagrama B+C, fix vertical seguros, e incidente de import (workflows duplicados)
+
+**`915661f` — redesign diagram overlay B+C + seguros bypass**
+
+#### Rediseño visual del overlay de diagrama (B+C)
+
+- `compose-image.js`: nodos más pequeños (`nodeR` 0.050w→0.025w; `hubR` 0.072w→0.038w).
+- Relleno de nodos: color sólido de marca → `rgba(8,12,30,0.58)` + borde ámbar `#F0A030`. Hub: `rgba(8,12,30,0.72)` + borde ámbar.
+- Líneas de conexión: blancas punteadas → ámbar `#F0A030` 1.5px.
+- Iconos FB y LI: dejaron de ser texto (`f` Georgia, `in` Arial) — ahora son paths SVG geométricos reales.
+- Filtros pesados `nglow`/`sglow` eliminados. Vignette reducido 0.52→0.32.
+
+#### Fix vertical seguros — Ideogram como motor creativo
+
+- **Causa del diagrama indeseado en seguros:** el nodo `Ideogram + OCR` detectaba `diagram_type` por regex sobre el copy (palabras como `cliente`, `venta`, `resultado` activaban `results`). Eso (a) forzaba prompts genéricos `_DIAG_PROMPTS` en vez del prompt del Auditor y (b) disparaba el overlay hub-and-spoke.
+- **Fix 1:** bypass `_vertical_ocr` — si `vertical === 'seguros_servicio'`, `_diagram_type` queda `null` siempre.
+- **Fix 2:** en modo diagrama, el prompt ahora usa `safeFallbackPrompt(prev)` (fondo abstracto temático) en vez de `_DIAG_PROMPTS` genéricos. Ideogram es el motor generativo en todos los formatos, no un fallback.
+
+#### ⚠️ INCIDENTE CRÍTICO — Import corrompió el workflow y proliferaron 17 duplicados
+
+- **Síntoma:** error en n8n UI `Cannot read properties of undefined (reading 'disabled')` al ejecutar. El workflow activo tenía solo 24 nodos.
+- **Causa raíz 1 (corrupción):** durante el import se aplicó `re.sub(r'<[^>]+>', '', raw)` sobre el JSON crudo para "strip de tags". Ese regex borra cualquier patrón `<...>`, destruyendo contenido dentro de los nodos y eliminando **6 nodos** (`¿Error OCR?`, `status=error (OCR)`, `Telegram: error OCR`, `Monitor post-cron 8:15`, `Monitor: posts atascados hoy`, `Monitor: preparar alerta Telegram`). El JSON seguía siendo válido pero con conexiones colgantes → el error `disabled`.
+- **Causa raíz 2 (duplicados):** el archivo local no tenía campo `id`. Cada `n8n import:workflow` creaba un workflow NUEVO en vez de actualizar. Se acumularon 17 copias de Content Generator (+ duplicados de Telegram Approval y linkedin-csv).
+- **Solución aplicada:**
+  1. Re-importado el archivo ORIGINAL sin strip (61 nodos íntegros) → quedó como `FjeJW9Qb8vNiDwz5`.
+  2. Agregado campo `"id": "FjeJW9Qb8vNiDwz5"` al archivo local → futuros imports ACTUALIZAN en sitio.
+  3. Limpieza masiva de duplicados vía SQLite (n8n detenido + backup + `PRAGMA integrity_check=ok`): de 24 workflows totales → 4 (uno por nombre). Activos: Content Generator, Formspree, Telegram Approval (`KkMSaxsZ2KFZopzU`). Inactivo conservado: linkedin-csv-pipeline (`hhkgqnvwVYMXmDbf`).
+  4. Backups en VPS: `~/database.bak-20260616.sqlite` y `~/database.bak2-20260616.sqlite`.
+
+#### REGLA DE IMPORT CORREGIDA (reemplaza el "strip tags" histórico)
+
+- **NUNCA** usar regex `<[^>]+>` sobre el JSON. Eso NO es "strip de tags" — corrompe los nodos.
+- El "strip tags" legítimo de FALLA 29 era `wf.pop('tags', None)` (quitar la **clave JSON** `tags`) para evitar el FK constraint. El archivo local ya tiene `tags: []`, así que **no necesita strip alguno**: se importa directo.
+- Con el `id` baked-in, `n8n import:workflow --input=content-generator.json` actualiza el workflow existente sin crear duplicados.
+- Para borrar workflows (no hay `delete:workflow` en CLI): detener n8n, backup de la DB, borrar con SQLite (todas las tablas con `workflowId`: ver lista abajo), `integrity_check`, reiniciar. Tablas: `execution_data`/`execution_metadata`/`execution_annotations` (por `executionId`), luego `execution_entity`, `workflows_tags`, `workflow_statistics`, `workflow_history`, `webhook_entity`, `shared_workflow`, `processed_data`, `insights_metadata`, `test_run`, y finalmente `workflow_entity`.
 
 
