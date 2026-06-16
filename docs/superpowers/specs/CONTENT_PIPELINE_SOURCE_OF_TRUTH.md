@@ -116,7 +116,8 @@ Core JAAGSOLUTIONS (vertical='jaagsolutions_core'):
 
 Seguros JAAGSOLUTIONS (vertical='seguros_servicio') — desde 2026-06-16:
   Martes   10:00  (carril propio, no toca el core)
-  Jueves   10:00  (expansion futura — pendiente decision)
+  Jueves   10:00  (ACTIVO desde 2026-06-18 — expansion aprobada tras piloto OK)
+  Lote cargado: 18-jun a 14-jul 2026 (8 piezas imagen_copy, embudo A/B/C + conversion).
 ```
 
 La agenda usa `platform = 'meta'` porque el workflow oficial publica primero en
