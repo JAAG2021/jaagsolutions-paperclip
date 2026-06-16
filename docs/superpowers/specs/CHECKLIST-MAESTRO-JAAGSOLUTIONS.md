@@ -7,7 +7,8 @@
 1. Este checklist (estado actual + tareas pendientes)
 2. `BITACORA-INFRAESTRUCTURA.md` (decisiones + 18+ gotchas históricos resueltos)
 3. `deploy/RUNBOOK.md` (procesos validados, sección 1.bis para imports con credenciales)
-4. `2026-05-25-jaagsolutions-production-sync-design.md` (modelo operativo v2 para agentes + sincronizacion Paperclip)
+4. `CONTENT_PIPELINE_SOURCE_OF_TRUTH.md` (fuente canonica del pipeline de contenido)
+5. `2026-05-25-jaagsolutions-production-sync-design.md` (modelo operativo v2 para agentes + sincronizacion Paperclip)
 
 ---
 
@@ -20,6 +21,7 @@ Se corrige la desincronizacion entre Paperclip y la realidad productiva:
 - A4 `Social & Content Lead` queda obligado por capabilities a respetar el workflow `content_plan -> Content Generator -> Telegram Approval -> Meta + LinkedIn Publisher`.
 - El pipeline de contenido queda reconocido como `done` con issue historico: `Pipeline automatizado de contenido - Meta + LinkedIn + Telegram approval`.
 - Los issues vivos ahora son operativos: calendario editorial, health diario de n8n, sync semanal Paperclip, reporte semanal de contenido/leads, prevalidacion de `content_plan`, aprobacion humana Telegram y hardening 2026-05-20.
+- La fuente operacional unica del calendario de contenido es PostgreSQL `content_plan`. No mantener agendas paralelas fuera de `content_plan`.
 - El documento rector de esta sincronizacion es `docs/superpowers/specs/2026-05-25-jaagsolutions-production-sync-design.md`.
 
 **Regla nueva:** antes de crear tareas de contenido, revisar si el trabajo debe entrar como registro en `content_plan`, como issue de P4 o como incidente en `BITACORA-INFRAESTRUCTURA.md`. No duplicar issues de setup ya cerrados.
@@ -35,7 +37,7 @@ Se corrige la desincronizacion entre Paperclip y la realidad productiva:
 
 ## ✅ ESTADO ACTUAL — CIERRE 2026-05-20
 
-**Pipeline E2E en producción con posts reales.** Semana 2 Mayo en curso: posts May 18 (`ef340765`, casos_de_uso) y May 20 (`9f513b84`, behind_the_scenes) publicados en FB + IG + LinkedIn vía pipeline completo. El post May 20 falló primero por OCR (`status=error`), se reintentó con prompt visual más seguro, llegó a Telegram, fue aprobado y quedó publicado en las tres redes. Post May 21 sigue pendiente de cron/aprobación.
+**Pipeline E2E en producción con posts reales.** Posts May 18 (`ef340765`, casos_de_uso), May 20 (`9f513b84`, behind_the_scenes) y May 21 (`9dd90ed3`, educacion) publicados via pipeline completo. El post May 20 falló primero por OCR (`status=error`), se reintentó con prompt visual más seguro, llegó a Telegram, fue aprobado y quedó publicado en las tres redes. Auditoria 2026-05-25: `content_plan` no tenia filas futuras `pending`; toda agenda nueva debe insertarse en `content_plan`.
 
 **Cambios desplegados sesión 2026-05-18 (commits):**
 
@@ -83,15 +85,14 @@ docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 | Agente Marketing (A4) | **Completo + reforzado** — Social & Content Lead creado y actualizado con mandato obligatorio de workflow de contenido ✅ (2026-05-25) | 100% |
 | Auditoría seguridad + bugs | **Completo** — 2 críticos + 4 importantes + 4 menores corregidos ✅ (2026-05-07) | 100% |
 | A4 apply_patch fix | **Completo** — `codex-run.sh` con `--dangerously-bypass-approvals-and-sandbox` ✅ (2026-05-10) | 100% |
-| Estrategia contenido Mes 1 | **Completo** — CSV Buffer + handoff + blog generados por A4 ✅ (2026-05-10) | 100% |
+| Estrategia contenido Mes 1 | **Completo** — estrategia + blog + pauta editorial generados por A4 ✅ (2026-05-10) | 100% |
 | Perfiles sociales | **Completo** — LinkedIn ✅ Instagram ✅ Facebook Business ✅ (2026-05-11) | 100% |
-| LinkedIn Schedule Mes 1 | **Completo** — 8 posts CSV generado por A4, post #1 publicado ✅ (2026-05-11) | 100% |
 | Meta Semana 1 programada | **Completo** — 3 posts FB+IG programados en Meta Business Suite ✅ (2026-05-11) | 100% |
 | Pipeline automatizado contenido | **LIVE E2E** — Content Generator (Ideogram V_2 + Auditor con 32 escenas + seed/style_type aleatorio + compose-image 4:5) → Telegram approval → publicación FB + IG + LinkedIn con imagen nativa + copy + hashtags concatenados. Validado 2026-05-17. | 100% |
 | Diversidad visual (Fase 1) | **Completo** — Code node `Preparar prompt Auditor` con 32 variantes, Ideogram seed + style_type rotativo, modelo V_2. Commit `2dd41281` ✅ | 100% |
 | pillarMap DB alignment | **Completo** — aliases `casos_de_uso`, `prueba_social`, `behind_the_scenes` añadidos al pillarMap. Commit `c7f5f923` ✅ (2026-05-18) | 100% |
 | negative_prompt Ideogram | **Completo** — extendido con brand names, store signs, product labels, background text, environmental signage, fake brand text, decorative lettering. Commit `73469488` ✅ (2026-05-18) | 100% |
-| Semana 2 Meta (May 18-21) | **EN PROGRESO** — posts May 18 y May 20 publicados ✅, post May 21 pendiente (cron automático) | 67% |
+| Semana 2 Meta (May 18-21) | **Completo con observacion** — posts May 18, May 20 y May 21 publicados. Auditoria 2026-05-25 detecto duplicado May 21 y ausencia de filas futuras en `content_plan`. | 100% |
 
 ---
 
@@ -110,10 +111,8 @@ docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 | Archivo | Ubicación | Estado |
 |---------|-----------|--------|
 | Estrategia + spec Mes 1 | `docs/superpowers/specs/2026-05-10-brand-content-mes1-estrategia-design.md` | ✅ Completo |
+| Fuente canonica pipeline contenido | `docs/superpowers/specs/CONTENT_PIPELINE_SOURCE_OF_TRUTH.md` | ✅ Canonico |
 | Blog post 1 | `/opt/jaagsolutions/repo/docs/content/blog/2026-05-12-automatizar-pyme.md` (VPS) | ✅ Completo |
-| CSV Buffer import | `/paperclip/workspace/content_plan_mes1_buffer.csv` (workspace Docker) | ✅ Completo |
-| Handoff Buffer | `/paperclip/workspace/handoff_buffer_import.md` (workspace Docker) | ✅ Completo |
-| LinkedIn Schedule Mes 1 | `/paperclip/workspace/linkedin_first8_schedule.csv` (workspace Docker) | ✅ Completo — 8 posts mayo 18 → jun 11 |
 
 ### Perfiles sociales
 
@@ -139,14 +138,9 @@ docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 | Antes/Después "4h → 20 min" | Jue 14 mayo | 4:00 PM | FB + IG |
 | Somos JAAGSOLUTIONS | Vie 15 mayo | 11:00 AM | FB + IG |
 
-### LinkedIn Posts publicados
+### Regla de agenda de contenido
 
-| # | Post | Fecha | Estado |
-| - | ---- | ----- | ------ |
-| 1 | "Mapa rápido: 3 procesos que debes auditar" | Lun 11 mayo | ✅ Publicado |
-| 2 | (ver CSV `/paperclip/workspace/linkedin_first8_schedule.csv`) | Lun 18 mayo | ✅ Publicado |
-
-**Pendientes:** Posts 3-8 → Jue 21 mayo → Lun 8 junio (lunes/jueves)
+`content_plan` es la unica agenda operacional. Si una publicacion no existe en `content_plan`, no esta agendada para el pipeline.
 
 ### Contenido programado Semana 2 (Meta — pipeline automatizado)
 
@@ -154,16 +148,16 @@ docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 | ------ | ------- | ------ | ---------- | -------- | ----------------- |
 | Casos de Uso — "De 3h a 18 min: facturación automática" | Mar 18 mayo | 11:00 | `casos_de_uso` | ✅ published | `ef340765-704a-41a7-8793-8b992ba59830` |
 | Behind-the-Scenes — "Así luce un workflow antes de llegar al cliente" | Mier 20 mayo | 08:00 | `behind_the_scenes` | ✅ published | `9f513b84-0f10-4715-a9e3-5b85a968070a` |
-| Educación — "Automatizar no es para grandes. Es para los que crecen." | Jue 21 mayo | 11:00 | `educacion` | ⏳ pending (cron) | `9dd90ed3-ea31-4f0d-a9dc-cdb77a1202b1` |
+| Educación — "Automatizar no es para grandes. Es para los que crecen." | Jue 21 mayo | 11:00 | `educacion` | ✅ published | `9dd90ed3-ea31-4f0d-a9dc-cdb77a1202b1` |
 
 ### Próximos pasos Brand & Content
 
 1. [x] ~~**PRIORIDAD MÁXIMA** — Implementar pipeline automatizado de contenido~~ ✅ LIVE 2026-05-17
-2. [ ] Programar posts LinkedIn 2-8 del CSV en LinkedIn native scheduler (18 mayo → 11 junio)
-3. [x] ~~Generar imágenes + copy para Semana 2 Meta (18, 20, 21 mayo)~~ ✅ Insertados + posts #1 y #2 publicados 2026-05-18/20
+2. [ ] Cargar proximas publicaciones directamente en `content_plan` con `status=pending`
+3. [x] ~~Generar imágenes + copy para Semana 2 Meta (18, 20, 21 mayo)~~ ✅ Insertados + publicados 2026-05-18/20/21
 4. [ ] Configurar adaptador Codex para A3 (Growth Ops) — mismo proceso que A4
 5. [ ] Desplegar hardening content pipeline 2026-05-20: alerta OCR confiable, fallback visual seguro, monitor post-cron 08:15 y CTA/link en captions. Patch local en `content-generator.json` + `telegram-approval.json`; falta importar en n8n producción y validar.
-6. [ ] Verificar/prevalidar post May 21 (`9dd90ed3-ea31-4f0d-a9dc-cdb77a1202b1`) antes del cron: confirmar `status=pending`, prompt sin pantallas/gráficos/texto visual, y `cta_url=https://jaagsolutions.com`.
+6. [ ] Agregar alerta si `content_plan` no tiene publicaciones futuras `pending` en los proximos 14 dias.
 
 ---
 
@@ -176,13 +170,13 @@ docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 ### Flujo objetivo
 
 ```
-A4 genera CSV (copy + prompts de imagen)
+A4 inserta registros en content_plan (copy + prompts de imagen)
             ↓
 n8n llama Ideogram API → genera imagen
             ↓
 n8n llama Google Vision API (OCR)
 → extrae texto de la imagen
-→ compara con texto esperado del CSV
+→ valida contra el contenido esperado de `content_plan`
 → si errores → regenera automáticamente (máx 3 intentos)
             ↓
 n8n envía imagen + copy a Telegram (bot)
@@ -211,7 +205,7 @@ Post publicado automáticamente en fecha/hora
 
 > **Título:** "Pipeline automatizado de contenido — Meta + LinkedIn + Telegram approval"
 >
-> **Descripción:** Construir workflow n8n que: lea CSV de A4 → genere imágenes vía Ideogram API → valide texto con OCR (Google Vision) → envíe checkpoint de aprobación vía Telegram bot → publique en Meta Graph API + LinkedIn API según fecha/hora del CSV. Un solo paso manual: aprobación de imagen en Telegram.
+> **Descripción:** Construir workflow n8n que: lea `content_plan` → genere imágenes vía Ideogram API → valide texto con OCR (Google Vision) → envíe checkpoint de aprobación vía Telegram bot → publique en Meta Graph API + LinkedIn API según `scheduled_date` y `scheduled_time`. Un solo paso manual: aprobación de imagen en Telegram.
 
 ---
 

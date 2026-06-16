@@ -602,7 +602,7 @@ docker exec deploy-paperclip-1 cat /paperclip/workspace/codex-run.sh
 | Archivo | Ubicación | Descripción |
 |---------|-----------|-------------|
 | Blog post 1 | `/opt/jaagsolutions/repo/docs/content/blog/2026-05-12-automatizar-pyme.md` | Creado manualmente via SSH (apply_patch aún no estaba fijo) |
-| CSV Buffer | `/paperclip/workspace/content_plan_mes1_buffer.csv` | 4 semanas, 3 canales, regla 70/30, pilares exactos |
+| Plan editorial inicial | Paperclip / documentos de estrategia | 4 semanas, 3 canales, regla 70/30, pilares exactos |
 | Handoff Buffer | `/paperclip/workspace/handoff_buffer_import.md` | Instrucciones importación + spec documentada |
 
 #### Issues completados (Brand & Content MVP)
@@ -637,7 +637,7 @@ Después de cada turno de A4, Paperclip detecta que no hay ejecución viva y blo
 - Buffer abandonado (loading issues) → reemplazado por Meta Business Suite + LinkedIn native
 
 **Contenido Semana 1:**
-- A4 generó `linkedin_first8_schedule.csv` — 8 posts LinkedIn con copy completo, fechas (mayo 18 → jun 11), horarios America/New_York, hashtags, CTAs y briefs de imagen
+- A4 genero contenido editorial inicial para LinkedIn con copy completo, fechas, horarios, hashtags, CTAs y briefs de imagen. Este material queda como historico; la agenda operacional vigente vive solo en `content_plan`.
 - Issue `c8de442` marcado Done
 - LinkedIn Post #1 publicado manualmente en cuenta personal Juan A. Alvarenga (Lun 11 mayo)
   - Página JAAGSOLUTIONS etiquetada correctamente (link azul activo)
@@ -655,7 +655,7 @@ Después de cada turno de A4, Paperclip detecta que no hay ejecución viva y blo
 Flujo definido para automatizar 100% la publicación de contenido con un solo paso manual (aprobación de imagen):
 
 ```
-A4 CSV → n8n → Ideogram API (imagen) → Google Vision OCR (validación)
+content_plan → n8n → Ideogram API (imagen) → Google Vision OCR (validación)
 → Telegram bot (aprobación humana) → Meta Graph API + LinkedIn API
 ```
 
@@ -676,7 +676,7 @@ APIs requeridas: Ideogram, Google Vision, Telegram Bot, Meta Graph API, LinkedIn
 2. Configurar Telegram bot para checkpoint de aprobación
 3. Obtener credenciales: Ideogram API key, Meta Graph API token, LinkedIn API app
 4. Construir workflow n8n en etapas (empezar por Ideogram → Telegram, luego Meta API, luego LinkedIn API)
-5. Programar posts LinkedIn 2-8 del CSV en LinkedIn native scheduler (18 mayo → 11 junio)
+5. Cargar proximas publicaciones directamente en `content_plan` con status `pending`
 6. Generar imágenes + copy para Meta Semana 2 (19, 21, 22 mayo)
 
 ---

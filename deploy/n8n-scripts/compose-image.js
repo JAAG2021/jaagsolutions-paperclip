@@ -31,6 +31,7 @@ const {
   platform,
   scheduled_date,
   aspect_ratio,
+  diagram_type,
   output_dir = '/opt/jaagsolutions/content',
 } = input;
 const post_id = input.post_id || input.id;
@@ -52,6 +53,204 @@ function downloadBuffer(url) {
       res.on('error', reject);
     }).on('error', reject);
   });
+}
+
+// ── Programmatic gradient background (replaces Ideogram for diagram mode) ──
+async function createGradientBackground(diagramType, dims) {
+  const ACCENT = {
+    social_media: '#7B1FA2',  // purple-magenta (social)
+    automation:   '#BF360C',  // deep orange (n8n brand)
+    results:      '#E65100',  // amber-gold (growth)
+    efficiency:   '#00695C',  // teal (clarity)
+    data:         '#0D47A1',  // deep blue (data)
+    team:         '#4E342E',  // warm brown (people)
+  };
+  const accent = ACCENT[diagramType] || '#1A2744';
+  const bgSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${dims.w}" height="${dims.h}">
+    <defs>
+      <radialGradient id="g1" cx="50%" cy="38%" r="65%">
+        <stop offset="0%"   stop-color="${accent}"  stop-opacity="0.55"/>
+        <stop offset="55%"  stop-color="#0A1628"    stop-opacity="0.80"/>
+        <stop offset="100%" stop-color="#050C18"    stop-opacity="1.00"/>
+      </radialGradient>
+      <radialGradient id="g2" cx="15%" cy="80%" r="45%">
+        <stop offset="0%"   stop-color="${accent}"  stop-opacity="0.18"/>
+        <stop offset="100%" stop-color="#050C18"    stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="${dims.w}" height="${dims.h}" fill="#060D1B"/>
+    <rect width="${dims.w}" height="${dims.h}" fill="url(#g1)"/>
+    <rect width="${dims.w}" height="${dims.h}" fill="url(#g2)"/>
+  </svg>`;
+  return sharp(Buffer.from(bgSvg)).png().toBuffer();
+}
+
+// ── Node Diagram SVG ──────────────────────────────────────────────────
+function buildDiagramSVG(diagramType, dims) {
+  const CONFIGS = {
+    social_media: {
+      center: { lines: ['TU', 'EMPRESA'], fill: '#0D1B2A', stroke: '#F5B800', textColor: '#F5B800' },
+      nodes: [
+        { lines: ['IG'],   fill: '#E1306C', angle: -90 },
+        { lines: ['LI'],   fill: '#0A66C2', angle: -18 },
+        { lines: ['FB'],   fill: '#1877F2', angle:  54 },
+        { lines: ['WA'],   fill: '#25D366', angle: 126 },
+        { lines: ['TK'],   fill: '#444444', angle: 198 },
+      ],
+    },
+    automation: {
+      center: { lines: ['n8n'], fill: '#FF6D5A', stroke: '#FFFFFF', textColor: '#FFFFFF' },
+      nodes: [
+        { lines: ['MAIL'], fill: '#4285F4', angle: -90 },
+        { lines: ['WA'],   fill: '#25D366', angle: -18 },
+        { lines: ['CRM'],  fill: '#FF7043', angle:  54 },
+        { lines: ['GS'],   fill: '#34A853', angle: 126 },
+        { lines: ['CAL'],  fill: '#1A73E8', angle: 198 },
+      ],
+    },
+    results: {
+      center: { lines: ['META'], fill: '#0D1B2A', stroke: '#F5B800', textColor: '#F5B800' },
+      nodes: [
+        { lines: ['Leads'],  fill: '#F5B800', angle: -90 },
+        { lines: ['Ventas'], fill: '#4CAF50', angle:   0 },
+        { lines: ['Clnts'],  fill: '#2196F3', angle:  90 },
+        { lines: ['ROI'],    fill: '#E91E63', angle: 180 },
+      ],
+    },
+    efficiency: {
+      center: { lines: ['PROC'], fill: '#00796B', stroke: '#80CBC4', textColor: '#FFFFFF' },
+      nodes: [
+        { lines: ['Tiempo'],  fill: '#00BCD4', angle: -90 },
+        { lines: ['Errores'], fill: '#66BB6A', angle:   0 },
+        { lines: ['Costos'],  fill: '#FFA726', angle:  90 },
+        { lines: ['Output'],  fill: '#AB47BC', angle: 180 },
+      ],
+    },
+    data: {
+      center: { lines: ['DATA'], fill: '#1565C0', stroke: '#82B1FF', textColor: '#FFFFFF' },
+      nodes: [
+        { lines: ['Ventas'], fill: '#0288D1', angle: -90 },
+        { lines: ['Web'],    fill: '#E65100', angle: -18 },
+        { lines: ['Redes'],  fill: '#AD1457', angle:  54 },
+        { lines: ['Email'],  fill: '#2E7D32', angle: 126 },
+        { lines: ['CRM'],    fill: '#6A1B9A', angle: 198 },
+      ],
+    },
+    team: {
+      center: { lines: ['EQUIPO'], fill: '#0D1B2A', stroke: '#F5B800', textColor: '#F5B800' },
+      nodes: [
+        { lines: ['CEO'],   fill: '#1565C0', angle:  -90 },
+        { lines: ['Vntas'], fill: '#2E7D32', angle:  -30 },
+        { lines: ['Ops'],   fill: '#E65100', angle:   30 },
+        { lines: ['Mktg'],  fill: '#AD1457', angle:   90 },
+        { lines: ['Tech'],  fill: '#00796B', angle:  150 },
+        { lines: ['Sup.'],  fill: '#6A1B9A', angle: -150 },
+      ],
+    },
+  };
+
+  const cfg = CONFIGS[diagramType];
+  if (!cfg) return null;
+
+  const cx      = Math.round(dims.w / 2);
+  const cy      = Math.round(dims.h * 0.36);
+  const spokeR  = Math.round(dims.w * 0.235);
+  const hubR    = Math.round(dims.w * 0.072);
+  const nodeR   = Math.round(dims.w * 0.050);
+  const baseFs  = Math.round(dims.w * 0.028);
+  const lineW   = Math.max(2, Math.round(dims.w * 0.002));
+  const toRad   = d => d * Math.PI / 180;
+
+  // SVG icon fragments — designed in ±7 unit space, centered at origin
+  // Render with: <g transform="translate(x,y) scale(nodeR/14)">ICON</g>
+  const SVGICONS = {
+    IG: `<rect x="-7" y="-5.5" width="14" height="11" rx="3" fill="none" stroke="white" stroke-width="1.4"/>
+         <circle cy="0.3" r="3.5" fill="none" stroke="white" stroke-width="1.4"/>
+         <circle cx="5" cy="-4" r="1.4" fill="white"/>`,
+    LI: `<text y="0" text-anchor="middle" dominant-baseline="middle" font-family="Arial,sans-serif" font-size="4" font-weight="900" fill="white">in</text>`,
+    FB: `<text y="0" text-anchor="middle" dominant-baseline="middle" font-family="Georgia,serif" font-size="5.5" font-weight="700" fill="white">f</text>`,
+    WA: `<path d="M0,-7 C-4,-7 -7,-4 -7,0 C-7,2.5 -5.5,4.5 -3,5.5 L-3.5,8 L-0.5,6.5 C-0.2,6.5 0,7 0,7 C4,7 7,4 7,0 C7,-4 4,-7 0,-7 Z" fill="none" stroke="white" stroke-width="1.4"/>
+          <circle r="2" fill="white"/>`,
+    TK: `<path d="M2,-7 C5,-6.5 7,-4 7,-1 L4.5,-1 C4.5,-3 3,-4.5 2,-5 L2,3 C2,5 0.5,7 -1.5,7 C-3.5,7 -5,5.5 -5,3.5 C-5,1.5 -3.5,0 -1.5,0 C-1,0 -0.5,0.1 0,0.3 L0,-2 C-0.5,-2.1 -1,-2 -1.5,-2 C-4.5,-2 -7,0.5 -7,3.5 C-7,6.5 -4.5,9 -1.5,9 C1.5,9 4,6.5 4,3.5 L4,-7 Z" fill="white"/>`,
+    MAIL: `<rect x="-7" y="-5" width="14" height="10" rx="2" fill="none" stroke="white" stroke-width="1.4"/>
+           <path d="M-7,-5 L0,2 L7,-5" fill="none" stroke="white" stroke-width="1.4"/>`,
+    GS: `<rect x="-6" y="-6" width="12" height="12" rx="2" fill="none" stroke="white" stroke-width="1.2"/>
+         <line x1="-6" y1="-2" x2="6" y2="-2" stroke="white" stroke-width="1"/>
+         <line x1="-6" y1="2" x2="6" y2="2" stroke="white" stroke-width="1"/>
+         <line x1="-2" y1="-6" x2="-2" y2="6" stroke="white" stroke-width="1"/>
+         <line x1="2" y1="-6" x2="2" y2="6" stroke="white" stroke-width="1"/>`,
+    CAL: `<rect x="-7" y="-5" width="14" height="12" rx="2" fill="none" stroke="white" stroke-width="1.3"/>
+          <line x1="-7" y1="-1" x2="7" y2="-1" stroke="white" stroke-width="1"/>
+          <line x1="-3.5" y1="-7" x2="-3.5" y2="-3" stroke="white" stroke-width="1.5"/>
+          <line x1="3.5" y1="-7" x2="3.5" y2="-3" stroke="white" stroke-width="1.5"/>`,
+    CRM: `<circle cy="-3.5" r="3.5" fill="none" stroke="white" stroke-width="1.4"/>
+          <path d="M-7,7 C-7,2 7,2 7,7" fill="none" stroke="white" stroke-width="1.4"/>`,
+    WA2: `<text y="3" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" font-weight="800" fill="white">WA</text>`,
+  };
+
+  const nodePos = cfg.nodes.map(n => ({
+    ...n,
+    x: Math.round(cx + spokeR * Math.cos(toRad(n.angle))),
+    y: Math.round(cy + spokeR * Math.sin(toRad(n.angle))),
+  }));
+
+  const s = [];
+  s.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${dims.w}" height="${dims.h}" viewBox="0 0 ${dims.w} ${dims.h}">`);
+  s.push(`<defs>
+    <filter id="nglow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="12" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="sglow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>`);
+
+  // Subtle dark vignette behind diagram area so labels read over any photo
+  s.push(`<radialGradient id="dvig" cx="50%" cy="36%" r="52%" gradientUnits="userSpaceOnUse" gradientTransform="scale(1,1.35) translate(0,-${Math.round(dims.h*0.12)})">
+    <stop offset="0%"   stop-color="#000000" stop-opacity="0.52"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>`);
+  s.push(`<rect width="${dims.w}" height="${dims.h}" fill="url(#dvig)"/>`);
+
+  // Connection lines
+  for (const { x, y } of nodePos) {
+    s.push(`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(255,255,255,0.35)" stroke-width="${lineW * 2}" stroke-dasharray="${lineW * 6} ${lineW * 3}"/>`);
+  }
+
+  // Hub glow ring
+  s.push(`<circle cx="${cx}" cy="${cy}" r="${hubR + 20}" fill="${cfg.center.fill}" opacity="0.35" filter="url(#nglow)"/>`);
+  // Hub circle — slightly transparent so photo shows through
+  s.push(`<circle cx="${cx}" cy="${cy}" r="${hubR}" fill="${cfg.center.fill}" fill-opacity="0.88" stroke="${cfg.center.stroke}" stroke-width="3"/>`);
+  // Hub label
+  const hfs = Math.round(baseFs * 0.80);
+  const hlh = Math.round(hfs * 1.25);
+  const hly = cy - ((cfg.center.lines.length - 1) * hlh / 2) + Math.round(hfs * 0.38);
+  cfg.center.lines.forEach((line, i) => {
+    s.push(`<text x="${cx}" y="${hly + i * hlh}" text-anchor="middle" font-family="DejaVu Sans,Arial,sans-serif" font-size="${hfs}" font-weight="800" fill="${cfg.center.textColor}">${escapeXml(line)}</text>`);
+  });
+
+  // Peripheral nodes
+  const iconScale = (nodeR / 10).toFixed(3);
+  for (const { lines, fill, x, y } of nodePos) {
+    s.push(`<circle cx="${x}" cy="${y}" r="${nodeR + 16}" fill="${fill}" opacity="0.28" filter="url(#nglow)"/>`);
+    s.push(`<circle cx="${x}" cy="${y}" r="${nodeR}" fill="${fill}" fill-opacity="0.85" stroke="rgba(255,255,255,0.70)" stroke-width="2.5" filter="url(#sglow)"/>`);
+    const iconKey = lines[0];
+    if (SVGICONS[iconKey]) {
+      s.push(`<g transform="translate(${x},${y}) scale(${iconScale})">${SVGICONS[iconKey]}</g>`);
+    } else {
+      const nfs = Math.round(baseFs * 0.72);
+      const nlh = Math.round(nfs * 1.25);
+      const nly = y - ((lines.length - 1) * nlh / 2) + Math.round(nfs * 0.38);
+      lines.forEach((line, i) => {
+        s.push(`<text x="${x}" y="${nly + i * nlh}" text-anchor="middle" font-family="DejaVu Sans,Arial,sans-serif" font-size="${nfs}" font-weight="700" fill="white">${escapeXml(line)}</text>`);
+      });
+    }
+  }
+
+  s.push('</svg>');
+  return Buffer.from(s.join(''));
 }
 
 function escapeXml(str) {
@@ -173,12 +372,17 @@ async function main() {
   if (!fs.existsSync(output_dir)) fs.mkdirSync(output_dir, { recursive: true });
   const filePath = `${output_dir}/${post_id}.jpg`;
 
+  const diagramBuf = diagram_type ? buildDiagramSVG(diagram_type, dims) : null;
+
   const composedBuffer = await sharp(baseBuffer)
     // position 'top': cuando hay que cropear vertical (3:4 → 4:5), recorta desde
     // el bottom (zona calma reservada por el Auditor), preservando el sujeto
     // que el prompt posiciona en el top 62%.
     .resize(dims.w, dims.h, { fit: 'cover', position: 'top' })
-    .composite([{ input: Buffer.from(svg), top: 0, left: 0 }])
+    .composite([
+      ...(diagramBuf ? [{ input: diagramBuf, top: 0, left: 0 }] : []),
+      { input: Buffer.from(svg), top: 0, left: 0 },
+    ])
     .jpeg({ quality: 92, progressive: true })
     .toBuffer();
 

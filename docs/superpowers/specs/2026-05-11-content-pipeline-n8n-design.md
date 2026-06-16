@@ -8,7 +8,7 @@
 
 ## Contexto
 
-JAAGSOLUTIONS publica contenido en LinkedIn (cuenta personal Juan A. Alvarenga), Instagram y Facebook (Meta Business Suite) siguiendo la estrategia del Mes 1 (70% valor / 30% conversión). El proceso actual es manual: A4 genera el CSV con copy y prompts de imagen, Juan genera imágenes en Ideogram.ai manualmente y programa cada post en Meta Business Suite y LinkedIn scheduler.
+JAAGSOLUTIONS publica contenido en LinkedIn (cuenta personal Juan A. Alvarenga), Instagram y Facebook siguiendo la estrategia del Mes 1 (70% valor / 30% conversión). La fuente operacional del plan de contenido es PostgreSQL `content_plan`; A4 crea registros en esa tabla y n8n procesa exclusivamente esos registros.
 
 Este pipeline elimina todos los pasos manuales excepto uno: la aprobación de cada post vía Telegram antes de publicar.
 
@@ -81,8 +81,8 @@ CREATE TABLE content_plan (
   image_prompt    TEXT NOT NULL,
   hashtags        TEXT,
   cta_url         TEXT,
-  image_path      TEXT,
-  -- path local en VPS: /opt/jaagsolutions/content/{id}.jpg
+  image_url       TEXT,
+  -- URL publica generada por compose-image
   status          TEXT NOT NULL DEFAULT 'pending',
   -- pending → generating → review → approved → published | error
   retry_count     INTEGER NOT NULL DEFAULT 0,
@@ -114,12 +114,6 @@ CREATE TRIGGER content_plan_updated_at
 | instagram | reel | ASPECT_9_16 |
 | meta | imagen_copy | ASPECT_1_1 |
 | facebook | imagen_copy | ASPECT_4_5 |
-
-### Migración del CSV existente
-
-El CSV `/paperclip/workspace/linkedin_first8_schedule.csv` se importa una sola vez con un script Python (`scripts/migrate-csv-to-db.py`) que lee las columnas del CSV y hace `INSERT` en `content_plan`. De ahí en adelante A4 escribe directamente a la tabla vía script.
-
----
 
 ## Workflow 1 — Content Generator
 
@@ -163,7 +157,7 @@ El CSV `/paperclip/workspace/linkedin_first8_schedule.csv` se importa una sola v
 8. [HTTP Request] GET imagen URL → Binary
    Descargar a /opt/jaagsolutions/content/{{ $json.id }}.jpg
 
-9. [Postgres] UPDATE image_path = '/opt/jaagsolutions/content/{{ $json.id }}.jpg'
+9. [Postgres] UPDATE image_url = public URL returned by compose-image
 
 10. [HTTP Request] POST https://vision.googleapis.com/v1/images:annotate
     ?key={{ $env.GOOGLE_VISION_API_KEY }}
@@ -342,19 +336,6 @@ LINKEDIN_ACCESS_TOKEN=     # LinkedIn Developer App → OAuth 2.0 → w_member_s
 
 ---
 
-## Script de migración CSV → PostgreSQL
-
-**Archivo:** `deploy/scripts/migrate-csv-to-db.py`
-
-Lee `/paperclip/workspace/linkedin_first8_schedule.csv` y hace INSERT en `content_plan`. Se ejecuta una sola vez dentro del container de la base de datos.
-
-```bash
-# Ejecutar en VPS:
-docker exec deploy-postgres-1 python3 /scripts/migrate-csv-to-db.py
-```
-
----
-
 ## Script de escritura para A4
 
 **Archivo:** `deploy/scripts/insert-content-plan.py`
@@ -369,9 +350,9 @@ python3 /paperclip/workspace/insert-content-plan.py \
   --platform "linkedin" \
   --format "imagen_copy" \
   --pillar "educacion" \
-  --post_type "valor" \
+  --type "valor" \
   --copy "Tu negocio puede hacer más sin contratar más..." \
-  --image_prompt "Infografía moderna: 3 procesos empresariales conectados por flechas..." \
+  --prompt "Professional editorial image showing an abstract automation process..." \
   --hashtags "#automatizacion #pymes #n8n"
 ```
 
@@ -383,7 +364,6 @@ python3 /paperclip/workspace/insert-content-plan.py \
 |---------|-------------|
 | `deploy/n8n-workflows/content-generator.json` | Workflow 1 — Cron + Ideogram + Vision + Telegram |
 | `deploy/n8n-workflows/telegram-approval.json` | Workflow 2 — Webhook + Meta + LinkedIn |
-| `deploy/scripts/migrate-csv-to-db.py` | Migración CSV existente a PostgreSQL |
 | `deploy/scripts/insert-content-plan.py` | Script de inserción para A4 |
 | `deploy/sql/content-plan-schema.sql` | DDL de la tabla + trigger |
 
@@ -392,7 +372,7 @@ python3 /paperclip/workspace/insert-content-plan.py \
 ## Criterios de aceptación
 
 - [ ] Tabla `content_plan` creada en PostgreSQL de producción
-- [ ] CSV existente migrado (todos los posts con status correcto)
+- [ ] Posts futuros cargados directamente en `content_plan` con status correcto
 - [ ] Workflow 1 activo: cron dispara, genera imagen, envía a Telegram
 - [ ] Workflow 2 activo: ✅ Aprobar publica en Meta y LinkedIn; ❌ Rechazar reprograma
 - [ ] OCR valida texto de imagen (reintenta hasta 3 veces si falla)

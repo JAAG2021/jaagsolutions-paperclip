@@ -131,7 +131,7 @@
         220
       ],
       "parameters": {
-        "jsCode": "const item = $input.first().json;\nconst pillar = (item.pillar || '').toLowerCase();\n\nconst variants = {\n  educacion: [\n    'A mid-30s Latina woman in business casual stands at a modern standing desk with dual monitors showing colorful data dashboards. Bright minimal open-plan office, large windows with city view, soft natural light. Editorial real-photo style.',\n    'A Latino male consultant in his 40s presents to colleagues in a sleek boardroom. Large blank display screen behind him, three attentive professionals at the table. Cinematic overhead lighting, cool tones.',\n    'A young Latina entrepreneur works at a sunlit café table, laptop open, coffee cup nearby. Warm golden-hour light streams through large windows behind her. Candid, natural, aspirational.',\n    'Waist-up portrait of a confident Latino business professional in his 30s, a tablet held low at one side. Blurred open-plan tech office bokeh behind him. Shallow depth of field, cool palette. Hands not the focus.',\n    'A Latino executive in his 50s stands in a glass-walled corner office, city skyline visible through floor-to-ceiling windows at dusk. Premium editorial photography, deep navy tones.',\n    'A Latina woman in her 30s facilitates a small workshop for three colleagues, standing beside a blank whiteboard. Modern bright training room, engaged team, natural light. Hands relaxed, not the focus.',\n    'A Latino IT manager in his 40s reviews infrastructure in a cool blue-lit server room. LED ambient glow, professional focused expression, tech precision mood.',\n    'A mature Latino business owner at a polished wood desk, reviewing documents under warm desk lamp. Bookshelves behind, evening atmosphere, intimate and accomplished.'\n  ],\n  social_proof: [\n    'A large glass whiteboard covered with abstract colored workflow lines and circular nodes dominates the entire frame. Four Latino professionals stand around it from the side and behind, all studying the diagram. The process visualization is the clear protagonist. People are secondary observers, no face-to-face interaction.',\n    'Overhead bird-eye shot of a wide conference table with an abstract process flow diagram as the central element. Three Latino professionals lean over it from different sides, all looking DOWN at the diagram, none facing each other. Table and workflow are the hero.',\n    'Wide boardroom shot: a large blank screen with an abstract flow chart fills the back wall. Five Latino professionals sit around a long table, all turned toward the screen. Screen and diagram dominate, people are small and secondary in the composition.',\n    'A clean floor-to-ceiling glass board with colored automation nodes and connecting lines fills two-thirds of the frame. Three Latino consultants stand to one side, looking at the board from the side. The workflow board is the main subject, people are silhouettes.',\n    'Top-down overhead view of a round meeting table with an abstract workflow diagram laid flat as the centerpiece. Four diverse Latino professionals sit around it, each looking down at the diagram, no face-to-face contact visible.',\n    'A Latina executive stands with her back to the camera, facing a large whiteboard filled with abstract colored process lines. She gestures toward the board. Shot from behind, the board and process diagram dominate the frame, no faces visible.',\n    'Wide shot of a modern workspace: a team of four Latino professionals gathered in a semicircle around a central display table showing abstract automation flows. All four look toward the display. Overhead angle, process visualization centered as the clear protagonist.',\n    'Three Latino professionals stand side by side in a row, all looking at the same direction toward a large glass process board. Shot from the side. The board with workflow lines and nodes fills the right half of the frame. Group alignment, zero interpersonal dynamic.'\n  ],\n  produccion: [\n    'Two Latino automation consultants stand over a clear glass conference table with simple colored path lines reflected across the surface. Warm modern meeting room, blank wall background, no devices, no papers, no signage. Editorial real-photo style.',\n    'Overhead view of a clean frosted-glass table with smooth colored process lines and small plain geometric markers. No people, no screens, no notebooks, no labels. Calm premium workspace.',\n    'A small Latino operations team studies a minimalist process layout made from colored cords on a large table. Bright office, soft daylight, plain surfaces, no documents, no monitors, no readable marks.',\n    'Two professionals stand a step back from a transparent acrylic board showing abstract colored workflow lines as pure shapes, viewed at a medium distance. The board has no symbols, letters, numbers, arrows, or labels. Hands at their sides, not the focus.',\n    'Wide modern conference room with two consultants discussing a blank wall-sized process map represented only by soft colored lines and circular nodes. No text, no screens, no whiteboard writing.',\n    'Abstract automation scene: smooth blue and teal light trails flowing through simple geometric nodes over a clean dark surface. No interface panels, no charts, no numbers, no typography.',\n    'Human-centered operations scene: a consultant and a business owner stand beside a glass table that displays plain colored tokens arranged along curved lines. Elegant office, natural light, no paper or devices. Hands relaxed, not manipulating objects, not the focus.',\n    'Minimal process workshop environment with a large empty table, colored cords forming a clean route, and blurred professionals in the background. Calm lower area for overlay, no readable details.'\n  ],\n  promesa: [\n    'A confident Latina entrepreneur in her 30s stands on a rooftop terrace at golden hour, arms slightly open, Latin American city skyline stretching behind her. Cinematic warm light.',\n    'A Latino business owner in his 40s stands at a floor-to-ceiling window at dawn, looking out at the city below. Silhouette-forward composition, hopeful expansive mood.',\n    'A mid-40s Latino man in a well-fitted suit walks purposefully through a modern glass atrium. Motion-blurred background, sharp subject, strong architectural lines.',\n    'A Latina CEO in professional attire stands at a glass building entrance, sunrise reflected in the facade, briefcase in hand. Aspirational editorial photography.',\n    'Wide aerial dawn shot of a modern Latin American city skyline, one warmly lit office window glowing in a high-rise tower. Symbolic, expansive, quiet ambition.',\n    'A Latino professional in his 30s in business casual stands on a hilltop overlook, cityscape below, symbolic elevation. Natural warm light, cinematic shallow DOF.',\n    'Dramatic silhouette of a confident business professional against a vivid orange-pink sunset sky, suspension bridge and city behind. Aspirational and dynamic.',\n    'A Latina entrepreneur in her 30s stands at a harbor at dusk, calm water with city reflections, looking forward confidently. Peaceful, accomplished, elegant.'\n  ]\n};\n\nconst pillarMap = {\n  educacion: 'educacion', experto: 'educacion', conocimiento: 'educacion',\n  social_proof: 'social_proof', casos: 'social_proof', testimonial: 'social_proof', casos_de_uso: 'social_proof', prueba_social: 'social_proof',\n  produccion: 'produccion', behind_scenes: 'produccion', proceso: 'produccion', herramienta: 'produccion', behind_the_scenes: 'produccion',\n  promesa: 'promesa', vision: 'promesa', aspiracion: 'promesa'\n};\n\nconst key = pillarMap[pillar] || 'educacion';\nconst pool = variants[key];\nconst scene = pool[Math.floor(Math.random() * pool.length)];\n\nconst systemPrompt = `You are a senior art director for B2B SaaS brand JAAGSOLUTIONS (an agency that builds automation systems for Latin American SMEs). Your job is to transform a generic image idea into a rich, production-quality prompt for Ideogram V_2.\\n\\nCRITICAL RULES:\\n\\n1. ABSOLUTELY NO TEXT, LETTERS, NUMBERS, WORDS, OR TYPOGRAPHY IN THE IMAGE. The image must be 100% text-free. No watermarks, no captions, no labels, no signage with readable words, no books with readable text, no screens showing readable text. The text overlay is added separately by post-processing.\\n\\n2. COMPOSITION MUST RESERVE NEGATIVE SPACE for a text overlay covering the BOTTOM 38% of the frame. The main subject and visual interest must be in the TOP 62%. The bottom area should be visually calm (sky, plain wall, gradient, soft bokeh, table surface) so dark text on a translucent overlay reads clearly.\\n\\n2b. HANDS AND ANATOMY (CRITICAL): Hands must NEVER appear in the foreground or be a prominent visual element. NEVER show close-up hands, pointing fingers, hands holding objects, pens, or pencils in the foreground. Strongly prefer compositions where hands are completely out of frame, hidden behind the body, or only barely visible at chest height far from camera. Frame people from the shoulders up or from behind.\\n\\n2c. PEOPLE COUNT (CRITICAL): If people appear, there must be a MINIMUM of 3 people — NEVER 2 people alone. Two-person compositions ALWAYS read as romantic regardless of intent. Preferred count: 3 to 5 people. Show them from the side, from behind, or from overhead — NEVER two people facing each other.\\n\\n2d. VISUAL PROTAGONIST (CRITICAL): The workflow diagram, process board, abstract flow lines, or meeting table MUST be the dominant visual element occupying at least half the frame. People are background observers looking AT the process — they are NOT the main subject.\\n\\n3. BRAND MOOD: confident, modern, clean, technological but human. Color palette leans cool (deep navy blues, slate, off-white) with optional warm accent. Lighting: soft, natural, professional.\\n\\n4. BASE SCENE — use this as your creative starting point and enrich it:\\n   \"${scene}\"\\n\\n5. STYLE DESCRIPTORS to include: \"professional editorial photography\", \"cinematic lighting\", \"shallow depth of field\", \"ultra-detailed\", \"high-end commercial style\", \"soft natural light\", \"color grading slightly cool with warm highlights\".\\n\\n6. NEGATIVE INSTRUCTIONS to include: \"no text, no letters, no logos, no watermarks, no captions, no signage, no readable typography, no numbers, no close-up hands, no pointing fingers, no handshakes, no deformed hands, no extra fingers, no romantic poses, no couple scenes, no intimate framing, no two people facing each other romantically, no seductive or flirtatious composition, no two-person composition, no hands in foreground, no close-up hands, no pens or objects held in foreground, minimum three people if people appear\".\\n\\n7. ETHNICITY: prefer Latino / Hispanic subjects. Diverse but always plausibly Latin American.\\n\\n8. LENGTH: 90-160 words. Concrete, sensory, no fluff.\\n\\n9. OUTPUT FORMAT: return ONLY the final prompt in English, single paragraph, no preamble, no quotes, no explanation.`;\n\nreturn [{ json: { ...item, auditor_system_prompt: systemPrompt, scene_variant: scene } }];"
+        "jsCode": "const item = $input.first().json;\nconst pillar = (item.pillar || '').toLowerCase();\n\nconst variants = {\n  educacion: [\n    {p:true,  s:'Waist-up portrait of a confident solo Latina professional in her 30s at a modern standing desk, blurred colorful abstract dashboard glow behind her, bright minimal open-plan office, soft natural light, editorial real-photo style, hands not the focus.'},\n    {p:true,  s:'Wide shot of a Latino consultant in his 40s presenting to a group of four attentive colleagues in a sleek boardroom, soft-lit blank display behind him, cinematic overhead lighting, cool slate tones, seen from the side.'},\n    {p:true,  s:'A young Latina entrepreneur works alone at a sunlit cafe table, laptop open, warm golden-hour light through large windows behind her, candid and aspirational, framed from the chest up.'},\n    {p:false, s:'Close detail of an elegant minimalist workspace, a sleek laptop, a ceramic cup and a small plant on a clean walnut desk, soft morning light, no people, no readable screens, calm premium mood.'},\n    {p:true,  s:'A Latino executive in his 50s stands alone in a glass-walled corner office, city skyline through floor-to-ceiling windows at dusk, premium editorial photography, deep navy tones, silhouette-forward.'},\n    {p:true,  s:'A Latina facilitator in her 30s leads a small workshop for three engaged colleagues in a bright modern training room, gesturing toward a soft-lit blank wall, natural light, group of four total, seen from the side, hands relaxed.'},\n    {p:false, s:'Abstract knowledge concept, warm light rays passing through floating translucent geometric panels over a deep blue gradient, no people, cinematic depth, premium and clean.'},\n    {p:true,  s:'A mature Latino business owner sits alone at a polished wood desk under a warm lamp, softly blurred bookshelves behind, evening atmosphere, intimate and accomplished, framed from the chest up, hands relaxed.'}\n  ],\n  social_proof: [\n    {p:true,  s:'A confident solo Latina business owner in her 40s stands in her thriving modern studio or shop, relaxed posture, warm satisfied expression, soft daylight, shallow depth of field, framed from the chest up, aspirational.'},\n    {p:true,  s:'Wide boardroom shot, five Latino professionals sit around a long table all turned toward a large soft-lit display showing abstract colored shapes on the back wall, people small in the frame, room and screen dominate, cool overhead lighting.'},\n    {p:true,  s:'A solo Latino entrepreneur in his 30s stands proudly in front of his small modern warehouse or workshop at golden hour, the business in operation softly blurred behind him, warm tones, editorial, framed from the chest up.'},\n    {p:true,  s:'Overhead bird-eye shot of a round meeting table with abstract colored flow shapes laid flat as the centerpiece, four Latino professionals around it all looking down at it, none facing each other, the table is the hero.'},\n    {p:false, s:'Symbolic growth scene, a sleek upward-curving abstract sculpture of light and soft color over a clean dark surface, no people, premium and dynamic, cinematic.'},\n    {p:false, s:'Abstract social proof concept, a clean dark wall covered with a softly glowing organic network of warm circular nodes connected by thin curved lines, no people, elegant and expansive, premium cinematic mood.'},\n    {p:true,  s:'A satisfied mature Latino client sits relaxed in a bright modern office lounge, calm confident expression, large window with soft city bokeh behind, solo, framed from the chest up, warm accent light.'},\n    {p:true,  s:'Wide modern workspace, a team of four Latino professionals gathered in a semicircle around a central glowing display table showing abstract automation flows, all looking toward it, overhead angle, process visualization centered.'}\n  ],\n  produccion: [\n    {p:false, s:'Overhead view of a clean frosted-glass table with smooth colored process lines and small plain geometric markers, no people, no screens, no labels, calm premium workspace, soft daylight.'},\n    {p:true,  s:'A solo Latino operations specialist in his 30s studies a minimalist process layout of colored cords on a large bright table, viewed from the side, hands relaxed at his sides, soft daylight, plain surfaces, no documents.'},\n    {p:false, s:'Abstract automation scene, smooth blue and teal light trails flowing through simple geometric nodes over a clean dark surface, no interface panels, no charts, no numbers, no typography.'},\n    {p:true,  s:'Wide modern workshop, three Latino professionals stand a step back from a transparent acrylic board showing abstract colored workflow lines as pure shapes, viewed from a medium distance, hands at sides, no symbols or labels.'},\n    {p:false, s:'Close detail of elegant abstract machinery of light, softly glowing interlocking rings and curved rails in cool blue and warm amber, no people, premium tech mood, shallow depth of field.'},\n    {p:true,  s:'A solo Latina engineer in her 30s in a cool blue-lit modern lab reviews a glowing abstract holographic process map, calm focused expression, framed from the chest up, no readable text.'},\n    {p:true,  s:'Minimal process workshop, a large empty bright table with colored cords forming a clean route, three blurred professionals in the background, calm lower area for overlay, no readable details.'},\n    {p:false, s:'Top-down flat-lay of a clean designer desk with abstract colored geometric tokens arranged along a curved path on a matte surface, no devices, no text, soft even light.'}\n  ],\n  promesa: [\n    {p:true,  s:'A confident solo Latina entrepreneur in her 30s stands on a rooftop terrace at golden hour, arms slightly open, Latin American city skyline behind her, cinematic warm light.'},\n    {p:true,  s:'A solo Latino business owner in his 40s stands at a floor-to-ceiling window at dawn looking out over the city, silhouette-forward, hopeful expansive mood.'},\n    {p:true,  s:'A mid-40s Latino man in a well-fitted suit walks purposefully alone through a modern glass atrium, motion-blurred background, sharp subject, strong architectural lines.'},\n    {p:false, s:'Wide aerial dawn shot of a modern Latin American city skyline, one warmly lit office window glowing in a high-rise tower, symbolic, expansive, no people, quiet ambition.'},\n    {p:true,  s:'A solo Latina CEO in professional attire stands at a glass building entrance at sunrise reflected in the facade, aspirational editorial photography, framed from the chest up, hands relaxed.'},\n    {p:false, s:'Abstract horizon of hope, a vast calm gradient sky from deep navy to warm amber over soft distant mountains, a single beam of light, no people, cinematic and serene.'},\n    {p:true,  s:'Dramatic silhouette of a single confident business professional against a vivid orange-pink sunset sky, suspension bridge and city behind, aspirational and dynamic.'},\n    {p:true,  s:'A group of four diverse Latino professionals walk forward together through a bright modern lobby toward large windows, seen from behind, motion and momentum, warm light ahead.'}\n  ]\n};\n\nconst pillarMap = {\n  educacion: 'educacion', experto: 'educacion', conocimiento: 'educacion',\n  social_proof: 'social_proof', casos: 'social_proof', testimonial: 'social_proof', casos_de_uso: 'social_proof', prueba_social: 'social_proof',\n  produccion: 'produccion', behind_scenes: 'produccion', proceso: 'produccion', herramienta: 'produccion', behind_the_scenes: 'produccion',\n  promesa: 'promesa', vision: 'promesa', aspiracion: 'promesa'\n};\n\nconst key = pillarMap[pillar] || 'educacion';\nconst pool = variants[key];\nconst noPeople = pool.filter(v => !v.p); const withPeople = pool.filter(v => v.p); const chosen = (noPeople.length && withPeople.length) ? (Math.random() < 0.65 ? noPeople[Math.floor(Math.random() * noPeople.length)] : withPeople[Math.floor(Math.random() * withPeople.length)]) : pool[Math.floor(Math.random() * pool.length)]; const scene = chosen.s; const has_people = chosen.p; const _pick = a => a[Math.floor(Math.random() * a.length)]; const shot = _pick(['wide establishing shot', 'medium editorial shot', 'intimate close composition', 'overhead angle', 'low dramatic angle', 'over-the-shoulder framing']); const palette = _pick(['cool slate and deep navy with a single warm amber accent', 'soft monochrome blue-grey with crisp white highlights', 'warm golden-hour tones over cool shadows', 'clean off-white and pale teal minimalist palette', 'moody deep navy with an electric blue accent']); const tod = _pick(['early morning soft light', 'bright midday daylight', 'golden-hour glow', 'cool blue dusk']); const mood = _pick(['calm and premium', 'energetic and modern', 'quiet and aspirational', 'focused and precise', 'warm and human']);\n\n// Derive visual concept from copy keywords — primary creative driver\nconst copyLower = (item.copy_text || '').toLowerCase();\nconst _imagePromptDB = (item.image_prompt || '').trim();\nconst _conceptMap = [\n  { re: /redes sociales|red social|instagram|facebook|linkedin|publicar|publicacion|contenido|seguidores|algoritmo|organico|engagement|activ.*red|social media/, concept: 'digital connectivity and social media presence — abstract glowing network of colored nodes and curved lines suggesting online platforms, a solo person engaging with a luminous digital network seen from behind or above, implied screen or smartphone interaction in soft ambient glow, no readable text, warm teal and amber connectivity lighting, the network IS the visual protagonist' },\n  { re: /automatiz|workflow|proceso|sistema|flujo|inteligencia artif|integrac/, concept: 'intelligent business automation — clean systematic abstract connections between glowing nodes, elegant data pipeline metaphor, technology flowing effortlessly, deep navy and electric teal palette' },\n  { re: /resultado|crecer|crecimiento|venta|cliente|ingreso|roi|escalar|duplicar/, concept: 'business growth and measurable results — a confident solo professional at a high vantage point or rooftop overlooking a city at golden hour, symbolizing elevation and achievement' },\n  { re: /tiempo|ahorra|eficien|productiv|rapido|lento|manual|horas/, concept: 'operational efficiency — visual contrast between cluttered complexity and elegant simplicity, a serene clean workspace in soft morning light' },\n  { re: /datos|analytic|metrica|dashboard|reporte|insight|kpi|medir/, concept: 'data intelligence — abstract glowing information flows, clean soft-lit data visualization, no readable numbers, premium cool palette' },\n  { re: /equipo|colabor|juntos|comunidad|partner|alianza/, concept: 'team collaboration — a group of 3-4 professionals moving purposefully forward in a modern environment, seen from behind, warm cohesive light' },\n];\nlet _derivedConcept = '';\nfor (const { re, concept } of _conceptMap) { if (re.test(copyLower)) { _derivedConcept = concept; break; } }\nconst primaryConcept = (_imagePromptDB && _imagePromptDB.length > 20 ? _imagePromptDB : null) || _derivedConcept || ('modern Latin American B2B environment — ' + key + ' theme');\n\nconst systemPrompt = `ABSOLUTE CONSTRAINT — ZERO TEXT IN IMAGE (read before all other rules):\nThe Ideogram prompt you write MUST produce an image with ZERO readable text, letters, numbers, symbols, or typography. Images with any text are automatically rejected by quality control.\nNEVER include in your output prompt:\n• Platform names (Instagram, Facebook, LinkedIn, TikTok, WhatsApp, Twitter, X) — replace with \"abstract digital network\" or \"soft glowing connectivity nodes\"\n• UI or interface elements (social media feeds, app screens, profile pages, dashboards, notification icons, buttons, comment sections, chat bubbles)\n• Text-triggering elements (workflow diagrams with labels, data charts with axes, KPI boards, signs, banners, whiteboards with writing, scoreboards)\n• Brand marks or logos of any kind (including JAAGSOLUTIONS — the logo is added separately in post-processing, never inside the image)\nINSTEAD always describe abstract visual metaphors:\n• For social media / networks: \"organic glowing network of light nodes and curved arcs\", \"abstract connectivity light pattern in teal and amber\"\n• For automation / process: \"smooth parallel streams of luminous light converging in deep navy space\", \"silent invisible data flow as light trails\"\n• For data / analytics: \"soft constellation of glowing points forming flowing curves\", \"abstract information art in cool blue and warm amber\"\n• For growth / results: \"cinematic aerial cityscape at night far below suggesting scale and elevation\"\nAbstract light and geometry are always safer and more visually compelling than literal representations.\n\nYou are a senior art director for B2B SaaS brand JAAGSOLUTIONS (an agency that builds automation systems for Latin American SMEs). Your job is to create a rich, production-quality Ideogram V_2 prompt that makes the viewer FEEL the essence of a social media post through imagery alone. The image must visually embody the post message — a viewer should sense what the post is about just by looking at the picture, without reading any copy. When the concept involves social media, networks, or digital presence, the image MUST reflect those themes concretely — not with a generic office scene.\\n\\nCRITICAL RULES:\\n\\n1. ABSOLUTELY NO TEXT, LETTERS, NUMBERS, WORDS, OR TYPOGRAPHY IN THE IMAGE. The image must be 100% text-free. No watermarks, no captions, no labels, no signage with readable words, no books with readable text, no screens showing readable text. The text overlay is added separately by post-processing.\\n\\n2. COMPOSITION MUST RESERVE NEGATIVE SPACE for a text overlay covering the BOTTOM 38% of the frame. The main subject and visual interest must be in the TOP 62%. The bottom area should be visually calm (sky, plain wall, gradient, soft bokeh, table surface) so dark text on a translucent overlay reads clearly.\\n\\n2b. HANDS AND ANATOMY (CRITICAL): Hands must NEVER appear in the foreground or be a prominent visual element. NEVER show close-up hands, pointing fingers, hands holding objects, pens, or pencils in the foreground. Strongly prefer compositions where hands are completely out of frame, hidden behind the body, or only barely visible at chest height far from camera. Frame people from the shoulders up or from behind.\\n\\n2c. PEOPLE COUNT (CRITICAL): NEVER show exactly 2 people — two-person compositions ALWAYS read as romantic regardless of intent. Use EITHER a single solo subject OR a group of 3 to 5 people. In groups, show them from the side, from behind, or from overhead — never two people facing each other. Solo subjects must be framed from the shoulders up or seen from behind.\\n\\n2d. VISUAL PROTAGONIST: ONLY if the base scene explicitly features a workflow diagram, process board, abstract flow lines or a meeting table, make that element the dominant visual element and keep people as secondary observers looking AT it. If the base scene is a solo portrait, a workspace, an environment or an abstract concept, let THAT be the protagonist — do NOT force a workflow diagram or process board into scenes that do not call for one. Vary the central subject from render to render.\\n\\n3. BRAND MOOD: confident, modern, clean, technological but human. Color palette leans cool (deep navy blues, slate, off-white) with optional warm accent. Lighting: soft, natural, professional.\\n\\n3b. CREATIVE DIRECTION FOR THIS RENDER (make each regeneration look visibly DIFFERENT from previous ones — never repeat the same composition): preferred shot type = ${shot}; color palette = ${palette}; lighting = ${tod}; overall mood = ${mood}. Treat these as firm creative direction.\\n\\n3c. PRIMARY VISUAL CONCEPT (MAIN CREATIVE DIRECTIVE — takes full precedence over rule 4): Create an image that visually embodies this concept: \"${primaryConcept}\". The viewer must sense the post message from the image alone. Do NOT default to a generic office or boardroom if the concept calls for something more specific. If the concept mentions social media, networks or digital presence, show glowing abstract colored connectivity nodes and curved light lines — NOT a generic meeting room or office people.\\n\\n4. COMPOSITION & STYLE REFERENCE (secondary — use ONLY for shot type, framing and lighting; rule 3c takes full creative precedence over subject matter):\\n   \"${scene}\"\\n\\n5. STYLE DESCRIPTORS to include: \"professional editorial photography\", \"cinematic lighting\", \"shallow depth of field\", \"ultra-detailed\", \"high-end commercial style\", \"soft natural light\", \"color grading slightly cool with warm highlights\".\\n\\n6. NEGATIVE INSTRUCTIONS to include: \"no text, no letters, no logos, no watermarks, no captions, no signage, no readable typography, no numbers, no close-up hands, no pointing fingers, no handshakes, no deformed hands, no extra fingers, no romantic poses, no couple scenes, no intimate framing, no two people facing each other romantically, no seductive or flirtatious composition, no two-person composition, no hands in foreground, no close-up hands, no pens or objects held in foreground, minimum three people if people appear\".\\n\\n7. ETHNICITY: prefer Latino / Hispanic subjects. Diverse but always plausibly Latin American.\\n\\n8. LENGTH: 90-160 words. Concrete, sensory, no fluff.\\n\\n9. OUTPUT FORMAT: return ONLY the final prompt in English, single paragraph, no preamble, no quotes, no explanation.`;\n\nreturn [{ json: { ...item, auditor_system_prompt: systemPrompt, scene_variant: scene, has_people, creative_axes: { shot, palette, tod, mood } } }];"
       }
     },
     {
@@ -190,7 +190,7 @@
         220
       ],
       "parameters": {
-        "jsCode": "const fs = require('fs');\nconst ideogramResp = $input.first().json;\nconst prev = $('Calcular aspect_ratio').first().json;\n\nconst imageUrl = ideogramResp.data?.[0]?.url;\nif (!imageUrl) {\n  throw new Error('Ideogram no devolvió imagen: ' + JSON.stringify(ideogramResp).slice(0, 500));\n}\n\n// Ruta fija — evita expresiones en Execute Command que no se resuelven\nconst tmpPath = '/tmp/n8n_compose.json';\nfs.writeFileSync(tmpPath, JSON.stringify({\n  image_url: imageUrl,\n  post_id: prev.id,\n  copy_text: prev.copy_text,\n  hashtags: prev.hashtags,\n  platform: prev.platform,\n  scheduled_date: prev.scheduled_date,\n  aspect_ratio: prev.aspect_ratio,\n  output_dir: '/opt/jaagsolutions/content',\n}));\n\nreturn [{ json: { ...prev, tmp_path: tmpPath } }];"
+        "jsCode": "const fs = require('fs');\nconst ideogramResp = $input.first().json;\nconst prev = $('Calcular aspect_ratio').first().json;\n\nconst imageUrl = ideogramResp.data?.[0]?.url;\nconst _dType = ideogramResp.diagram_type || null;\nif (!imageUrl) {\n  throw new Error('Ideogram no devolvió imagen: ' + JSON.stringify(ideogramResp).slice(0, 500));\n}\n\n// Ruta fija — evita expresiones en Execute Command que no se resuelven\nconst tmpPath = '/tmp/n8n_compose.json';\nfs.writeFileSync(tmpPath, JSON.stringify({\n  image_url: imageUrl,\n  post_id: prev.id,\n  copy_text: prev.copy_text,\n  hashtags: prev.hashtags,\n  platform: prev.platform,\n  scheduled_date: prev.scheduled_date,\n  aspect_ratio: prev.aspect_ratio,\n  diagram_type: _dType,\n  output_dir: '/opt/jaagsolutions/content',\n}));\n\nreturn [{ json: { ...prev, tmp_path: tmpPath } }];"
       }
     },
     {
@@ -318,16 +318,26 @@
       "name": "¿Falló Telegram send?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [3500, 140],
+      "position": [
+        3500,
+        140
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
           "conditions": [
             {
               "id": "check-telegram-error",
               "leftValue": "={{ $json.error !== undefined }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "equals" }
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
@@ -339,7 +349,10 @@
       "name": "DB: error Telegram send",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [3720, 60],
+      "position": [
+        3720,
+        60
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "UPDATE content_plan SET status = 'error', error_log = 'Telegram sendPhoto failed' WHERE id = '{{ $('Componer imagen final (Sharp + SVG)').first().json.id }}'",
@@ -357,7 +370,10 @@
       "name": "Telegram: alerta fallo envío",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [3940, 60],
+      "position": [
+        3940,
+        60
+      ],
       "parameters": {
         "method": "POST",
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
@@ -436,7 +452,7 @@
         220
       ],
       "parameters": {
-        "jsCode": "const https = require('https');\nconst prev = $input.first().json;\nconst MAX_ATTEMPTS = 6;\n\nfunction httpsPost(hostname, path, body, extraHeaders) {\n  return new Promise((resolve, reject) => {\n    const bodyStr = JSON.stringify(body);\n    const options = {\n      hostname, path, method: 'POST',\n      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr), ...extraHeaders },\n      timeout: 30000\n    };\n    const req = https.request(options, (res) => {\n      let data = '';\n      res.on('data', chunk => data += chunk);\n      res.on('end', () => {\n        try { resolve(JSON.parse(data)); }\n        catch (e) { reject(new Error('JSON invalido: ' + data.slice(0, 300))); }\n      });\n    });\n    req.on('error', reject);\n    req.on('timeout', () => { req.destroy(); reject(new Error('Request timeout')); });\n    req.write(bodyStr);\n    req.end();\n  });\n}\n\nfunction safeFallbackPrompt(item) {\n  const headline = (item.copy_text || '').split('\\\\n').find(Boolean) || 'JAAGSOLUTIONS automation workflow';\n  return 'Professional editorial photo for JAAGSOLUTIONS, a B2B automation agency for Latin American SMEs. A large glass board with abstract colored workflow lines and circular nodes dominates the composition occupying most of the frame. Three Latino professionals stand around it from the side, all looking at the board, none facing each other. The process visualization is the protagonist. Modern warm office, soft natural light, premium business mood, calm empty lower area for overlay. No screens, no laptops, no keyboards, no documents, no sticky notes, no signage, no interface panels, no charts, no graphs, no letters, no numbers, no symbols, no logos, no typography, no hands in foreground. Visual theme:' + headline.slice(0, 80);\n}\n\nasync function generateIdeogram(prompt, aspectRatio, safeMode) {\n  const seed = Math.floor(Math.random() * 2147483647);\n  const styleTypes = safeMode ? ['GENERAL', 'GENERAL', 'REALISTIC'] : ['REALISTIC', 'REALISTIC', 'GENERAL', 'GENERAL'];\n  const styleType = styleTypes[Math.floor(Math.random() * styleTypes.length)];\n  return httpsPost('api.ideogram.ai', '/generate', {\n    image_request: {\n      prompt, aspect_ratio: aspectRatio, model: 'V_2',\n      magic_prompt_option: 'OFF', seed, style_type: styleType,\n      negative_prompt: 'text, letters, numbers, words, watermark, logo, caption, label, sign, typography, readable text, signage, signature, written language, glyphs, symbols, interface, UI, screen, monitor, laptop, keyboard, notebook, document, paper, sticky notes, whiteboard, chart, graph, dashboard, brand names, store signs, product labels, background text, environmental signage, fake brand text, decorative lettering, deformed hands, mutated hands, extra fingers, missing fingers, fused fingers, malformed fingers, too many fingers, distorted hands, mangled hands, twisted fingers, poorly drawn hands, low quality hands, bad anatomy, extra limbs, malformed limbs, disfigured, plastic skin, uncanny valley, doll-like, cgi face, artificial skin, deformed face, distorted proportions, wax figure, overly smooth skin, lifeless eyes, romantic, couple, lovers, intimate pose, seductive, flirtatious, romantic gaze, two people facing each other romantically, date scene, kissing, embracing, romance, amorous, lovingly gazing, two people alone, pair of people, two person scene, hands in foreground, close up hands, pen in hand foreground, writing hand, finger pointing close up'\n    }\n  }, { 'Api-Key': $env.IDEOGRAM_API_KEY });\n}\n\nasync function checkOCR(imageUrl) {\n  try {\n    const resp = await httpsPost(\n      'vision.googleapis.com',\n      `/v1/images:annotate?key=${$env.GOOGLE_VISION_API_KEY}`,\n      { requests: [{ image: { source: { imageUri: imageUrl } }, features: [{ type: 'TEXT_DETECTION', maxResults: 10 }] }] },\n      {}\n    );\n    const annotations = resp.responses?.[0]?.textAnnotations || [];\n    const description = annotations[0]?.description || '';\n    return { hasText: description.length > 2, detectedText: description.slice(0, 200) };\n  } catch (err) {\n    console.log('[OCR] Vision API error - fail open: ' + err.message);\n    return { hasText: false, detectedText: '' };\n  }\n}\n\nasync function checkAnatomy(imageUrl) {\n  if (!$env.OPENAI_API_KEY) return { bad: false, reason: 'no-key' };\n  try {\n    const resp = await httpsPost('api.openai.com', '/v1/chat/completions', {\n      model: 'gpt-4o-mini', max_tokens: 80, temperature: 0,\n      messages: [{ role: 'user', content: [\n        { type: 'text', text: 'You are a strict QA reviewer for marketing photos. Inspect ONLY human anatomy. Reply with compact JSON {\"bad\":true,\"reason\":\"...\"} or {\"bad\":false,\"reason\":\"\"}. Set bad=true ONLY if a visible human hand, finger, arm or face is clearly deformed: wrong number of fingers, fused, extra or missing fingers, twisted or malformed hands or limbs, or a distorted face. If there are no people, hands are not visible, or anatomy looks natural, set bad=false. Be conservative; only flag clear deformities.' },\n        { type: 'image_url', image_url: { url: imageUrl } }\n      ] }]\n    }, { 'Authorization': 'Bearer ' + $env.OPENAI_API_KEY });\n    const txt = resp.choices?.[0]?.message?.content || '';\n    const m = txt.match(/\\{[\\s\\S]*\\}/);\n    if (!m) return { bad: false, reason: 'no-json' };\n    const verdict = JSON.parse(m[0]);\n    return { bad: verdict.bad === true, reason: String(verdict.reason || '').slice(0, 120) };\n  } catch (err) {\n    console.log('[Anatomy] Vision API error - fail open: ' + err.message);\n    return { bad: false, reason: 'api-error' };\n  }\n}\n\nlet cleanImageUrl = null;\nlet lastError = '';\nlet usedSafeFallback = false;\n\nfor (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {\n  const safeMode = attempt >= 3;\n  const prompt = safeMode ? safeFallbackPrompt(prev) : prev.image_prompt;\n  usedSafeFallback = usedSafeFallback || safeMode;\n  const resp = await generateIdeogram(prompt, prev.aspect_ratio, safeMode);\n  const url = resp.data?.[0]?.url;\n  if (!url) throw new Error('Ideogram sin URL en intento ' + attempt + ': ' + JSON.stringify(resp).slice(0, 300));\n  const ocr = await checkOCR(url);\n  if (ocr.hasText) {\n    lastError = 'Intento ' + attempt + (safeMode ? ' fallback seguro' : '') + ': texto detectado - \"' + ocr.detectedText.replace(/\"/g, \"'\").slice(0, 100) + '\"';\n    console.log('[OCR] ' + lastError);\n    continue;\n  }\n  const anatomy = await checkAnatomy(url);\n  if (anatomy.bad) {\n    lastError = 'Intento ' + attempt + (safeMode ? ' fallback seguro' : '') + ': anatomia deforme - \"' + anatomy.reason.replace(/\"/g, \"'\") + '\"';\n    console.log('[Anatomy] ' + lastError);\n    continue;\n  }\n  cleanImageUrl = url;\n  console.log('[QA] Intento ' + attempt + (safeMode ? ' fallback seguro' : '') + ': imagen limpia (texto + anatomia OK)');\n  break;\n}\n\nif (cleanImageUrl) {\n  return [{ json: { ...prev, data: [{ url: cleanImageUrl }], used_safe_fallback: usedSafeFallback } }];\n}\nreturn [{ json: { ...prev, ocr_error: true, used_safe_fallback: usedSafeFallback, ocr_error_log: 'QA ' + MAX_ATTEMPTS + ' intentos fallidos (texto/anatomia). Ultimo: ' + lastError } }];"
+        "jsCode": "const https = require('https');\nconst prev = $input.first().json;\nconst MAX_ATTEMPTS = parseInt($env.IDEOGRAM_MAX_ATTEMPTS || '3', 10);\nconst HAS_PEOPLE = prev.has_people !== false;\n\n// Diagram mode: detect concept from copy to drive node diagram overlay\nconst _copyLower = (prev.copy_text || '').toLowerCase();\nconst _DIAGRAM_MAP = [\n  { re: /redes sociales|red social|instagram|facebook|linkedin|publicar|contenido|seguidores|algoritmo|engagement/, type: 'social_media' },\n  { re: /automatiz|workflow|proceso|sistema|flujo|inteligencia/, type: 'automation' },\n  { re: /resultado|crecer|crecimiento|venta|cliente|ingreso|roi|escalar|duplicar/, type: 'results' },\n  { re: /tiempo|ahorra|eficien|productiv/, type: 'efficiency' },\n  { re: /datos|analytic|metrica|dashboard|reporte|insight|kpi|medir/, type: 'data' },\n  { re: /equipo|colabor|juntos|comunidad|partner|alianza/, type: 'team' },\n];\nlet _diagram_type = null;\nfor (const { re, type } of _DIAGRAM_MAP) { if (re.test(_copyLower)) { _diagram_type = type; break; } }\n\n// Ultra-simple backgrounds for diagram mode — guaranteed no text\nconst _BG_PROMPTS = [\n  'Deep abstract dark navy space, very subtle atmospheric depth and soft light diffusion from center, pure dark background, no objects, no text, no symbols, no figures, premium photography backdrop',\n  'Minimalist dark background, smooth deep navy to midnight blue gradient, barely visible subtle bokeh texture, extremely clean, no content, no text, no objects, premium dark background',\n  'Premium dark cinematic background, deep navy with extremely subtle warm amber glow near center dissolving to dark edges, no objects, no text, no people, very clean atmospheric',\n  'Abstract dark space, subtle cool blue atmospheric haze in upper portion fading to near-black below, extremely minimal, no text, no symbols, no objects, very premium photography background',\n  'Dark navy premium background, extremely subtle light rays suggesting depth and atmosphere from above, no content, no text, no objects, very clean dark minimal backdrop',\n];\n\nfunction httpsPost(hostname, path, body, extraHeaders) {\n  return new Promise((resolve, reject) => {\n    const bodyStr = JSON.stringify(body);\n    const options = {\n      hostname, path, method: 'POST',\n      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr), ...extraHeaders },\n      timeout: 30000\n    };\n    const req = https.request(options, (res) => {\n      let data = '';\n      res.on('data', chunk => data += chunk);\n      res.on('end', () => {\n        try { resolve(JSON.parse(data)); }\n        catch (e) { reject(new Error('JSON invalido: ' + data.slice(0, 300))); }\n      });\n    });\n    req.on('error', reject);\n    req.on('timeout', () => { req.destroy(); reject(new Error('Request timeout')); });\n    req.write(bodyStr);\n    req.end();\n  });\n}\n\nfunction safeFallbackPrompt(item) {\n  const copy = (item.copy_text || '').toLowerCase();\n  const conceptScenes = [\n    { re: /redes sociales|red social|instagram|facebook|linkedin|publicar|contenido|seguidores|algoritmo|engagement/, scene: 'Abstract glowing network of soft warm circular nodes connected by delicate curved light lines floating in deep navy space, teal and amber light trails suggesting digital connectivity flowing organically across the frame, no people, no text, no icons, no interface elements, no logos, no platform symbols, cinematic mood, premium, calm empty lower third for overlay' },\n    { re: /automatiz|workflow|proceso|sistema|flujo|inteligencia/, scene: 'Elegant glowing streams of cool electric teal light curving smoothly through deep dark space, multiple parallel arcs converging toward a soft bright focal point, suggesting intelligent invisible flow, no text, no interface, no labels, no people, deep navy with electric teal accent, abstract and premium' },\n    { re: /resultado|crecer|crecimiento|venta|cliente|ingreso|roi|escalar|duplicar/, scene: 'Cinematic aerial night cityscape from far above, vast glowing grid of warm amber and white city lights spreading to the horizon under a deep navy sky, profound sense of elevation scale and achievement, no people, no text, no signs, ultra-wide, premium' },\n    { re: /tiempo|ahorra|eficien|productiv/, scene: 'High-contrast minimalist composition, warm textured organic shapes on one side dissolving into clean serene cool space on the other, soft morning diffused light, abstract metaphor of clarity emerging from complexity, no people, no text, no interface, editorial premium' },\n    { re: /datos|analytic|metrica|dashboard|reporte|insight|kpi|medir/, scene: 'Abstract data art, soft glowing dots and delicate constellation-like grid lines arranged in gentle flowing curves against deep dark background, cool blue and warm amber points of light forming organic patterns, no text, no numbers, no interface, no screens, premium cinematic' },\n    { re: /equipo|colabor|juntos|comunidad|partner|alianza/, scene: 'Abstract warm light composition, five soft glowing amber orbs moving purposefully together through dark space, gentle motion suggesting unified direction and cohesion, no people, no text, no symbols, warm amber and deep navy, premium' },\n  ];\n  let scene = null;\n  for (const { re, scene: s } of conceptScenes) { if (re.test(copy)) { scene = s; break; } }\n  if (!scene) {\n    const defaults = [\n      'Premium abstract light composition, smooth curved teal and amber light trails flowing gently through deep navy space, organic and calm, no text, no symbols, no people, no interface, cinematic quality, calm lower third for overlay',\n      'Modern architectural exterior at dusk, clean glass facade reflecting soft violet and blue gradient sky, symmetrical and serene, no people, no signage, no readable text, premium editorial',\n      'Minimalist top-down flat-lay, clean slate surface with a single small ceramic cup and a slim closed notebook, soft diffused morning light from the side, no readable text anywhere, no screens, premium and calm',\n    ];\n    scene = defaults[Math.floor(Math.random() * defaults.length)];\n  }\n  return scene + '. Brand: JAAGSOLUTIONS — B2B automation agency for Latin American SMEs. CRITICAL: absolutely no text, no letters, no numbers, no words, no watermarks, no logos anywhere in the image.';\n}\n\nasync function generateIdeogram(prompt, aspectRatio, safeMode) {\n  const seed = Math.floor(Math.random() * 2147483647);\n  const styleTypes = safeMode ? ['GENERAL', 'GENERAL', 'REALISTIC'] : ['REALISTIC', 'REALISTIC', 'GENERAL', 'GENERAL'];\n  const styleType = styleTypes[Math.floor(Math.random() * styleTypes.length)];\n  return httpsPost('api.ideogram.ai', '/generate', {\n    image_request: {\n      prompt, aspect_ratio: aspectRatio, model: 'V_2',\n      magic_prompt_option: 'OFF', seed, style_type: styleType,\n      negative_prompt: 'text, letters, numbers, words, watermark, logo, caption, label, sign, typography, readable text, signage, signature, written language, glyphs, symbols, interface, UI, screen, monitor, laptop, keyboard, notebook, document, paper, sticky notes, whiteboard, chart, graph, dashboard, brand names, store signs, product labels, background text, environmental signage, fake brand text, decorative lettering, deformed hands, mutated hands, extra fingers, missing fingers, fused fingers, malformed fingers, too many fingers, distorted hands, mangled hands, twisted fingers, poorly drawn hands, low quality hands, bad anatomy, extra limbs, malformed limbs, disfigured, plastic skin, uncanny valley, doll-like, cgi face, artificial skin, deformed face, distorted proportions, wax figure, overly smooth skin, lifeless eyes, romantic, couple, lovers, intimate pose, seductive, flirtatious, romantic gaze, two people facing each other romantically, date scene, kissing, embracing, romance, amorous, lovingly gazing, two people alone, pair of people, two person scene, hands in foreground, close up hands, pen in hand foreground, writing hand, finger pointing close up'\n    }\n  }, { 'Api-Key': $env.IDEOGRAM_API_KEY });\n}\n\nasync function checkOCR(imageUrl) {\n  try {\n    const resp = await httpsPost(\n      'vision.googleapis.com',\n      `/v1/images:annotate?key=${$env.GOOGLE_VISION_API_KEY}`,\n      { requests: [{ image: { source: { imageUri: imageUrl } }, features: [{ type: 'TEXT_DETECTION', maxResults: 10 }] }] },\n      {}\n    );\n    const annotations = resp.responses?.[0]?.textAnnotations || [];\n    const description = annotations[0]?.description || '';\n    return { hasText: description.length > 8, detectedText: description.slice(0, 200) };\n  } catch (err) {\n    console.log('[OCR] Vision API error - fail open: ' + err.message);\n    return { hasText: false, detectedText: '' };\n  }\n}\n\nasync function checkAnatomy(imageUrl) {\n  if (!$env.OPENAI_API_KEY) return { bad: false, reason: 'no-key' };\n  try {\n    const resp = await httpsPost('api.openai.com', '/v1/chat/completions', {\n      model: 'gpt-4o-mini', max_tokens: 80, temperature: 0,\n      messages: [{ role: 'user', content: [\n        { type: 'text', text: 'You are a strict QA reviewer for marketing photos. Inspect ONLY human anatomy. Reply with compact JSON {\"bad\":true,\"reason\":\"...\"} or {\"bad\":false,\"reason\":\"\"}. Set bad=true ONLY if a visible human hand, finger, arm or face is clearly deformed: wrong number of fingers, fused, extra or missing fingers, twisted or malformed hands or limbs, or a distorted face. If there are no people, hands are not visible, or anatomy looks natural, set bad=false. Be conservative; only flag clear deformities.' },\n        { type: 'image_url', image_url: { url: imageUrl } }\n      ] }]\n    }, { 'Authorization': 'Bearer ' + $env.OPENAI_API_KEY });\n    const txt = resp.choices?.[0]?.message?.content || '';\n    const m = txt.match(/\\{[\\s\\S]*\\}/);\n    if (!m) return { bad: false, reason: 'no-json' };\n    const verdict = JSON.parse(m[0]);\n    return { bad: verdict.bad === true, reason: String(verdict.reason || '').slice(0, 120) };\n  } catch (err) {\n    console.log('[Anatomy] Vision API error - fail open: ' + err.message);\n    return { bad: false, reason: 'api-error' };\n  }\n}\n\nlet cleanImageUrl = null;\nlet lastError = '';\nlet usedSafeFallback = false;\n\nfor (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {\n  const safeMode = attempt === MAX_ATTEMPTS;\n  const _DIAG_PROMPTS = [\n    'Group of 3 young Latin American professionals in a modern glass-walled open-plan office, seen from behind looking at a large wall panel, warm soft ambient lighting, premium editorial photography, no text on any surface, no readable screens, no signage, calm lower third for text overlay',\n    'Two young Latino business professionals walking confidently in a bright modern corporate corridor, side view, elegant interior, soft natural light from tall windows, no text, no readable elements, premium editorial photography, calm lower third',\n    'Group of 4 diverse young Latin American professionals in a sleek modern tech office, seen from a slightly elevated angle, working and collaborating, warm ambient light, no text on surfaces, no readable screens, premium cinematic',\n    'Young Latina entrepreneur in a bright open co-working space, side view at a standing desk, large windows with blurred city behind, confident posture, warm golden light, premium editorial photography, no text anywhere, calm lower third',\n    'Group of 3 Latin American business professionals in a modern conference room with glass walls, seen from the side, engaged in discussion, soft natural light, no text on surfaces, no readable screens, premium editorial, calm lower third',\n  ];\n  const prompt = (_diagram_type && !safeMode)\n    ? _DIAG_PROMPTS[Math.floor(Math.random() * _DIAG_PROMPTS.length)]\n    : (safeMode ? safeFallbackPrompt(prev) : prev.image_prompt);\n  usedSafeFallback = usedSafeFallback || safeMode;\n  const resp = await generateIdeogram(prompt, prev.aspect_ratio, safeMode);\n  const url = resp.data?.[0]?.url;\n  if (!url) throw new Error('Ideogram sin URL en intento ' + attempt + ': ' + JSON.stringify(resp).slice(0, 300));\n  const ocr = await checkOCR(url);\n  if (ocr.hasText) {\n    lastError = 'Intento ' + attempt + (safeMode ? ' fallback seguro' : '') + ': texto detectado - \"' + ocr.detectedText.replace(/\"/g, \"'\").slice(0, 100) + '\"';\n    console.log('[OCR] ' + lastError);\n    continue;\n  }\n  if (HAS_PEOPLE) {\n    const anatomy = await checkAnatomy(url);\n    if (anatomy.bad) {\n      lastError = 'Intento ' + attempt + (safeMode ? ' fallback seguro' : '') + ': anatomia deforme - \"' + anatomy.reason.replace(/\"/g, \"'\") + '\"';\n      console.log('[Anatomy] ' + lastError);\n      continue;\n    }\n  }\n  cleanImageUrl = url;\n  console.log('[QA] Intento ' + attempt + (safeMode ? ' fallback seguro' : '') + ': imagen limpia (texto + anatomia OK)');\n  break;\n}\n\nif (cleanImageUrl) {\n  return [{ json: { ...prev, data: [{ url: cleanImageUrl }], used_safe_fallback: usedSafeFallback, diagram_type: _diagram_type } }];\n}\nreturn [{ json: { ...prev, ocr_error: true, used_safe_fallback: usedSafeFallback, diagram_type: _diagram_type, ocr_error_log: 'QA ' + MAX_ATTEMPTS + ' intentos fallidos (texto/anatomia). Ultimo: ' + lastError } }];"
       }
     },
     {
@@ -579,6 +595,471 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ chat_id: $env.TELEGRAM_CHAT_ID, text: $json.text }) }}",
         "options": {}
+      }
+    },
+    {
+      "id": "canvas-note-overview",
+      "name": "Nota - Resumen del workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -520
+      ],
+      "parameters": {
+        "content": "# Resumen del workflow\n\nGenera la pieza visual de un post pendiente en content_plan, valida calidad con IA/OCR, compone la imagen final y la envia a Telegram para aprobacion humana. Tambien acepta regeneracion por webhook y monitorea posts atascados despues del cron.",
+        "height": 240,
+        "width": 520
+      }
+    },
+    {
+      "id": "canvas-note-schedule-trigger",
+      "name": "Nota 01 - Cron 8 AM diario",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        120,
+        -10
+      ],
+      "parameters": {
+        "content": "## Paso 01\n\n**Cron 8 AM diario**\n\nDispara el flujo principal todos los dias a las 8:00 AM. No recibe datos externos; solo inicia la busqueda del siguiente post pendiente en content_plan.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-postgres-select",
+      "name": "Nota 02 - Obtener posts pendientes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        340,
+        -820
+      ],
+      "parameters": {
+        "content": "## Paso 02\n\n**Obtener posts pendientes**\n\nConsulta PostgreSQL para traer un solo post con status pending programado para la fecha actual. Ordena por scheduled_time para procesar primero el contenido que toca antes.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-if-has-posts",
+      "name": "Nota 03 - ¿Hay posts?",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        560,
+        -10
+      ],
+      "parameters": {
+        "content": "## Paso 03\n\n**¿Hay posts?**\n\nVerifica si la consulta devolvio un id. Si hay post, continua con la generacion. Si no hay filas, el workflow termina sin hacer cambios.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-split-batches",
+      "name": "Nota 04 - Procesar 1 post a la vez",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        780,
+        -360
+      ],
+      "parameters": {
+        "content": "## Paso 04\n\n**Procesar 1 post a la vez**\n\nNodo preparado para procesar posts uno por uno si la consulta devuelve varios registros. En este export el query usa LIMIT 1 y la ruta activa no pasa por este nodo.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-postgres-set-generating",
+      "name": "Nota 05 - status = generating",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        -90
+      ],
+      "parameters": {
+        "content": "## Paso 05\n\n**status = generating**\n\nActualiza el registro a status generating. Este cambio marca que el post ya fue tomado por n8n y evita que quede como pendiente mientras se genera la pieza.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-code-aspect-ratio",
+      "name": "Nota 06 - Calcular aspect_ratio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1220,
+        -360
+      ],
+      "parameters": {
+        "content": "## Paso 06\n\n**Calcular aspect_ratio**\n\nCalcula el aspect_ratio que Ideogram acepta segun platform y format. La mayoria usa ASPECT_3_4 y luego compose-image.js adapta el arte final a formato social.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-code-prep-auditor-prompt",
+      "name": "Nota 07 - Preparar prompt Auditor",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        -90
+      ],
+      "parameters": {
+        "content": "## Paso 07\n\n**Preparar prompt Auditor**\n\nConstruye el brief visual para el auditor creativo. Usa el pilar del contenido, el copy y variantes de escena para pedir una direccion visual mas segura y consistente.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-http-prompt-auditor",
+      "name": "Nota 08 - Auditor de prompt (OpenAI)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1330,
+        -630
+      ],
+      "parameters": {
+        "content": "## Paso 08\n\n**Auditor de prompt (OpenAI)**\n\nLlama a OpenAI Chat Completions para refinar el prompt visual antes de generar la imagen. Su salida debe mejorar composicion, seguridad visual y consistencia B2B.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-code-apply-refined-prompt",
+      "name": "Nota 09 - Aplicar prompt mejorado",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        -900
+      ],
+      "parameters": {
+        "content": "## Paso 09\n\n**Aplicar prompt mejorado**\n\nToma la respuesta del auditor y reemplaza image_prompt por el prompt refinado. Si OpenAI no devuelve contenido util, conserva el prompt original para no bloquear el flujo.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-code-write-compose-input",
+      "name": "Nota 12 - Preparar input compose",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        -90
+      ],
+      "parameters": {
+        "content": "## Paso 12\n\n**Preparar input compose**\n\nPrepara el archivo temporal /tmp/n8n_compose.json con los datos del post, URL de imagen limpia, copy, CTA y formato. Ese archivo alimenta el script de composicion.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-exec-compose",
+      "name": "Nota 13 - Exec: compose-image.js",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        -360
+      ],
+      "parameters": {
+        "content": "## Paso 13\n\n**Exec: compose-image.js**\n\nEjecuta compose-image.js dentro del contenedor n8n. El script usa Sharp/SVG para descargar la imagen base, adaptarla y producir la pieza final en disco.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-code-save-image",
+      "name": "Nota 14 - Componer imagen final (Sharp + SVG)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2280,
+        -90
+      ],
+      "parameters": {
+        "content": "## Paso 14\n\n**Componer imagen final (Sharp + SVG)**\n\nLee el stdout del script de composicion, valida que haya salida y devuelve al workflow los campos finales como image_path e image_url.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-postgres-set-image-path",
+      "name": "Nota 15 - Guardar image_path",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2100,
+        -630
+      ],
+      "parameters": {
+        "content": "## Paso 15\n\n**Guardar image_path**\n\nGuarda en content_plan la URL publica de la imagen final. Aunque el nodo se llama image_path, la query actual actualiza image_url.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-postgres-set-review",
+      "name": "Nota 16 - status = review",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2980,
+        -170
+      ],
+      "parameters": {
+        "content": "## Paso 16\n\n**status = review**\n\nCambia el post a status review. Desde este punto el contenido ya esta generado y queda pendiente de decision humana en Telegram.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-code-prep-telegram",
+      "name": "Nota 17 - Preparar binario Telegram",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3200,
+        -440
+      ],
+      "parameters": {
+        "content": "## Paso 17\n\n**Preparar binario Telegram**\n\nLee el archivo final desde image_path y lo adjunta como binario photo para Telegram. Tambien conserva los datos del post para construir caption y botones.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-telegram-send",
+      "name": "Nota 18 - Telegram — enviar para aprobación",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3420,
+        -170
+      ],
+      "parameters": {
+        "content": "## Paso 18\n\n**Telegram — enviar para aprobación**\n\nEnvia la imagen al chat de Telegram con caption, copy, CTA, hashtags y dos botones: Aprobar o Rechazar. Este es el punto de control humano.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-code-check-telegram-error",
+      "name": "Nota 19 - ¿Falló Telegram send?",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3420,
+        -710
+      ],
+      "parameters": {
+        "content": "## Paso 19\n\n**¿Falló Telegram send?**\n\nRevisa si la respuesta de Telegram contiene error. Si fallo el envio, se registra error en DB y se alerta; si fue exitoso, se guarda el message_id.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-postgres-telegram-send-error",
+      "name": "Nota 21 - DB: error Telegram send",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3640,
+        -1060
+      ],
+      "parameters": {
+        "content": "## Paso 21\n\n**DB: error Telegram send**\n\nMarca el post como error si Telegram sendPhoto fallo. Esto evita que el contenido quede en review sin mensaje visible para aprobar.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-telegram-send-fail-alert",
+      "name": "Nota 22 - Telegram: alerta fallo envío",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3860,
+        -250
+      ],
+      "parameters": {
+        "content": "## Paso 22\n\n**Telegram: alerta fallo envío**\n\nEnvia una alerta por Telegram indicando que no se pudo mandar el post para aprobacion. Sirve para intervencion operativa rapida.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-postgres-set-telegram-id",
+      "name": "Nota 20 - Guardar telegram_msg_id",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3640,
+        -1520
+      ],
+      "parameters": {
+        "content": "## Paso 20\n\n**Guardar telegram_msg_id**\n\nGuarda telegram_msg_id en content_plan. Ese id permite que el workflow de aprobacion edite luego el mismo mensaje al publicar o regenerar.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-webhook-regenerate-trigger",
+      "name": "Nota 25 - Webhook regenerar por ID",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        120,
+        -1160
+      ],
+      "parameters": {
+        "content": "## Paso 25\n\n**Webhook regenerar por ID**\n\nRecibe POST /webhook/regenerate-single desde el workflow de aprobacion cuando Juan rechaza una pieza y aun quedan reintentos disponibles.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-postgres-get-single-post",
+      "name": "Nota 26 - Obtener post por ID",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        340,
+        -1430
+      ],
+      "parameters": {
+        "content": "## Paso 26\n\n**Obtener post por ID**\n\nBusca en content_plan el post exacto indicado por body.post_id. Luego lo reinyecta en la misma ruta de generacion que usa el cron diario.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-code-ideogram-ocr",
+      "name": "Nota 10 - Ideogram + OCR - fallback seguro",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1660,
+        -360
+      ],
+      "parameters": {
+        "content": "## Paso 10\n\n**Ideogram + OCR - fallback seguro**\n\nGenera imagenes con Ideogram y aplica QA automatico. Reintenta hasta 6 veces, usa fallback seguro desde el intento 3, revisa texto con Google Vision OCR y anatomia con OpenAI si hay API key.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-if-ocr-error",
+      "name": "Nota 11 - ¿Error OCR?",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        -1060
+      ],
+      "parameters": {
+        "content": "## Paso 11\n\n**¿Error OCR?**\n\nEvalua si la generacion fallo por OCR/anatomia despues de los reintentos. True lleva a error operativo; False continua a composicion final.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-postgres-ocr-error",
+      "name": "Nota 23 - status=error (OCR)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2120,
+        -1330
+      ],
+      "parameters": {
+        "content": "## Paso 23\n\n**status=error (OCR)**\n\nActualiza content_plan con status error y guarda el detalle del fallo de QA/OCR. Se usa cuando no se logro una imagen limpia despues de todos los intentos.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-telegram-ocr-error",
+      "name": "Nota 24 - Telegram: error OCR",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2360,
+        -1060
+      ],
+      "parameters": {
+        "content": "## Paso 24\n\n**Telegram: error OCR**\n\nNotifica por Telegram que la generacion fallo por OCR/anatomia. El operador sabe que el post requiere revision manual o ajuste de prompt.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-schedule-monitor-0815",
+      "name": "Nota 27 - Monitor post-cron 8:15",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        120,
+        430
+      ],
+      "parameters": {
+        "content": "## Paso 27\n\n**Monitor post-cron 8:15**\n\nDispara un control automatico despues del cron principal. Su funcion es detectar si el proceso matutino dejo publicaciones atascadas.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-postgres-monitor-stuck-posts",
+      "name": "Nota 28 - Monitor: posts atascados hoy",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        340,
+        -1730
+      ],
+      "parameters": {
+        "content": "## Paso 28\n\n**Monitor: posts atascados hoy**\n\nConsulta posts de hoy en pending, generating, error o review sin telegram_msg_id. Es la lista de casos que necesitan atencion operativa.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-code-monitor-alert-text",
+      "name": "Nota 29 - Monitor: preparar alerta Telegram",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        560,
+        430
+      ],
+      "parameters": {
+        "content": "## Paso 29\n\n**Monitor: preparar alerta Telegram**\n\nConvierte los posts atascados en un mensaje breve para Telegram. Si no hay filas, devuelve vacio y no dispara alerta.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-telegram-monitor-alert",
+      "name": "Nota 30 - Telegram: alerta post-cron",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        780,
+        -650
+      ],
+      "parameters": {
+        "content": "## Paso 30\n\n**Telegram: alerta post-cron**\n\nEnvia la alerta post-cron al chat de Telegram. Ayuda a detectar fallos silenciosos antes de que se pierda la ventana de publicacion.",
+        "height": 220,
+        "width": 320
       }
     }
   ],

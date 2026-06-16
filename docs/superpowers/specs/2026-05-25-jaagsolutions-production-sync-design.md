@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-05-25  
 **Estado:** Activo  
-**Source of truth:** `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json`, `docs/superpowers/specs/CHECKLIST-MAESTRO-JAAGSOLUTIONS.md`, `deploy/RUNBOOK.md`
+**Source of truth:** `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json`, `docs/superpowers/specs/CONTENT_PIPELINE_SOURCE_OF_TRUTH.md`, `docs/superpowers/specs/CHECKLIST-MAESTRO-JAAGSOLUTIONS.md`, `deploy/RUNBOOK.md`
 
 Este documento corrige la desincronizacion entre lo que ya esta en produccion y lo que Paperclip mostraba como pendiente. El objetivo es que JAAGSOLUTIONS opere con agentes conectados, tareas reales y workflows de contenido respetados.
 

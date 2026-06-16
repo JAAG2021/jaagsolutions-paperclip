@@ -12,7 +12,10 @@
       "name": "Webhook Formspree",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [200, 300],
+      "position": [
+        200,
+        300
+      ],
       "webhookId": "formspree-lead"
     },
     {
@@ -23,7 +26,10 @@
       "name": "Validar webhook (secreto / firma)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 300]
+      "position": [
+        460,
+        300
+      ]
     },
     {
       "parameters": {
@@ -33,7 +39,10 @@
       "name": "Construir issue Paperclip",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [720, 300]
+      "position": [
+        720,
+        300
+      ]
     },
     {
       "parameters": {
@@ -61,7 +70,10 @@
       "name": "POST Paperclip issue",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [960, 300]
+      "position": [
+        960,
+        300
+      ]
     },
     {
       "parameters": {
@@ -90,7 +102,10 @@
       "name": "¿Issue creado?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1200, 300]
+      "position": [
+        1200,
+        300
+      ]
     },
     {
       "parameters": {
@@ -100,7 +115,10 @@
       "name": "Log éxito",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1420, 220]
+      "position": [
+        1420,
+        220
+      ]
     },
     {
       "parameters": {
@@ -110,31 +128,205 @@
       "name": "Log error",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1420, 380]
+      "position": [
+        1420,
+        380
+      ]
+    },
+    {
+      "id": "canvas-note-overview",
+      "name": "Nota - Resumen del workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -520
+      ],
+      "parameters": {
+        "content": "# Resumen del workflow\n\nConvierte formularios entrantes de Formspree en issues operativos de Paperclip. Valida el webhook, normaliza los campos del lead, construye el issue con prioridad y lo envia a la API de Paperclip.",
+        "height": 240,
+        "width": 520
+      }
+    },
+    {
+      "id": "canvas-note-webhook-formspree",
+      "name": "Nota 01 - Webhook Formspree",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        120,
+        -10
+      ],
+      "parameters": {
+        "content": "## Paso 01\n\n**Webhook Formspree**\n\nRecibe el POST del formulario web enviado por Formspree. Es el punto de entrada para leads comerciales desde jaagsolutions.com.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-verify-webhook",
+      "name": "Nota 02 - Validar webhook (secreto / firma)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        380,
+        -820
+      ],
+      "parameters": {
+        "content": "## Paso 02\n\n**Validar webhook (secreto / firma)**\n\nValida el origen del webhook usando FORMSPREE_WEBHOOK_SECRET, headers o query token. Tambien puede verificar FORMSPREE_FORM_HASHID si esta configurado.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-build-issue",
+      "name": "Nota 03 - Construir issue Paperclip",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -10
+      ],
+      "parameters": {
+        "content": "## Paso 03\n\n**Construir issue Paperclip**\n\nNormaliza los campos del formulario y construye el issue de Paperclip: titulo, descripcion, prioridad, agente asignado, proyecto y goal comercial.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-http-create-issue",
+      "name": "Nota 04 - POST Paperclip issue",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -280
+      ],
+      "parameters": {
+        "content": "## Paso 04\n\n**POST Paperclip issue**\n\nHace POST a la API de Paperclip con Authorization Bearer. Crea el issue dentro de la company configurada para que el equipo lo trabaje.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-if-created",
+      "name": "Nota 05 - ¿Issue creado?",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        -10
+      ],
+      "parameters": {
+        "content": "## Paso 05\n\n**¿Issue creado?**\n\nComprueba si Paperclip devolvio un id de issue. Si existe, la creacion fue exitosa; si no, envia la ejecucion a la rama de error.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-log-ok",
+      "name": "Nota 06 - Log éxito",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        -360
+      ],
+      "parameters": {
+        "content": "## Paso 06\n\n**Log éxito**\n\nRegistra en logs que el issue fue creado correctamente. Ayuda a auditar que el lead entro al sistema operativo.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-log-fail",
+      "name": "Nota 07 - Log error",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        -740
+      ],
+      "parameters": {
+        "content": "## Paso 07\n\n**Log error**\n\nRegistra en error log la respuesta recibida cuando Paperclip no crea el issue. Sirve para diagnosticar auth, payload o fallos de API.",
+        "height": 220,
+        "width": 320
+      }
     }
   ],
   "connections": {
     "Webhook Formspree": {
-      "main": [[{ "node": "Validar webhook (secreto / firma)", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Validar webhook (secreto / firma)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Validar webhook (secreto / firma)": {
-      "main": [[{ "node": "Construir issue Paperclip", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Construir issue Paperclip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Construir issue Paperclip": {
-      "main": [[{ "node": "POST Paperclip issue", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "POST Paperclip issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "POST Paperclip issue": {
-      "main": [[{ "node": "¿Issue creado?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "¿Issue creado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "¿Issue creado?": {
       "main": [
-        [{ "node": "Log éxito", "type": "main", "index": 0 }],
-        [{ "node": "Log error", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Log éxito",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log error",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
   "active": false,
-  "settings": { "executionOrder": "v1" },
-  "meta": { "templateCredsSetupCompleted": true },
-  "tags": ["jaagsolutions", "leads"]
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": [
+    "jaagsolutions",
+    "leads"
+  ]
 }

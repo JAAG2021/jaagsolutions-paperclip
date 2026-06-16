@@ -6,7 +6,10 @@
       "name": "Webhook Telegram Callback",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [200, 300],
+      "position": [
+        200,
+        300
+      ],
       "parameters": {
         "httpMethod": "POST",
         "path": "telegram-approval",
@@ -20,7 +23,10 @@
       "name": "Parsear callback",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [420, 300],
+      "position": [
+        420,
+        300
+      ],
       "parameters": {
         "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst callbackQuery = body.callback_query;\nif (!callbackQuery) throw new Error('No callback_query en payload: ' + JSON.stringify(body));\n\nconst data = callbackQuery.data || '';\nconst parts = data.split('_');\nconst action = parts[0];\nconst post_id = parts.slice(1).join('_');\nconst callback_query_id = callbackQuery.id;\nconst message_id = callbackQuery.message?.message_id;\nconst chat_id = callbackQuery.message?.chat?.id;\n\nif (!action || !post_id) throw new Error('callback_data inválido: ' + data);\nif (action !== 'aprobar' && action !== 'rechazar') throw new Error('action desconocida: ' + action);\n\nreturn [{ json: { action, post_id, callback_query_id, message_id, chat_id } }];"
       }
@@ -30,7 +36,10 @@
       "name": "Telegram — answerCallbackQuery",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [640, 300],
+      "position": [
+        640,
+        300
+      ],
       "parameters": {
         "method": "POST",
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/answerCallbackQuery",
@@ -45,7 +54,10 @@
       "name": "Obtener datos del post",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [860, 300],
+      "position": [
+        860,
+        300
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "SELECT * FROM content_plan WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
@@ -63,16 +75,26 @@
       "name": "¿Aprobar o Rechazar?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1080, 300],
+      "position": [
+        1080,
+        300
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
           "conditions": [
             {
               "id": "check-action",
               "leftValue": "={{ $('Parsear callback').first().json.action }}",
               "rightValue": "aprobar",
-              "operator": { "type": "string", "operation": "equals" }
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
@@ -84,16 +106,26 @@
       "name": "¿Es LinkedIn?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1300, 180],
+      "position": [
+        1300,
+        180
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
           "conditions": [
             {
               "id": "check-platform",
               "leftValue": "={{ $json.platform }}",
               "rightValue": "linkedin",
-              "operator": { "type": "string", "operation": "equals" }
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
@@ -105,7 +137,10 @@
       "name": "LinkedIn — register upload",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2620, 200],
+      "position": [
+        2620,
+        200
+      ],
       "continueOnFail": true,
       "parameters": {
         "method": "POST",
@@ -113,14 +148,22 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}" },
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ ({ registerUploadRequest: { recipes: ['urn:li:digitalmediaRecipe:feedshare-image'], owner: $env.LINKEDIN_AUTHOR_URN, serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }] } }) }}",
-        "options": { "timeout": 30000 }
+        "options": {
+          "timeout": 30000
+        }
       }
     },
     {
@@ -128,7 +171,10 @@
       "name": "Leer imagen (LinkedIn)",
       "type": "n8n-nodes-base.readBinaryFile",
       "typeVersion": 1,
-      "position": [2840, 200],
+      "position": [
+        2840,
+        200
+      ],
       "continueOnFail": true,
       "parameters": {
         "filePath": "=/opt/jaagsolutions/content/{{ $('Parsear callback').first().json.post_id }}.jpg",
@@ -140,7 +186,10 @@
       "name": "LinkedIn — subir imagen",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [3060, 200],
+      "position": [
+        3060,
+        200
+      ],
       "continueOnFail": true,
       "parameters": {
         "method": "POST",
@@ -148,13 +197,18 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}"
+            }
           ]
         },
         "sendBody": true,
         "contentType": "binaryData",
         "inputDataFieldName": "data",
-        "options": { "timeout": 60000 }
+        "options": {
+          "timeout": 60000
+        }
       }
     },
     {
@@ -162,7 +216,10 @@
       "name": "LinkedIn — publicar post",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [3280, 200],
+      "position": [
+        3280,
+        200
+      ],
       "continueOnFail": true,
       "parameters": {
         "method": "POST",
@@ -170,15 +227,26 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}" },
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "X-Restli-Protocol-Version", "value": "2.0.0" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Restli-Protocol-Version",
+              "value": "2.0.0"
+            }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ ({ author: $env.LINKEDIN_AUTHOR_URN, lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: (() => { const post = $('Obtener datos del post').first().json; const cta = ((post.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = post.copy_text || ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }, shareMediaCategory: 'IMAGE', media: [{ status: 'READY', description: { text: $('Obtener datos del post').first().json.copy_text }, media: $('LinkedIn — register upload').first().json.value.asset, title: { text: ($('Obtener datos del post').first().json.copy_text || 'JAAGSOLUTIONS').substring(0, 200) } }] } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
-        "options": { "timeout": 30000 }
+        "options": {
+          "timeout": 30000
+        }
       }
     },
     {
@@ -186,7 +254,10 @@
       "name": "LinkedIn Org — register upload",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [3500, 200],
+      "position": [
+        3500,
+        200
+      ],
       "continueOnFail": true,
       "parameters": {
         "method": "POST",
@@ -194,14 +265,22 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}" },
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ ({ registerUploadRequest: { recipes: ['urn:li:digitalmediaRecipe:feedshare-image'], owner: $env.LINKEDIN_ORGANIZATION_URN, serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }] } }) }}",
-        "options": { "timeout": 30000 }
+        "options": {
+          "timeout": 30000
+        }
       }
     },
     {
@@ -209,7 +288,10 @@
       "name": "Leer imagen (LinkedIn Org)",
       "type": "n8n-nodes-base.readBinaryFile",
       "typeVersion": 1,
-      "position": [3720, 200],
+      "position": [
+        3720,
+        200
+      ],
       "continueOnFail": true,
       "parameters": {
         "filePath": "=/opt/jaagsolutions/content/{{ $('Parsear callback').first().json.post_id }}.jpg",
@@ -221,7 +303,10 @@
       "name": "LinkedIn Org — subir imagen",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [3940, 200],
+      "position": [
+        3940,
+        200
+      ],
       "continueOnFail": true,
       "parameters": {
         "method": "POST",
@@ -229,13 +314,18 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}"
+            }
           ]
         },
         "sendBody": true,
         "contentType": "binaryData",
         "inputDataFieldName": "data",
-        "options": { "timeout": 60000 }
+        "options": {
+          "timeout": 60000
+        }
       }
     },
     {
@@ -243,7 +333,10 @@
       "name": "LinkedIn Org — publicar post",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [4160, 200],
+      "position": [
+        4160,
+        200
+      ],
       "continueOnFail": true,
       "parameters": {
         "method": "POST",
@@ -251,15 +344,26 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}" },
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "X-Restli-Protocol-Version", "value": "2.0.0" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.LINKEDIN_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Restli-Protocol-Version",
+              "value": "2.0.0"
+            }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ ({ author: $env.LINKEDIN_ORGANIZATION_URN, lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: (() => { const post = $('Obtener datos del post').first().json; const cta = ((post.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = post.copy_text || ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }, shareMediaCategory: 'IMAGE', media: [{ status: 'READY', description: { text: $('Obtener datos del post').first().json.copy_text }, media: $('LinkedIn Org — register upload').first().json.value.asset, title: { text: ($('Obtener datos del post').first().json.copy_text || 'JAAGSOLUTIONS').substring(0, 200) } }] } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
-        "options": { "timeout": 30000 }
+        "options": {
+          "timeout": 30000
+        }
       }
     },
     {
@@ -267,16 +371,26 @@
       "name": "¿Es Meta/IG/FB?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1520, 260],
+      "position": [
+        1520,
+        260
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
           "conditions": [
             {
               "id": "check-meta",
               "leftValue": "={{ $json.platform }}",
               "rightValue": "linkedin",
-              "operator": { "type": "string", "operation": "notEquals" }
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
             }
           ],
           "combinator": "and"
@@ -288,7 +402,10 @@
       "name": "Leer imagen (FB)",
       "type": "n8n-nodes-base.readBinaryFile",
       "typeVersion": 1,
-      "position": [1740, 200],
+      "position": [
+        1740,
+        200
+      ],
       "continueOnFail": true,
       "parameters": {
         "filePath": "=/opt/jaagsolutions/content/{{ $('Parsear callback').first().json.post_id }}.jpg",
@@ -300,7 +417,10 @@
       "name": "Meta FB — subir foto",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1960, 200],
+      "position": [
+        1960,
+        200
+      ],
       "continueOnFail": true,
       "parameters": {
         "method": "POST",
@@ -308,19 +428,36 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.META_PAGE_ACCESS_TOKEN }}" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.META_PAGE_ACCESS_TOKEN }}"
+            }
           ]
         },
         "sendBody": true,
         "contentType": "multipart-form-data",
         "bodyParameters": {
           "parameters": [
-            { "parameterType": "formBinaryData", "name": "source", "inputDataFieldName": "data" },
-            { "parameterType": "formData", "name": "caption", "value": "={{ (() => { const post = $('Obtener datos del post').first().json; const cta = ((post.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = post.copy_text || ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }}" },
-            { "parameterType": "formData", "name": "published", "value": "true" }
+            {
+              "parameterType": "formBinaryData",
+              "name": "source",
+              "inputDataFieldName": "data"
+            },
+            {
+              "parameterType": "formData",
+              "name": "caption",
+              "value": "={{ (() => { const post = $('Obtener datos del post').first().json; const cta = ((post.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = post.copy_text || ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }}"
+            },
+            {
+              "parameterType": "formData",
+              "name": "published",
+              "value": "true"
+            }
           ]
         },
-        "options": { "timeout": 60000 }
+        "options": {
+          "timeout": 60000
+        }
       }
     },
     {
@@ -328,7 +465,10 @@
       "name": "Meta IG — crear container",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2180, 200],
+      "position": [
+        2180,
+        200
+      ],
       "continueOnFail": true,
       "parameters": {
         "method": "POST",
@@ -336,18 +476,29 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.META_PAGE_ACCESS_TOKEN }}" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.META_PAGE_ACCESS_TOKEN }}"
+            }
           ]
         },
         "sendBody": true,
         "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
-            { "name": "image_url", "value": "={{ $('Obtener datos del post').first().json.image_url }}" },
-            { "name": "caption", "value": "={{ (() => { const post = $('Obtener datos del post').first().json; const cta = ((post.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = post.copy_text || ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }}" }
+            {
+              "name": "image_url",
+              "value": "={{ $('Obtener datos del post').first().json.image_url }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ (() => { const post = $('Obtener datos del post').first().json; const cta = ((post.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = post.copy_text || ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }}"
+            }
           ]
         },
-        "options": { "timeout": 30000 }
+        "options": {
+          "timeout": 30000
+        }
       }
     },
     {
@@ -355,7 +506,10 @@
       "name": "Esperar IG container",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2290, 200],
+      "position": [
+        2290,
+        200
+      ],
       "parameters": {
         "jsCode": "// Meta requiere unos segundos para procesar el container antes de poder publicarlo.\n// Sin esto, /media_publish devuelve 9007 'Media ID is not available'.\nawait new Promise(r => setTimeout(r, 5000));\nreturn $input.all();"
       }
@@ -365,7 +519,10 @@
       "name": "Meta IG — publicar",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2510, 200],
+      "position": [
+        2510,
+        200
+      ],
       "continueOnFail": true,
       "parameters": {
         "method": "POST",
@@ -373,14 +530,20 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.META_PAGE_ACCESS_TOKEN }}" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.META_PAGE_ACCESS_TOKEN }}"
+            }
           ]
         },
         "sendBody": true,
         "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
-            { "name": "creation_id", "value": "={{ $json.id }}" }
+            {
+              "name": "creation_id",
+              "value": "={{ $json.id }}"
+            }
           ]
         },
         "options": {}
@@ -391,7 +554,10 @@
       "name": "status = published",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [2200, 220],
+      "position": [
+        2200,
+        220
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "UPDATE content_plan SET status = 'published', published_at = NOW() WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
@@ -409,7 +575,10 @@
       "name": "Telegram — ✅ Publicado",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2640, 220],
+      "position": [
+        2640,
+        220
+      ],
       "parameters": {
         "method": "POST",
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/editMessageCaption",
@@ -421,19 +590,29 @@
     },
     {
       "id": "if-retry-ok",
-      "name": "¿retry_count < 3?",
+      "name": "¿retry_count < 6?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1300, 420],
+      "position": [
+        1300,
+        420
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
           "conditions": [
             {
               "id": "check-retry-count",
               "leftValue": "={{ $('Obtener datos del post').first().json.retry_count }}",
-              "rightValue": 3,
-              "operator": { "type": "number", "operation": "lt" }
+              "rightValue": 6,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
             }
           ],
           "combinator": "and"
@@ -445,7 +624,10 @@
       "name": "status = pending (rechazado)",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1520, 360],
+      "position": [
+        1520,
+        360
+      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "UPDATE content_plan SET status = 'pending', retry_count = retry_count + 1 WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
@@ -463,14 +645,19 @@
       "name": "Trigger regeneración inmediata",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1740, 360],
+      "position": [
+        1740,
+        360
+      ],
       "parameters": {
         "method": "POST",
         "url": "http://n8n:5678/webhook/regenerate-single",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ post_id: $('Parsear callback').first().json.post_id }) }}",
-        "options": { "timeout": 10000 }
+        "options": {
+          "timeout": 10000
+        }
       }
     },
     {
@@ -478,13 +665,16 @@
       "name": "Telegram — 🔄 Regenerando",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1960, 360],
+      "position": [
+        1960,
+        360
+      ],
       "parameters": {
         "method": "POST",
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/editMessageCaption",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ chat_id: $('Parsear callback').first().json.chat_id, message_id: $('Parsear callback').first().json.message_id, caption: '🔄 Rechazado — regenerando imagen inmediatamente (intento ' + ($('Obtener datos del post').first().json.retry_count + 1) + ' de 3)' }) }}",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Parsear callback').first().json.chat_id, message_id: $('Parsear callback').first().json.message_id, caption: '🔄 Rechazado — regenerando imagen inmediatamente (intento ' + ($('Obtener datos del post').first().json.retry_count + 1) + ' de 6)' }) }}",
         "options": {}
       }
     },
@@ -493,10 +683,13 @@
       "name": "status = error (max retries)",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1520, 540],
+      "position": [
+        1520,
+        540
+      ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE content_plan SET status = 'error', error_log = 'Rechazado 3 veces — requiere revisión manual' WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
+        "query": "UPDATE content_plan SET status = 'error', error_log = 'Rechazado 6 veces — requiere revisión manual' WHERE id = '{{ $('Parsear callback').first().json.post_id }}'",
         "options": {}
       },
       "credentials": {
@@ -508,111 +701,763 @@
     },
     {
       "id": "telegram-failed-final",
-      "name": "Telegram — ❌ Falló 3 veces",
+      "name": "Telegram — ❌ Falló 6 veces",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1740, 540],
+      "position": [
+        1740,
+        540
+      ],
       "parameters": {
         "method": "POST",
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/editMessageCaption",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ chat_id: $('Parsear callback').first().json.chat_id, message_id: $('Parsear callback').first().json.message_id, caption: '❌ Rechazado 3 veces — el post fue marcado como ERROR. Requiere revisión manual del image_prompt o del copy en la base de datos.' }) }}",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Parsear callback').first().json.chat_id, message_id: $('Parsear callback').first().json.message_id, caption: '❌ Rechazado 6 veces — el post fue marcado como ERROR. Requiere revisión manual del image_prompt o del copy en la base de datos.' }) }}",
         "options": {}
+      }
+    },
+    {
+      "id": "canvas-note-overview",
+      "name": "Nota - Resumen del workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -520
+      ],
+      "parameters": {
+        "content": "# Resumen del workflow\n\nRecibe la decision tomada en Telegram. Si se aprueba, publica el contenido en los canales correspondientes y marca el post como published. Si se rechaza, regenera mientras retry_count sea menor que 6 o marca error para revision manual.",
+        "height": 240,
+        "width": 520
+      }
+    },
+    {
+      "id": "canvas-note-webhook-telegram",
+      "name": "Nota 01 - Webhook Telegram Callback",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        120,
+        -10
+      ],
+      "parameters": {
+        "content": "## Paso 01\n\n**Webhook Telegram Callback**\n\nRecibe el callback de Telegram cuando el operador toca Aprobar o Rechazar en el mensaje del post. Es la entrada publica del flujo de decision.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-code-parse",
+      "name": "Nota 02 - Parsear callback",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        340,
+        -820
+      ],
+      "parameters": {
+        "content": "## Paso 02\n\n**Parsear callback**\n\nExtrae action y post_id desde callback_data. Tambien guarda callback_query_id, message_id y chat_id para responder y editar el mensaje original.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-http-answer-callback",
+      "name": "Nota 03 - Telegram — answerCallbackQuery",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        560,
+        -10
+      ],
+      "parameters": {
+        "content": "## Paso 03\n\n**Telegram — answerCallbackQuery**\n\nResponde a Telegram con answerCallbackQuery para cerrar el estado de carga del boton. El usuario ve que la accion esta siendo procesada.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-postgres-get-post",
+      "name": "Nota 04 - Obtener datos del post",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        780,
+        -280
+      ],
+      "parameters": {
+        "content": "## Paso 04\n\n**Obtener datos del post**\n\nBusca en content_plan el post aprobado o rechazado. Desde aqui el workflow recupera platform, copy_text, image_path, hashtags, retry_count y metadata.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-if-approve",
+      "name": "Nota 05 - ¿Aprobar o Rechazar?",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        -10
+      ],
+      "parameters": {
+        "content": "## Paso 05\n\n**¿Aprobar o Rechazar?**\n\nSepara la decision humana. Si action es aprobar, avanza a publicacion. Si action es rechazar, entra al control de reintentos y regeneracion.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-if-linkedin",
+      "name": "Nota 06 - ¿Es LinkedIn?",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1220,
+        -400
+      ],
+      "parameters": {
+        "content": "## Paso 06\n\n**¿Es LinkedIn?**\n\nDetecta si platform es linkedin. Si es LinkedIn, salta directo a la cadena de publicacion LinkedIn; si no, pasa primero por Meta/IG/FB.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-http-linkedin-register",
+      "name": "Nota 13 - LinkedIn — register upload",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2540,
+        -110
+      ],
+      "parameters": {
+        "content": "## Paso 13\n\n**LinkedIn — register upload**\n\nRegistra en LinkedIn un asset de imagen y obtiene uploadUrl y asset URN. Es necesario antes de subir el binario y crear el post.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-read-linkedin-image",
+      "name": "Nota 14 - Leer imagen (LinkedIn)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2760,
+        -380
+      ],
+      "parameters": {
+        "content": "## Paso 14\n\n**Leer imagen (LinkedIn)**\n\nLee la imagen final desde disco para la subida a LinkedIn personal. Usa el mismo archivo generado por el workflow de contenido.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-http-linkedin-upload",
+      "name": "Nota 15 - LinkedIn — subir imagen",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2980,
+        -110
+      ],
+      "parameters": {
+        "content": "## Paso 15\n\n**LinkedIn — subir imagen**\n\nSube el binario de imagen al uploadUrl devuelto por LinkedIn. Este paso deja el asset listo para publicarse en un UGC post.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-http-linkedin",
+      "name": "Nota 16 - LinkedIn — publicar post",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3200,
+        -380
+      ],
+      "parameters": {
+        "content": "## Paso 16\n\n**LinkedIn — publicar post**\n\nPublica el post en el perfil personal configurado por LINKEDIN_AUTHOR_URN. El texto combina copy, CTA si falta en el copy y hashtags.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-http-linkedin-org-register",
+      "name": "Nota 17 - LinkedIn Org — register upload",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3420,
+        -110
+      ],
+      "parameters": {
+        "content": "## Paso 17\n\n**LinkedIn Org — register upload**\n\nRegistra un segundo asset para la organizacion de LinkedIn. Separa la publicacion personal de la publicacion corporativa.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-read-linkedin-org-image",
+      "name": "Nota 18 - Leer imagen (LinkedIn Org)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3640,
+        -380
+      ],
+      "parameters": {
+        "content": "## Paso 18\n\n**Leer imagen (LinkedIn Org)**\n\nLee nuevamente la imagen final para subirla como asset de la organizacion. Mantiene el mismo creativo aprobado.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-http-linkedin-org-upload",
+      "name": "Nota 19 - LinkedIn Org — subir imagen",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3860,
+        -110
+      ],
+      "parameters": {
+        "content": "## Paso 19\n\n**LinkedIn Org — subir imagen**\n\nSube la imagen al uploadUrl del asset de LinkedIn Organization. Prepara el recurso multimedia para la publicacion corporativa.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-http-linkedin-org",
+      "name": "Nota 20 - LinkedIn Org — publicar post",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4080,
+        -380
+      ],
+      "parameters": {
+        "content": "## Paso 20\n\n**LinkedIn Org — publicar post**\n\nPublica el post en la organizacion configurada por LINKEDIN_ORGANIZATION_URN. Completa la salida LinkedIn corporativa.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-if-meta",
+      "name": "Nota 07 - ¿Es Meta/IG/FB?",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        -50
+      ],
+      "parameters": {
+        "content": "## Paso 07\n\n**¿Es Meta/IG/FB?**\n\nValida la ruta no-LinkedIn. Todo platform distinto de linkedin se trata como publicacion Meta: Facebook Page e Instagram Business antes de continuar a LinkedIn.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-read-fb-image",
+      "name": "Nota 08 - Leer imagen (FB)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1660,
+        -380
+      ],
+      "parameters": {
+        "content": "## Paso 08\n\n**Leer imagen (FB)**\n\nLee desde disco la imagen final del post para usarla como binario en la subida a Facebook. La ruta se basa en el post_id.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-http-fb-photo",
+      "name": "Nota 09 - Meta FB — subir foto",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        -110
+      ],
+      "parameters": {
+        "content": "## Paso 09\n\n**Meta FB — subir foto**\n\nSube la imagen a la Facebook Page usando Meta Graph API. Incluye caption construido desde copy_text, CTA y hashtags.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-http-ig-container",
+      "name": "Nota 10 - Meta IG — crear container",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2100,
+        -380
+      ],
+      "parameters": {
+        "content": "## Paso 10\n\n**Meta IG — crear container**\n\nCrea el media container de Instagram Business con la URL publica de la imagen y el caption. Es el paso previo obligatorio antes de publicar en IG.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-wait-ig-container",
+      "name": "Nota 11 - Esperar IG container",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2210,
+        -650
+      ],
+      "parameters": {
+        "content": "## Paso 11\n\n**Esperar IG container**\n\nEspera unos segundos para que Meta termine de procesar el container. Evita errores de media_publish cuando el asset aun no esta disponible.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-http-ig-publish",
+      "name": "Nota 12 - Meta IG — publicar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2430,
+        -920
+      ],
+      "parameters": {
+        "content": "## Paso 12\n\n**Meta IG — publicar**\n\nPublica el container en Instagram Business mediante media_publish. Al terminar, la ruta continua hacia LinkedIn para completar distribucion multicanal.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-postgres-published",
+      "name": "Nota 21 - status = published",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2120,
+        -1440
+      ],
+      "parameters": {
+        "content": "## Paso 21\n\n**status = published**\n\nMarca el registro como published y guarda published_at. Este es el cierre operacional en content_plan despues de publicar en los canales.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-telegram-approved",
+      "name": "Nota 22 - Telegram — ✅ Publicado",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        -1440
+      ],
+      "parameters": {
+        "content": "## Paso 22\n\n**Telegram — ✅ Publicado**\n\nEdita el mensaje original de Telegram para mostrar que el post fue publicado. Da confirmacion visible al operador sin crear un nuevo mensaje.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-if-retry-ok",
+      "name": "Nota 23 - ¿retry_count < 6?",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1220,
+        -700
+      ],
+      "parameters": {
+        "content": "## Paso 23\n\n**¿retry_count < 6?**\n\nEn la rama de rechazo, revisa si retry_count es menor que 6. Si aun hay margen, regenera; si no, manda el post a error manual.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-postgres-rejected",
+      "name": "Nota 24 - status = pending (rechazado)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        -1030
+      ],
+      "parameters": {
+        "content": "## Paso 24\n\n**status = pending (rechazado)**\n\nCuando se rechaza y quedan intentos, vuelve el post a pending e incrementa retry_count. Esto habilita una nueva generacion controlada.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-http-trigger-regenerate",
+      "name": "Nota 25 - Trigger regeneración inmediata",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1660,
+        -760
+      ],
+      "parameters": {
+        "content": "## Paso 25\n\n**Trigger regeneración inmediata**\n\nLlama al webhook interno /webhook/regenerate-single del Content Generator con el post_id. Asi dispara regeneracion inmediata sin esperar al proximo cron.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-telegram-regenerating",
+      "name": "Nota 26 - Telegram — 🔄 Regenerando",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        -1030
+      ],
+      "parameters": {
+        "content": "## Paso 26\n\n**Telegram — 🔄 Regenerando**\n\nEdita el mensaje de Telegram indicando que la pieza se esta regenerando. Mantiene al operador informado dentro del mismo hilo de aprobacion.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-postgres-status-error",
+      "name": "Nota 27 - status = error (max retries)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        230
+      ],
+      "parameters": {
+        "content": "## Paso 27\n\n**status = error (max retries)**\n\nSi el post fue rechazado 6 veces, lo marca como error y registra que requiere revision manual. Evita un loop infinito de regeneracion.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "canvas-note-telegram-failed-final",
+      "name": "Nota 28 - Telegram — ❌ Falló 6 veces",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1660,
+        -1390
+      ],
+      "parameters": {
+        "content": "## Paso 28\n\n**Telegram — ❌ Falló 6 veces**\n\nEdita Telegram para avisar que el post fallo despues de 6 rechazos. El siguiente paso ya no es automatico: requiere intervencion humana.",
+        "height": 220,
+        "width": 320
       }
     }
   ],
   "connections": {
     "Webhook Telegram Callback": {
-      "main": [[{ "node": "Parsear callback", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Parsear callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Parsear callback": {
-      "main": [[{ "node": "Telegram — answerCallbackQuery", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Telegram — answerCallbackQuery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Telegram — answerCallbackQuery": {
-      "main": [[{ "node": "Obtener datos del post", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Obtener datos del post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Obtener datos del post": {
-      "main": [[{ "node": "¿Aprobar o Rechazar?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "¿Aprobar o Rechazar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "¿Aprobar o Rechazar?": {
       "main": [
-        [{ "node": "¿Es LinkedIn?", "type": "main", "index": 0 }],
-        [{ "node": "¿retry_count < 3?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "¿Es LinkedIn?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿retry_count < 6?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "¿retry_count < 3?": {
+    "¿retry_count < 6?": {
       "main": [
-        [{ "node": "status = pending (rechazado)", "type": "main", "index": 0 }],
-        [{ "node": "status = error (max retries)", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "status = pending (rechazado)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "status = error (max retries)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "¿Es LinkedIn?": {
       "main": [
-        [{ "node": "LinkedIn — register upload", "type": "main", "index": 0 }],
-        [{ "node": "¿Es Meta/IG/FB?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "LinkedIn — register upload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Es Meta/IG/FB?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "¿Es Meta/IG/FB?": {
       "main": [
-        [{ "node": "Leer imagen (FB)", "type": "main", "index": 0 }],
+        [
+          {
+            "node": "Leer imagen (FB)",
+            "type": "main",
+            "index": 0
+          }
+        ],
         []
       ]
     },
     "Leer imagen (FB)": {
-      "main": [[{ "node": "Meta FB — subir foto", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Meta FB — subir foto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Meta FB — subir foto": {
-      "main": [[{ "node": "Meta IG — crear container", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Meta IG — crear container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Meta IG — crear container": {
-      "main": [[{ "node": "Esperar IG container", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Esperar IG container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Esperar IG container": {
-      "main": [[{ "node": "Meta IG — publicar", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Meta IG — publicar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Meta IG — publicar": {
-      "main": [[{ "node": "LinkedIn — register upload", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "LinkedIn — register upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "LinkedIn — register upload": {
-      "main": [[{ "node": "Leer imagen (LinkedIn)", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Leer imagen (LinkedIn)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Leer imagen (LinkedIn)": {
-      "main": [[{ "node": "LinkedIn — subir imagen", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "LinkedIn — subir imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "LinkedIn — subir imagen": {
-      "main": [[{ "node": "LinkedIn — publicar post", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "LinkedIn — publicar post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "LinkedIn — publicar post": {
-      "main": [[{ "node": "LinkedIn Org — register upload", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "LinkedIn Org — register upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "LinkedIn Org — register upload": {
-      "main": [[{ "node": "Leer imagen (LinkedIn Org)", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Leer imagen (LinkedIn Org)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Leer imagen (LinkedIn Org)": {
-      "main": [[{ "node": "LinkedIn Org — subir imagen", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "LinkedIn Org — subir imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "LinkedIn Org — subir imagen": {
-      "main": [[{ "node": "LinkedIn Org — publicar post", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "LinkedIn Org — publicar post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "LinkedIn Org — publicar post": {
-      "main": [[{ "node": "status = published", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "status = published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "status = published": {
-      "main": [[{ "node": "Telegram — ✅ Publicado", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Telegram — ✅ Publicado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "status = pending (rechazado)": {
-      "main": [[{ "node": "Trigger regeneración inmediata", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Trigger regeneración inmediata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Trigger regeneración inmediata": {
-      "main": [[{ "node": "Telegram — 🔄 Regenerando", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Telegram — 🔄 Regenerando",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "status = error (max retries)": {
-      "main": [[{ "node": "Telegram — ❌ Falló 3 veces", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Telegram — ❌ Falló 6 veces",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
-  "settings": { "executionOrder": "v1" },
-  "meta": { "templateCredsSetupCompleted": false },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
   "tags": []
 }
