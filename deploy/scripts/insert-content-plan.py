@@ -19,6 +19,24 @@ VALID_FORMATS   = ("imagen_copy", "carrusel", "texto_largo", "reel")
 VALID_PILLARS   = ("educacion", "casos_de_uso", "prueba_social", "behind_the_scenes")
 VALID_TYPES     = ("valor", "conversion")
 
+# Destino de conversión: el sitio es one-page, el diagnóstico vive en #contacto.
+# UTMs ANTES del fragment '#' (lo posterior al '#' no llega al servidor/GA).
+SITE_BASE = "https://jaagsolutions.com/"
+DIAG_ANCHOR = "#contacto"
+HARD_CTA = "👉 Agenda tu diagnóstico gratuito de 10 minutos."
+
+
+def build_cta_url(platform, pillar, post_type, date):
+    """cta_url con UTMs. Conversión apunta a #contacto; valor a la home."""
+    qs = (
+        f"?utm_source={platform}&utm_medium=social"
+        f"&utm_campaign={pillar}"
+        f"&utm_content={date.replace('-', '')}"
+        f"&utm_term={post_type}"
+    )
+    anchor = DIAG_ANCHOR if post_type == "conversion" else ""
+    return SITE_BASE + qs + anchor
+
 def main():
     p = argparse.ArgumentParser(description="Insertar post en content_plan")
     p.add_argument("--date",     required=True,  help="YYYY-MM-DD")
@@ -30,8 +48,18 @@ def main():
     p.add_argument("--copy",     required=True,  help="Texto completo del post")
     p.add_argument("--prompt",   required=True,  help="Prompt para Ideogram")
     p.add_argument("--hashtags", default="",     help="Hashtags separados por espacio")
-    p.add_argument("--cta",      default="https://jaagsolutions.com", help="URL del CTA")
+    p.add_argument("--cta",      default="",     help="URL del CTA (vacío = auto con UTMs por post_type)")
     args = p.parse_args()
+
+    # cta_url: si no se pasa, se construye con UTMs según post_type/pillar/platform.
+    cta_url = args.cta.strip() or build_cta_url(
+        args.platform, args.pillar, args.post_type, args.date
+    )
+
+    # CTA dura en el copy para posts de conversión (si no está ya presente).
+    copy_text = args.copy
+    if args.post_type == "conversion" and "Agenda tu diagnóstico" not in copy_text:
+        copy_text = copy_text.rstrip() + "\n\n" + HARD_CTA
 
     conn = psycopg2.connect(DB_URL)
     cur = conn.cursor()
@@ -44,8 +72,8 @@ def main():
         RETURNING id
     """, (
         post_id, args.date, args.time, args.platform, args.format,
-        args.pillar, args.post_type, args.copy, args.prompt,
-        args.hashtags, args.cta,
+        args.pillar, args.post_type, copy_text, args.prompt,
+        args.hashtags, cta_url,
     ))
     conn.commit()
     cur.close()

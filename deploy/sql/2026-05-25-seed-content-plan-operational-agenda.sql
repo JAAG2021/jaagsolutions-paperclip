@@ -225,7 +225,10 @@ planned AS (
     'imagen_copy'::text AS format,
     pillar,
     post_type,
-    headline || E'\n\n' || body || E'\n\n' || cta AS copy_text,
+    headline || E'\n\n' || body || E'\n\n' || cta
+      || CASE WHEN post_type = 'conversion'
+              THEN E'\n\n👉 Agenda tu diagnóstico gratuito de 10 minutos.'
+              ELSE '' END AS copy_text,
     CASE pillar
       WHEN 'educacion' THEN
         'Professional editorial photography inside a modern Latin American SME office. A consultant and business owner review an abstract workflow made from smooth colored lines and plain circular markers on a clean table. Main subjects in the top area, calm empty lower area for overlay, soft natural light, premium B2B automation mood, no screens, no documents, no sticky notes, no whiteboards, no charts, no letters, no numbers, no readable text, no logos.'
@@ -237,7 +240,15 @@ planned AS (
         'Warm professional editorial photo of a Latino consultant and small business owner in a modern office, reviewing an abstract workflow made only from colored lines and plain circular markers on a table. Trustworthy human consultation mood, soft natural light, premium but approachable. Main people in top area, clean calm lower area for overlay, no forms, no documents, no screens, no signage, no text, no letters, no numbers, no logos.'
     END AS image_prompt,
     hashtags,
-    'https://jaagsolutions.com'::text AS cta_url
+    -- cta_url con UTMs (utm_source=meta para esta agenda). Conversión apunta al
+    -- formulario de diagnóstico (#contacto). UTMs ANTES del fragment '#'.
+    'https://jaagsolutions.com/'
+      || '?utm_source=meta&utm_medium=social'
+      || '&utm_campaign=' || pillar
+      || '&utm_content='  || to_char(scheduled_date, 'YYYYMMDD')
+      || '&utm_term='     || post_type
+      || CASE WHEN post_type = 'conversion' THEN '#contacto' ELSE '' END
+      AS cta_url
   FROM planned_raw
 ),
 obsolete_pending AS (

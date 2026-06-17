@@ -243,7 +243,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ ({ author: $env.LINKEDIN_AUTHOR_URN, lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: (() => { const post = $('Obtener datos del post').first().json; const cta = ((post.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = post.copy_text || ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }, shareMediaCategory: 'IMAGE', media: [{ status: 'READY', description: { text: $('Obtener datos del post').first().json.copy_text }, media: $('LinkedIn — register upload').first().json.value.asset, title: { text: ($('Obtener datos del post').first().json.copy_text || 'JAAGSOLUTIONS').substring(0, 200) } }] } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
+        "jsonBody": "={{ ({ author: $env.LINKEDIN_AUTHOR_URN, lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: (() => { const post = $('Obtener datos del post').first().json; const copy = (post.copy_text || '').trim(); const isConversion = (post.post_type || '') === 'conversion'; const cta = isConversion ? ((post.cta_url || 'https://jaagsolutions.com') + '').trim() : ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }, shareMediaCategory: 'IMAGE', media: [{ status: 'READY', description: { text: $('Obtener datos del post').first().json.copy_text }, media: $('LinkedIn — register upload').first().json.value.asset, title: { text: ($('Obtener datos del post').first().json.copy_text || 'JAAGSOLUTIONS').substring(0, 200) } }] } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
         "options": {
           "timeout": 30000
         }
@@ -360,7 +360,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ ({ author: $env.LINKEDIN_ORGANIZATION_URN, lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: (() => { const post = $('Obtener datos del post').first().json; const cta = ((post.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = post.copy_text || ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }, shareMediaCategory: 'IMAGE', media: [{ status: 'READY', description: { text: $('Obtener datos del post').first().json.copy_text }, media: $('LinkedIn Org — register upload').first().json.value.asset, title: { text: ($('Obtener datos del post').first().json.copy_text || 'JAAGSOLUTIONS').substring(0, 200) } }] } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
+        "jsonBody": "={{ ({ author: $env.LINKEDIN_ORGANIZATION_URN, lifecycleState: 'PUBLISHED', specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: (() => { const post = $('Obtener datos del post').first().json; const copy = (post.copy_text || '').trim(); const isConversion = (post.post_type || '') === 'conversion'; const cta = isConversion ? ((post.cta_url || 'https://jaagsolutions.com') + '').trim() : ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }, shareMediaCategory: 'IMAGE', media: [{ status: 'READY', description: { text: $('Obtener datos del post').first().json.copy_text }, media: $('LinkedIn Org — register upload').first().json.value.asset, title: { text: ($('Obtener datos del post').first().json.copy_text || 'JAAGSOLUTIONS').substring(0, 200) } }] } }, visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' } }) }}",
         "options": {
           "timeout": 30000
         }
@@ -446,7 +446,7 @@
             {
               "parameterType": "formData",
               "name": "caption",
-              "value": "={{ (() => { const post = $('Obtener datos del post').first().json; const cta = ((post.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = post.copy_text || ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }}"
+              "value": "={{ (() => { const post = $('Obtener datos del post').first().json; const copy = (post.copy_text || '').trim(); const isConversion = (post.post_type || '') === 'conversion'; const cta = isConversion ? ((post.cta_url || 'https://jaagsolutions.com') + '').trim() : ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }}"
             },
             {
               "parameterType": "formData",
@@ -492,7 +492,7 @@
             },
             {
               "name": "caption",
-              "value": "={{ (() => { const post = $('Obtener datos del post').first().json; const cta = ((post.cta_url || 'https://jaagsolutions.com') + '').trim(); const copy = post.copy_text || ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }}"
+              "value": "={{ (() => { const post = $('Obtener datos del post').first().json; const copy = (post.copy_text || '').trim(); const isConversion = (post.post_type || '') === 'conversion'; const cta = isConversion ? ((post.cta_url || 'https://jaagsolutions.com') + '').trim() : ''; const hashtags = (post.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }}"
             }
           ]
         },

@@ -81,7 +81,7 @@ Campos minimos para que un post pueda entrar al cron:
 | `hashtags` | Campo separado, no incrustado en `copy_text`. |
 | `cta_url` | URL de CTA, fallback `https://jaagsolutions.com`. |
 | `status` | Debe ser `pending` para que el cron lo procese. |
-| `vertical` | Etiqueta de vertical. Default `'jaagsolutions_core'`. Seguros usa `'seguros_servicio'`. No afecta ruteo — solo metadata/filtros. |
+| `vertical` | Etiqueta de vertical. Default `'jaagsolutions_core'`. Seguros usa `'seguros_servicio'`. Solo metadata/filtros (desde 2026-06-17 ya no afecta ruteo de generación). Columna formalizada en `deploy/sql/2026-06-17-add-vertical-column.sql`. |
 
 ---
 
@@ -173,14 +173,75 @@ docker exec deploy-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 
 ---
 
-## Modo Diagrama
+## Modo Diagrama — ELIMINADO (2026-06-17)
 
-Cuando `diagram_type` está presente en un post de `content_plan`, el workflow activa el modo diagrama:
+El "modo diagrama" (overlay hub-and-spoke con nodo central — `'n8n'` para
+automatización — más íconos de apps) fue **eliminado de raíz**. Producía piezas
+genéricas que contradecían el mensaje y exponían marcas de terceros.
 
-- Ideogram genera una **foto de personas** (fondo editorial) usando prompts del pool `_DIAG_PROMPTS` en el nodo `code-ideogram-ocr`.
-- `compose-image.js` superpone un **overlay SVG hub-and-spoke** sobre la foto: nodo central JAAGSOLUTIONS + nodos periféricos de herramientas con iconos SVG reconocibles (IG, LI, FB, WA, TK, MAIL, GS, CAL, CRM).
-- Los iconos escalan con `scale(nodeR/10)` — coordenadas diseñadas en espacio ±7 unidades.
-- Nodos sin entrada en `SVGICONS` (Leads, Ventas, Tiempo, etc.) renderizan texto como fallback.
+Cambios aplicados:
+
+- `code-ideogram-ocr` ya **no** calcula `diagram_type` (se eliminó `_DIAGRAM_MAP`).
+  Siempre devuelve `diagram_type: null`. Las escenas son humanas/editoriales: en
+  intentos normales usa el `image_prompt` del Auditor; el fallback seguro también
+  es humano. Se conserva la red de seguridad OCR + anatomy QA.
+- `deploy/n8n-scripts/compose-image.js` ya **no** contiene `buildDiagramSVG` ni
+  `createGradientBackground`. El overlay es solo logo + headline + barra + URL.
+- Con esto, `vertical` ya **no afecta el ruteo** (antes `seguros_servicio` se
+  exceptuaba del modo diagrama). Ahora todos los pilares/verticales siguen el
+  mismo camino humano/editorial.
+
+### Alineación imagen ↔ copy (2026-06-17)
+
+La imagen debe **ilustrar el mensaje del post**, no ser decoración genérica por pilar.
+
+- El prompt del Auditor (`code-prep-auditor-prompt`) ahora **deriva el concepto
+  visual del `copy_text`** (driver principal) en vez de usar la plantilla genérica
+  por pilar del seed. Filosofía: *ilustrar concretamente, props permitidos, prohibir
+  solo TEXTO legible*. Se eliminó la directiva previa de "abstract is always safer".
+- `negative_prompt` (en `ideogram-ocr.js`) ya **no prohíbe props** (papel, pizarra,
+  diagramas dibujados a mano con formas); solo prohíbe texto legible + anatomía
+  deforme + poses románticas/glamour. El guard de OCR cubre texto accidental.
+- Para nuevos posts, dejar `image_prompt` vacío o alineado al copy permite que el
+  Auditor derive la escena; si trae un prompt específico (>20 chars) se usa como
+  fallback.
+
+### CTA por post_type + UTMs (2026-06-17)
+
+El caption final se arma en el publisher (`telegram-approval.json`) como
+`copy_text` + (link CTA) + `hashtags`. Reglas:
+
+- **`valor`**: engagement, SIN link. El publisher solo añade `cta_url` si
+  `post_type = 'conversion'`.
+- **`conversion`**: lleva una línea de CTA dura en el `copy_text`
+  ("👉 Agenda tu diagnóstico gratuito de 10 minutos.") y el publisher añade el
+  `cta_url` con destino al formulario de diagnóstico.
+- **Destino conversión**: el sitio es one-page; NO existe `/diagnostico`. El destino
+  es `https://jaagsolutions.com/?<utms>#contacto` (los UTMs van ANTES del `#`).
+  Si se crea una landing dedicada, cambiar `base`/`anchor` en el seed, el SQL de
+  retrofit y `insert-content-plan.py`.
+- **UTMs** (atribución): `utm_source=<platform>`, `utm_medium=social`,
+  `utm_campaign=<pillar>`, `utm_content=<YYYYMMDD>`, `utm_term=<post_type>`.
+  Caveat: una fila `platform='meta'` también cross-postea a LinkedIn con
+  `utm_source=meta`; para atribución por red exacta habría que mover los UTMs al
+  publisher (por nodo). Hoy es capa de datos (cero cambios de topología).
+
+Artefactos: `deploy/sql/2026-06-17-cta-by-posttype-utm.sql` (retrofit pendientes,
+idempotente), seed `2026-05-25-...sql` (nuevos), `insert-content-plan.py` (`--cta`
+vacío = auto con UTMs).
+
+### Fuente de verdad del código de los Code nodes
+
+- El código de los Code nodes se edita en `deploy/n8n-workflows/lib/*.js` y se
+  inyecta al JSON con `python deploy/n8n-workflows/lib/sync-node-code.py`
+  (`--check` valida sin escribir). Mapa actual: `code-ideogram-ocr` →
+  `ideogram-ocr.js`; `code-prep-auditor-prompt` → `prep-auditor-prompt.js`.
+  Reemplaza al obsoleto `build-content-generator.py` (eliminado).
+- El system prompt del Auditor vive **solo** en `prep-auditor-prompt.js` (la antigua
+  `lib/auditor-system-prompt.md` fue eliminada por divergente).
+- El compose canónico es `deploy/n8n-scripts/compose-image.js` (se despliega vía
+  `Dockerfile.n8n`: `COPY n8n-scripts/ /opt/n8n-scripts/` → requiere rebuild de la
+  imagen n8n). La antigua copia `lib/compose-image.js` fue eliminada.
 
 ---
 

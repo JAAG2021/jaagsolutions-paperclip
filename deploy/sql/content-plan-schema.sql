@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS content_plan (
                   CHECK (pillar IN ('educacion','casos_de_uso','prueba_social','behind_the_scenes')),
   post_type       TEXT NOT NULL
                   CHECK (post_type IN ('valor','conversion')),
+  vertical        TEXT NOT NULL DEFAULT 'jaagsolutions_core'
+                  CHECK (vertical IN ('jaagsolutions_core','seguros_servicio')),
   copy_text       TEXT NOT NULL,
   image_prompt    TEXT NOT NULL,
   hashtags        TEXT,
