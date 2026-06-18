@@ -305,6 +305,16 @@ con body `{"post_id":"<uuid>"}` (requiere Content Generator **activo**). Antes: 
 post en `pending`, limpiar `image_url/retry_count/error_log/telegram_msg_id`, borrar el
 `.jpg` viejo en `/opt/jaagsolutions/content/<id>.jpg`.
 
+**Atajo (un solo comando, en el VPS):** `deploy/scripts/regen-today.sh` encapsula todo el
+flujo (reset → normalizar contenido → borrar jpg → disparar webhook).
+
+```bash
+./deploy/scripts/regen-today.sh                  # posts de HOY
+./deploy/scripts/regen-today.sh 2026-06-20       # posts de esa fecha
+./deploy/scripts/regen-today.sh <uuid>           # un post puntual
+./deploy/scripts/regen-today.sh --no-clean       # solo reset + regen (sin normalizar)
+```
+
 ### Gotchas de operación (consola)
 
 - La consola **"SSH en el navegador" de GCP ya te deja DENTRO del VPS**: NO ejecutes
