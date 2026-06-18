@@ -1,8 +1,11 @@
 # Content Pipeline Source Of Truth
 
 **Estado:** Canonico  
-**Ultima actualizacion:** 2026-06-16  
+**Ultima actualizacion:** 2026-06-18  
 **Alcance:** Operacion de contenido JAAGSOLUTIONS en n8n.
+
+> 🗺️ ¿Buscas dónde se arma algo o por qué salió mal? Salta directo a
+> **"Mapa De Composición"** y **"Problemas Conocidos → Causa → Solución"** (al final).
 
 ---
 
@@ -79,7 +82,7 @@ Campos minimos para que un post pueda entrar al cron:
 | `copy_text` | Copy final del post. |
 | `image_prompt` | Prompt visual para generacion. |
 | `hashtags` | Campo separado, no incrustado en `copy_text`. |
-| `cta_url` | URL de CTA, fallback `https://jaagsolutions.com`. |
+| `cta_url` | El caption SIEMPRE muestra `https://jaagsolutions.com` (dominio limpio, sin UTMs). Ver "Link y CTA — DOMINIO LIMPIO". |
 | `status` | Debe ser `pending` para que el cron lo procese. |
 | `vertical` | Etiqueta de vertical. Default `'jaagsolutions_core'`. Seguros usa `'seguros_servicio'`. Solo metadata/filtros (desde 2026-06-17 ya no afecta ruteo de generación). Columna formalizada en `deploy/sql/2026-06-17-add-vertical-column.sql`. |
 
@@ -187,9 +190,14 @@ Cambios aplicados:
   es humano. Se conserva la red de seguridad OCR + anatomy QA.
 - `deploy/n8n-scripts/compose-image.js` ya **no** contiene `buildDiagramSVG` ni
   `createGradientBackground`. El overlay es solo logo + headline + barra + URL.
-- Con esto, `vertical` ya **no afecta el ruteo** (antes `seguros_servicio` se
-  exceptuaba del modo diagrama). Ahora todos los pilares/verticales siguen el
-  mismo camino humano/editorial.
+- Con esto, `vertical` ya no afecta el **modo** (el diagrama fue eliminado): todos
+  los pilares/verticales siguen el mismo camino humano/editorial.
+- **PERO (actualizado 2026-06-18)** `vertical` SÍ afecta el **concepto visual**:
+  `vertical='seguros_servicio'` fuerza la escena de asesoría (corredor + clientes),
+  ignorando el `_conceptMap` derivado del copy. Motivo: un copy de seguros que menciona
+  "LinkedIn/redes sociales" disparaba el concepto social y arruinaba el tono. Además se
+  quitó la directiva "printed photo cards" de ese concepto social. Fix en
+  `prep-auditor-prompt.js` (cortocircuito por vertical).
 
 ### Alineación imagen ↔ copy (2026-06-17)
 
@@ -206,29 +214,40 @@ La imagen debe **ilustrar el mensaje del post**, no ser decoración genérica po
   Auditor derive la escena; si trae un prompt específico (>20 chars) se usa como
   fallback.
 
-### CTA por post_type + UTMs (2026-06-17)
+### Link y CTA — DOMINIO LIMPIO (actualizado 2026-06-18) ⟵ SUPERSEDE UTMs
 
-El caption final se arma en el publisher (`telegram-approval.json`) como
-`copy_text` + (link CTA) + `hashtags`. Reglas:
+> ⚠️ Esta sección **reemplaza** la política de UTMs del 2026-06-17. Los UTMs en
+> `cta_url` quedaron **OBSOLETOS**: en texto plano de redes no aportan atribución
+> real y ensucian el copy (se veía una URL larga). Decisión de la auditoría 2026-06-18.
 
-- **`valor`**: engagement, SIN link. El publisher solo añade `cta_url` si
-  `post_type = 'conversion'`.
-- **`conversion`**: lleva una línea de CTA dura en el `copy_text`
-  ("👉 Agenda tu diagnóstico gratuito de 10 minutos.") y el publisher añade el
-  `cta_url` con destino al formulario de diagnóstico.
-- **Destino conversión**: el sitio es one-page; NO existe `/diagnostico`. El destino
-  es `https://jaagsolutions.com/?<utms>#contacto` (los UTMs van ANTES del `#`).
-  Si se crea una landing dedicada, cambiar `base`/`anchor` en el seed, el SQL de
-  retrofit y `insert-content-plan.py`.
-- **UTMs** (atribución): `utm_source=<platform>`, `utm_medium=social`,
-  `utm_campaign=<pillar>`, `utm_content=<YYYYMMDD>`, `utm_term=<post_type>`.
-  Caveat: una fila `platform='meta'` también cross-postea a LinkedIn con
-  `utm_source=meta`; para atribución por red exacta habría que mover los UTMs al
-  publisher (por nodo). Hoy es capa de datos (cero cambios de topología).
+El caption final se arma en el publisher (`telegram-approval.json`, 4 builders idénticos)
+y en el preview de Telegram (`content-generator.json`) como
+`[copy_text, link, hashtags].join('\n\n')`. Reglas vigentes:
 
-Artefactos: `deploy/sql/2026-06-17-cta-by-posttype-utm.sql` (retrofit pendientes,
-idempotente), seed `2026-05-25-...sql` (nuevos), `insert-content-plan.py` (`--cta`
-vacío = auto con UTMs).
+- **Link en TODO post** (valor y conversion). El builder añade el link salvo que el
+  copy ya lo contenga (`showCta = cta && !copy.includes(cta)`). **NO** depende de
+  `post_type` (la regla anterior "valor sin link" quedó obsoleta).
+- **El link visible es SIEMPRE `https://jaagsolutions.com`**. Los builders recortan
+  `?...` y `#...` del `cta_url` antes de mostrarlo: aunque la fila traiga UTMs o
+  `#contacto`, en pantalla sale el dominio pelado.
+- **`conversion`** mantiene su línea de CTA dura dentro del `copy_text`
+  ("👉 Agenda tu diagnóstico gratuito de 10 minutos.").
+- **`cta_url` en la DB**: `insert-content-plan.py` lo genera ya limpio (`CLEAN_LINK`).
+  El SQL `2026-06-17-cta-by-posttype-utm.sql` fue editado para escribir dominio limpio
+  (su nombre con "utm" es **histórico**; ya NO genera UTMs).
+- **Tradeoff aceptado**: sin UTMs no hay atribución por red en estos links de texto
+  plano. Si se quiere atribución en el futuro, usar un **link corto de marca** que
+  redirija con UTMs del lado del sitio — NO reintroducir UTMs en el caption.
+
+Artefactos: retrofit del lote pendiente en
+`deploy/sql/2026-06-18-fix-emdash-link-hashtags-seguros.sql` (idempotente),
+`insert-content-plan.py` (`CLEAN_LINK` + `sanitize_copy`).
+
+### Guion largo (—) PROHIBIDO en publicación (2026-06-18)
+
+Nunca debe publicarse `—`/`–`. Se reemplaza por **coma** en tres capas (defensa en
+profundidad): inserción (`insert-content-plan.py` → `sanitize_copy`), headline horneado
+(`compose-image.js`) y los 5 builders de caption (regex `/\s*[—–]\s*/g` reemplaza por coma).
 
 ### Fuente de verdad del código de los Code nodes
 
@@ -242,6 +261,69 @@ vacío = auto con UTMs).
 - El compose canónico es `deploy/n8n-scripts/compose-image.js` (se despliega vía
   `Dockerfile.n8n`: `COPY n8n-scripts/ /opt/n8n-scripts/` → requiere rebuild de la
   imagen n8n). La antigua copia `lib/compose-image.js` fue eliminada.
+
+---
+
+## Mapa De Composición — Dónde Se Arma Cada Elemento
+
+Tabla única de "quién genera qué" (para no recorrer archivos):
+
+| Elemento | Fuente de verdad | Notas |
+|---|---|---|
+| Concepto/escena de la imagen | `lib/prep-auditor-prompt.js` → nodo `code-prep-auditor-prompt` | `_conceptMap` deriva el concepto del `copy_text`. `vertical='seguros_servicio'` fuerza escena de asesoría. Sincronizar al JSON con `lib/sync-node-code.py`. |
+| Generación imagen (Ideogram) + OCR | `lib/ideogram-ocr.js` → nodo `code-ideogram-ocr` | `magic_prompt: OFF`. `negative_prompt` prohíbe solo texto legible + anatomía/glamour. |
+| Texto horneado en la imagen (headline, logo, URL) | `deploy/n8n-scripts/compose-image.js` | Solo bloque 1 del copy. Reemplaza `—` por coma. Cambios requieren rebuild de la imagen n8n (`Dockerfile.n8n`). |
+| Caption publicado (LinkedIn member/org, Meta FB/IG) | `telegram-approval.json` (4 builders idénticos) | `[copy, link, hashtags].join`. Limpia `—` y recorta el link a dominio pelado. |
+| Caption preview Telegram | `content-generator.json` (nodo "Telegram — enviar para aprobación") | Misma lógica que los publishers. |
+| copy_text / hashtags / cta_url (datos) | Tabla Postgres `content_plan` | Insertados por `insert-content-plan.py` o SQL en `deploy/sql/`. |
+| Saneo en inserción | `deploy/scripts/insert-content-plan.py` | `sanitize_copy` (— → coma) + `build_cta_url` → `CLEAN_LINK`. |
+
+Reglas de contenido vigentes: **guion largo** nunca (→ coma); **link** siempre
+`https://jaagsolutions.com`; **hashtags** 8-15 keyword-driven sin geo-lock (set seguros
+canónico en `2026-06-17-fix-hashtags-softcta.sql`, sin `#SegurosElSalvador`); **imagen
+seguros** = escena de asesoría, nunca tarjetas-foto.
+
+---
+
+## Problemas Conocidos → Causa → Solución
+
+Auditoría de publicación 2026-06-18 (caso seguros `educacion`, post `ed135115…`,
+publicado OK en LinkedIn + Instagram + Facebook):
+
+| Síntoma | Causa raíz | Solución / dónde |
+|---|---|---|
+| Imagen con "tarjetas-foto" en post de seguros | La regla social del `_conceptMap` ("printed photo cards") ganaba porque el copy decía "LinkedIn", antes de la regla de seguros (corta en la 1.ª coincidencia) | Cortocircuito `vertical='seguros_servicio'` + quitar photo cards del concepto social — `prep-auditor-prompt.js` |
+| Guion largo `—` en captions | `copy_text` traía `—` y ningún punto lo saneaba | Reemplazo a coma en inserción + 5 builders + headline |
+| URL larga con UTMs en el caption | `cta_url` traía `?utm_...#contacto` y se mostraba crudo | Builders recortan `?`/`#`; fuente genera dominio limpio |
+| Hashtag `#SegurosElSalvador` | Set seguros geo-bloqueado en el SQL de hashtags | Set keyword nuevo en `2026-06-17-fix-hashtags-softcta.sql` |
+| Copy decía solo "LinkedIn" | Contenido de la fila (dato) | `Google y LinkedIn` → `Google y redes sociales` (SQL `2026-06-18-...`) |
+| La migración SQL no tocó el post del día | El post estaba en `status='review'`; toda la migración filtra `status='pending'` | Resetear a `pending` y **re-correr** la migración (idempotente) ANTES de regenerar |
+| Import de workflow creó duplicados en n8n | El `id` del JSON no coincidió con el workflow activo; los viejos quedaron `Inactive` | Dejar solo el nuevo `Active`; archivar los `Inactive`. Verificar `id` baked-in vs producción |
+
+**Regenerar un post puntual:** `POST https://n8n.jaagsolutions.com/webhook/regenerate-single`
+con body `{"post_id":"<uuid>"}` (requiere Content Generator **activo**). Antes: poner el
+post en `pending`, limpiar `image_url/retry_count/error_log/telegram_msg_id`, borrar el
+`.jpg` viejo en `/opt/jaagsolutions/content/<id>.jpg`.
+
+### Gotchas de operación (consola)
+
+- La consola **"SSH en el navegador" de GCP ya te deja DENTRO del VPS**: NO ejecutes
+  `ssh jaagsolutions-vps` ahí (abre un SSH anidado a sí mismo). Corre los comandos directo.
+- En **PowerShell local**, las rutas van `C:\...` (no `/c/...`, que es sintaxis Git Bash).
+- `git push jaag2021 feature/jaagsolutions` (local) **antes** del `git pull` en el VPS.
+
+---
+
+## Elementos Obsoletos (NO usar / limpiar)
+
+- **UTMs en `cta_url`** (política 2026-06-17): superseded por dominio limpio (2026-06-18).
+- **"valor sin link"** (regla 2026-06-17): obsoleta; hoy el link va en todo post.
+- Nombre de archivo `2026-06-17-cta-by-posttype-utm.sql`: histórico; su contenido ya
+  NO genera UTMs (genera dominio limpio).
+- Workflows n8n **Inactive** duplicados (Content Generator 16-jun, Telegram Approval
+  17-jun): archivar para no confundir cuál es el vivo.
+- Ya eliminados (no recrear): `modo diagrama`, `build-content-generator.py`,
+  `lib/auditor-system-prompt.md`, `lib/compose-image.js`.
 
 ---
 
