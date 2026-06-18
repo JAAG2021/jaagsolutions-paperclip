@@ -73,7 +73,7 @@ const noPeople = pool.filter(v => !v.p); const withPeople = pool.filter(v => v.p
 const copyLower = (item.copy_text || '').toLowerCase();
 const _imagePromptDB = (item.image_prompt || '').trim();
 const _conceptMap = [
-  { re: /redes sociales|red social|instagram|facebook|linkedin|publicar|publicacion|contenido|seguidores|algoritmo|organico|engagement|social media/, concept: 'planning social content like a human — a person arranging printed photo cards or simple shape stickers on a wall to plan posts, or sketching a content calendar grid by hand using boxes only (no letters or numbers), focused and creative, the act of planning content is the visual' },
+  { re: /redes sociales|red social|instagram|facebook|linkedin|publicar|publicacion|contenido|seguidores|algoritmo|organico|engagement|social media/, concept: 'planning a content strategy like a professional team — a marketer or small group at a modern office sketching a content calendar of empty boxes on a glass board or large notebook (pure boxes, arrows and dots, absolutely no letters or numbers), or arranging plain blank sticky notes in a clean grid on a wall, focused strategic mood, premium corporate editorial. ABSOLUTELY NO literal printed photographs, photo prints, polaroids or photo cards anywhere in the frame — the visual is the act of strategic planning, not photos on a table' },
   { re: /automatiz|workflow|proceso|sistema|flujo|inteligencia artif|integrac|herramienta|ejercicio|antes de/, concept: 'mapping a process by hand BEFORE touching any tool — a person at a table or glass board drawing a simple flow of boxes and arrows using shapes and lines only (absolutely no letters or numbers), thoughtful planning mood, the act of designing the workflow on paper is the hero of the image' },
   { re: /resultado|crecer|crecimiento|venta|cliente|ingreso|roi|escalar|duplicar/, concept: 'tangible business growth — a confident small-business owner standing in their thriving workspace, or reviewing a simple upward hand-drawn curve sketched on paper (a pure line shape, no numbers), warm sense of achievement' },
   { re: /tiempo|ahorra|eficien|productiv|rapido|lento|manual|horas/, concept: 'reclaiming wasted time — a clear before/after feel of a cluttered busy desk transforming into a calm tidy organized workspace, with a clock or hourglass as a prop, the relief of saved time' },
@@ -83,6 +83,13 @@ const _conceptMap = [
 ];
 let _derivedConcept = '';
 for (const { re, concept } of _conceptMap) { if (re.test(copyLower)) { _derivedConcept = concept; break; } }
+// VERTICAL MANDA SOBRE EL COPY: en seguros, la imagen SIEMPRE es la escena de asesoría
+// corporativa (confianza/relación), aunque el copy mencione "LinkedIn/redes sociales"
+// (que de otro modo dispararía el concepto social y arruinaría el tono empresarial).
+if (_vertical === 'seguros_servicio') {
+  const _seg = _conceptMap.find(c => c.re.source.includes('corredor'));
+  if (_seg) _derivedConcept = _seg.concept;
+}
 // El concepto derivado del copy MANDA; el image_prompt del seed solo es fallback.
 const primaryConcept = _derivedConcept
   || (_imagePromptDB && _imagePromptDB.length > 20 ? _imagePromptDB : null)

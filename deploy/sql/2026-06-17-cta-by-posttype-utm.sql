@@ -19,22 +19,17 @@
 
 BEGIN;
 
+-- NOTA 2026-06-18: política de link cambiada a DOMINIO LIMPIO (sin UTMs).
+-- En texto plano de redes los UTMs no aportan atribución y ensucian el copy.
+-- El publisher muestra siempre https://jaagsolutions.com (recorta '?...'/'#...').
 WITH params AS (
   SELECT
-    'https://jaagsolutions.com/'::text AS base,
-    '#contacto'::text                  AS anchor,
+    'https://jaagsolutions.com'::text AS clean_link,
     E'\n\n👉 Agenda tu diagnóstico gratuito de 10 minutos.'::text AS hard_cta
 )
 UPDATE content_plan cp
 SET
-  cta_url =
-    p.base
-    || '?utm_source='  || cp.platform
-    || '&utm_medium=social'
-    || '&utm_campaign=' || cp.pillar
-    || '&utm_content='  || to_char(cp.scheduled_date, 'YYYYMMDD')
-    || '&utm_term='     || cp.post_type
-    || CASE WHEN cp.post_type = 'conversion' THEN p.anchor ELSE '' END,
+  cta_url = p.clean_link,
   copy_text =
     CASE
       WHEN cp.post_type = 'conversion'

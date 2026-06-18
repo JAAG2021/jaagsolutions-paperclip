@@ -41,7 +41,7 @@ WHERE vertical = 'jaagsolutions_core'
   AND scheduled_date >= CURRENT_DATE;
 
 UPDATE content_plan SET hashtags =
-  '#SegurosDigitales #AutomatizaciónSeguros #SegurosElSalvador #TransformaciónDigital #CorredoresDeSeguros #AutomatizaciónEmpresarial #EficienciaOperativa #GestiónDeSeguros #NegociosSV #Seguros #DigitalizaciónSeguros #SegurosLatam #AutomatizaciónPymes'
+  '#Seguros #SegurosDigitales #CorredoresDeSeguros #AutomatizaciónSeguros #GestiónDeSeguros #TransformaciónDigital #AutomatizaciónEmpresarial #EficienciaOperativa #ProductividadEmpresarial #Pymes #Emprendedores #InteligenciaArtificial #SegurosLatam'
 WHERE vertical = 'seguros_servicio'
   AND status = 'pending'
   AND scheduled_date >= CURRENT_DATE;

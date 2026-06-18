@@ -5,6 +5,7 @@
 
 import argparse
 import os
+import re
 import sys
 import uuid
 import psycopg2
@@ -19,23 +20,21 @@ VALID_FORMATS   = ("imagen_copy", "carrusel", "texto_largo", "reel")
 VALID_PILLARS   = ("educacion", "casos_de_uso", "prueba_social", "behind_the_scenes")
 VALID_TYPES     = ("valor", "conversion")
 
-# Destino de conversión: el sitio es one-page, el diagnóstico vive en #contacto.
-# UTMs ANTES del fragment '#' (lo posterior al '#' no llega al servidor/GA).
-SITE_BASE = "https://jaagsolutions.com/"
-DIAG_ANCHOR = "#contacto"
+# Link visible en redes: SIEMPRE el dominio limpio, sin UTMs ni fragment.
+# Decisión 2026-06-18: en texto plano los UTMs no aportan atribución y ensucian
+# el copy; el publisher además recorta '?...'/'#...'. Por eso el link es la home.
+CLEAN_LINK = "https://jaagsolutions.com"
 HARD_CTA = "👉 Agenda tu diagnóstico gratuito de 10 minutos."
 
 
+def sanitize_copy(text):
+    """Política JAAGSOLUTIONS: nunca publicar guion largo/medio. '—'/'–' -> coma."""
+    return re.sub(r"\s*[—–]\s*", ", ", text or "")
+
+
 def build_cta_url(platform, pillar, post_type, date):
-    """cta_url con UTMs. Conversión apunta a #contacto; valor a la home."""
-    qs = (
-        f"?utm_source={platform}&utm_medium=social"
-        f"&utm_campaign={pillar}"
-        f"&utm_content={date.replace('-', '')}"
-        f"&utm_term={post_type}"
-    )
-    anchor = DIAG_ANCHOR if post_type == "conversion" else ""
-    return SITE_BASE + qs + anchor
+    """Link limpio para todos los posts (sin UTMs). Firma estable por compat."""
+    return CLEAN_LINK
 
 def main():
     p = argparse.ArgumentParser(description="Insertar post en content_plan")
@@ -57,7 +56,7 @@ def main():
     )
 
     # CTA dura en el copy para posts de conversión (si no está ya presente).
-    copy_text = args.copy
+    copy_text = sanitize_copy(args.copy)
     if args.post_type == "conversion" and "Agenda tu diagnóstico" not in copy_text:
         copy_text = copy_text.rstrip() + "\n\n" + HARD_CTA
 
