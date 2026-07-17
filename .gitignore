@@ -57,3 +57,7 @@ deploy/.env
 
 # Git worktrees
 .worktrees/
+
+# Python cache
+__pycache__/
+*.pyc
