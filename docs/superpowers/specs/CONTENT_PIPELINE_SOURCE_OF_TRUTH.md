@@ -237,9 +237,12 @@ El caption final se arma en el publisher (`telegram-approval.json`, 4 builders i
 y en el preview de Telegram (`content-generator.json`) como
 `[copy_text, link, hashtags].join('\n\n')`. Reglas vigentes:
 
-- **Link en TODO post** (valor y conversion). El builder añade el link salvo que el
-  copy ya lo contenga (`showCta = cta && !copy.includes(cta)`). **NO** depende de
-  `post_type` (la regla anterior "valor sin link" quedó obsoleta).
+- **Link SOLO en `post_type='conversion'`** (actualizado 2026-07-17 — SPLIT POR FUNNEL).
+  El builder añade el link únicamente en conversion:
+  `showCta = post.post_type === 'conversion' && cta && !copy.includes(cta)` (en el
+  preview de content-generator la fila es `$json`). Los posts **`valor` publican
+  `[copy, hashtags]` sin link** (optimizan alcance/engagement; conservan su soft-CTA de
+  comentarios). Un post = una sola acción. ⟵ REEMPLAZA "link en todo post" del 2026-06-18.
 - **El link visible es SIEMPRE `https://jaagsolutions.com`**. Los builders recortan
   `?...` y `#...` del `cta_url` antes de mostrarlo: aunque la fila traiga UTMs o
   `#contacto`, en pantalla sale el dominio pelado.
@@ -286,8 +289,8 @@ Tabla única de "quién genera qué" (para no recorrer archivos):
 | Concepto/escena de la imagen | `lib/prep-auditor-prompt.js` → nodo `code-prep-auditor-prompt` | `_conceptMap` deriva el concepto del `copy_text`. `vertical='seguros_servicio'` fuerza escena de asesoría. Sincronizar al JSON con `lib/sync-node-code.py`. |
 | Generación imagen (Ideogram) + OCR | `lib/ideogram-ocr.js` → nodo `code-ideogram-ocr` | `magic_prompt: OFF`. `negative_prompt` prohíbe solo texto legible + anatomía/glamour. |
 | Texto horneado en la imagen (headline, logo, URL) | `deploy/n8n-scripts/compose-image.js` | Solo bloque 1 del copy. Reemplaza `—` por coma. Cambios requieren rebuild de la imagen n8n (`Dockerfile.n8n`). |
-| Caption publicado (LinkedIn member/org, Meta FB/IG) | `telegram-approval.json` (4 builders idénticos) | `[copy, link, hashtags].join`. Limpia `—` y recorta el link a dominio pelado. |
-| Caption preview Telegram | `content-generator.json` (nodo "Telegram — enviar para aprobación") | Misma lógica que los publishers. |
+| Caption publicado (LinkedIn member/org, Meta FB/IG) | `telegram-approval.json` (4 builders idénticos) | `[copy, link, hashtags].join`. Limpia `—` y recorta el link a dominio pelado. **Link solo si `post_type='conversion'`** (split por funnel, 2026-07-17). |
+| Caption preview Telegram | `content-generator.json` (nodo "Telegram — enviar para aprobación") | Misma lógica que los publishers (link solo en conversion; la fila es `$json`). |
 | copy_text / hashtags / cta_url (datos) | Tabla Postgres `content_plan` | Insertados por `insert-content-plan.py` o SQL en `deploy/sql/`. |
 | Saneo en inserción | `deploy/scripts/insert-content-plan.py` | `sanitize_copy` (— → coma) + `build_cta_url` → `CLEAN_LINK`. |
 
@@ -344,11 +347,22 @@ flujo (reset → normalizar contenido → borrar jpg → disparar webhook).
 ## Elementos Obsoletos (NO usar / limpiar)
 
 - **UTMs en `cta_url`** (política 2026-06-17): superseded por dominio limpio (2026-06-18).
-- **"valor sin link"** (regla 2026-06-17): obsoleta; hoy el link va en todo post.
+- **"link en todo post"** (regla 2026-06-18): superseded por **split por funnel**
+  (2026-07-17): link SOLO en `conversion`, `valor` sin link. Ver "Link y CTA".
 - Nombre de archivo `2026-06-17-cta-by-posttype-utm.sql`: histórico; su contenido ya
   NO genera UTMs (genera dominio limpio).
-- Workflows n8n **Inactive** duplicados (Content Generator 16-jun, Telegram Approval
-  17-jun): archivar para no confundir cuál es el vivo.
+- **Content Generator — duplicado RESUELTO 2026-07-17**: la auditoría encontró que el
+  workflow ACTIVO era un duplicado congelado `v9UQ8ubdYv6htihI` (creado 06-18 13:34),
+  mientras el canónico `FjeJW9Qb8vNiDwz5` (última edición 06-18 14:23, con el preview y las
+  correcciones buenas) estaba **inactivo**. Es decir: desde el 18-jun corría la versión
+  vieja. Consolidado: se desactivó y renombró el dup a `ZZ_OBSOLETE - Content Generator
+  (dup 06-18...)`, se reimportó el repo al canónico `FjeJW9Qb8vNiDwz5` (recupera las 31
+  sticky notes que el live había perdido) y se reactivó. **Único Content Generator activo =
+  `FjeJW9Qb8vNiDwz5`.** Lección: `n8n import` matchea por `id` baked-in; si el activo no es
+  ese `id`, el import actualiza el inactivo y el cambio no surte efecto. Verificar SIEMPRE
+  el activo por API (`GET /workflows?limit=50`, campo `active`) antes de importar.
+- Workflows n8n **Inactive** duplicados (Telegram Approval 17-jun): archivar para no
+  confundir cuál es el vivo.
 - **Telegram Approval → Publisher tiene 3 copias `Inactive` adicionales** encontradas en
   la auditoría 2026-07-17: `KkMSaxsZ2KFZopzU` (el que este doc daba por canónico, ya no
   lo es), `mu4Wqrrwk17hKbSk`, `J4NE9LD2lOidvnKd`. El único `Active` con el webhook

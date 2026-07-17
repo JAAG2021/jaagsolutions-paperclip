@@ -164,6 +164,10 @@ consistencia visual de marca.
 
 - **Re-import de workflows crea duplicados** si el `id` no coincide con el activo. Mitigación:
   verificar `id` activo contra `webhook_entity` antes de importar (ver SOURCE_OF_TRUTH).
+  **[Materializado 2026-07-17]** El Content Generator activo era un duplicado congelado
+  (`v9UQ8ubdYv6htihI`) y el canónico (`FjeJW9Qb8vNiDwz5`) estaba inactivo desde el 18-jun.
+  Se consolidó antes de importar: dup desactivado+renombrado `ZZ_OBSOLETE`, canónico
+  reimportado y reactivado. Único CG activo = `FjeJW9Qb8vNiDwz5`.
 - **Rebuild de imagen n8n** (W3) requiere `Dockerfile.n8n` + reinicio; coordinar ventana.
 - **Regla superseded que revive:** W2 reactiva "valor sin link". Documentar bien para que
   una auditoría futura no la vuelva a marcar obsoleta por error.
