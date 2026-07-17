@@ -93,9 +93,11 @@ Cambiar la construcción del caption para que el **link se agregue solo en `conv
 (pilar que la estrategia original asignó a texto largo con gancho).
 
 **Render.** `deploy/n8n-scripts/compose-image.js`: si `format === 'texto_largo'`,
-**omitir el bloque `<text>` del headline horneado**. Se conserva logo + barra dorada +
-URL (imagen de marca limpia). El resto del overlay (gradientes) se mantiene o se simplifica
-para que no quede una caja vacía. Requiere rebuild de la imagen n8n (`Dockerfile.n8n`).
+**omitir el bloque `<text>` del headline horneado y su barra dorada asociada** (la barra
+va justo encima del headline). Se conserva el logo arriba y la URL abajo (imagen de marca
+limpia). El gradiente inferior (`bottomFade`) se **atenúa o elimina** para esta rama, ya
+que sin headline no cubre texto y una caja oscura vacía se vería mal. Requiere rebuild de
+la imagen n8n (`Dockerfile.n8n`).
 
 **Copy.** Los `texto_largo` se reescriben como narrativa: **gancho fuerte en la línea 1**
 (lo que LinkedIn muestra antes de "ver más") → desarrollo/historia → insight → cierre
