@@ -1,6 +1,7 @@
 # Corrección del pipeline de contenido LinkedIn — JAAGSOLUTIONS
 
-**Estado:** Aprobado (diseño) — 2026-07-17
+**Estado:** ✅ IMPLEMENTADO — 2026-07-17 (aplicado en producción y verificado; ver plan
+`docs/superpowers/plans/2026-07-17-linkedin-pipeline-correction.md`)
 **Autor:** Juan (inverjaag) + agente
 **Alcance:** Operación de contenido JAAGSOLUTIONS en n8n (`content_plan` + workflows).
 **Doc canónico relacionado:** `docs/superpowers/specs/CONTENT_PIPELINE_SOURCE_OF_TRUTH.md` (se actualiza como parte de esta corrección).

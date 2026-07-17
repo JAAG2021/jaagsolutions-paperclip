@@ -341,6 +341,12 @@ flujo (reset → normalizar contenido → borrar jpg → disparar webhook).
   `ssh jaagsolutions-vps` ahí (abre un SSH anidado a sí mismo). Corre los comandos directo.
 - En **PowerShell local**, las rutas van `C:\...` (no `/c/...`, que es sintaxis Git Bash).
 - `git push jaag2021 feature/jaagsolutions` (local) **antes** del `git pull` en el VPS.
+- **Rebuild de la imagen n8n** (`docker compose build n8n && docker compose up -d n8n`):
+  recrea el container. Verificado 2026-07-17: **tras el `up -d`, el Content Generator
+  puede quedar `active=false`** (n8n no re-registró su trigger al bootear). Reactivarlo
+  por API (`POST /workflows/<id>/activate`) y confirmar con `GET /workflows?limit=50`.
+  El volumen sqlite persiste, así que los workflows/estados no se pierden salvo este
+  quirk de re-activación.
 
 ---
 
