@@ -118,7 +118,7 @@ deploy/sql/2026-05-25-seed-content-plan-operational-agenda.sql
 Ese archivo es idempotente y solo sirve para poblar `content_plan`. Despues de
 ejecutarlo, la fuente de verdad vuelve a ser exclusivamente la tabla.
 
-Cadencia vigente desde 2026-05-25 hasta 2026-07-31:
+Cadencia vigente desde 2026-07-17 (core-only):
 
 ```text
 Core JAAGSOLUTIONS (vertical='jaagsolutions_core'):
@@ -126,10 +126,14 @@ Core JAAGSOLUTIONS (vertical='jaagsolutions_core'):
   Miercoles 10:00
   Viernes  16:00
 
-Seguros JAAGSOLUTIONS (vertical='seguros_servicio') — desde 2026-06-16:
-  Martes   10:00  (carril propio, no toca el core)
-  Jueves   10:00  (ACTIVO desde 2026-06-18 — expansion aprobada tras piloto OK)
-  Lote cargado: 18-jun a 14-jul 2026 (8 piezas imagen_copy, embudo A/B/C + conversion).
+Seguros JAAGSOLUTIONS (vertical='seguros_servicio') — PAUSADO desde 2026-07-17:
+  Motivo: expansion horizontal prematura. Segundo ICP (corredores de seguros)
+  sobre el perfil personal con alcance minimo y sin resultados; diluia la senal
+  del perfil y sumaba deuda tecnica. El lote 18-jun a 14-jul 2026 (8 piezas) se
+  agoto y NO se recarga. No hay carril Martes/Jueves.
+  Codigo dormido (columna `vertical`, constraint y cortocircuito en
+  prep-auditor-prompt.js se conservan) — reactivable en el futuro, idealmente como
+  canal/pagina propia, no mezclado en el perfil personal core.
 ```
 
 La agenda usa `platform = 'meta'` porque el workflow oficial publica primero en
@@ -351,6 +355,9 @@ flujo (reset → normalizar contenido → borrar jpg → disparar webhook).
   El nodo `¿LinkedIn Org configurado?` la salta cuando está vacío para no generar alertas
   falsas, pero eso significa que hoy **no se publica en la página/organización de LinkedIn**,
   solo en el perfil personal (`LINKEDIN_AUTHOR_URN`).
+- **Carril de seguros (vertical='seguros_servicio')**: PAUSADO 2026-07-17. No recargar el
+  carril Martes/Jueves. Ver "Entrada De Contenido → Cadencia". Codigo conservado pero
+  inactivo (no habra filas nuevas con ese vertical). Verificado 2026-07-17: 0 filas pending.
 - Ya eliminados (no recrear): `modo diagrama`, `build-content-generator.py`,
   `lib/auditor-system-prompt.md`, `lib/compose-image.js`.
 
