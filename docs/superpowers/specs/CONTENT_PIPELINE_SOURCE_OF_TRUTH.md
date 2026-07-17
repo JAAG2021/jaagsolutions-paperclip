@@ -292,9 +292,12 @@ Tabla única de "quién genera qué" (para no recorrer archivos):
 | Saneo en inserción | `deploy/scripts/insert-content-plan.py` | `sanitize_copy` (— → coma) + `build_cta_url` → `CLEAN_LINK`. |
 
 Reglas de contenido vigentes: **guion largo** nunca (→ coma); **link** siempre
-`https://jaagsolutions.com`; **hashtags** 8-15 keyword-driven sin geo-lock (set seguros
-canónico en `2026-06-17-fix-hashtags-softcta.sql`, sin `#SegurosElSalvador`); **imagen
-seguros** = escena de asesoría, nunca tarjetas-foto.
+`https://jaagsolutions.com`; **hashtags** 3-5 temáticos globales, **sin geo-lock**
+(nada de `#PymesSV`/`#NegociosSV`/`#SegurosElSalvador`: el mercado es pan-hispano
+LATAM+España, no un país; tampoco ultra-genéricos que ahogan entre millones). Set
+canónico en `2026-07-17-hashtags-3-5.sql` (supersede el 8-15 de
+`2026-06-17-fix-hashtags-softcta.sql`); **imagen seguros** = escena de asesoría,
+nunca tarjetas-foto.
 
 ---
 
@@ -355,6 +358,9 @@ flujo (reset → normalizar contenido → borrar jpg → disparar webhook).
   El nodo `¿LinkedIn Org configurado?` la salta cuando está vacío para no generar alertas
   falsas, pero eso significa que hoy **no se publica en la página/organización de LinkedIn**,
   solo en el perfil personal (`LINKEDIN_AUTHOR_URN`).
+- **Set de hashtags 8-15** (`2026-06-17-fix-hashtags-softcta.sql`) y los tags con geo-lock
+  `#PymesSV`/`#NegociosSV`: superseded por 3-5 temáticos globales sin geo
+  (`2026-07-17-hashtags-3-5.sql`, 2026-07-17).
 - **Carril de seguros (vertical='seguros_servicio')**: PAUSADO 2026-07-17. No recargar el
   carril Martes/Jueves. Ver "Entrada De Contenido → Cadencia". Codigo conservado pero
   inactivo (no habra filas nuevas con ese vertical). Verificado 2026-07-17: 0 filas pending.

@@ -13,7 +13,7 @@
 - Toda migración SQL es **idempotente** y solo toca `status='pending' AND scheduled_date >= CURRENT_DATE`. Verbatim del spec.
 - **Nunca publicar em dash** `—`/`–` → coma (defensa en profundidad ya existente; no romperla).
 - **Link visible siempre** `https://jaagsolutions.com` (dominio limpio, sin UTMs).
-- **Hashtags:** 3-5 por pieza (regla nueva; reemplaza "8-15").
+- **Hashtags:** 3-5 por pieza, temáticos globales **sin geo-lock** (nada de `#PymesSV`/`#NegociosSV`; mercado pan-hispano LATAM+España). Regla nueva; reemplaza "8-15".
 - **Un CTA por post:** `valor` = engagement sin link; `conversion` = link + CTA duro sin comment-bait.
 - **Carrusel FUERA de alcance.** `texto_largo` = imagen de marca sin headline (no texto puro).
 - **Import de workflows:** verificar el `id` activo contra `webhook_entity` antes de importar; el `id` baked-in del JSON debe coincidir con el workflow activo (Content Generator `FjeJW9Qb8vNiDwz5`, Telegram Approval `KduOBXYi3tuDG3fZ`). Ver `CONTENT_PIPELINE_SOURCE_OF_TRUTH.md`.
@@ -123,7 +123,8 @@ Create `deploy/sql/2026-07-17-hashtags-3-5.sql`:
 
 ```sql
 -- deploy/sql/2026-07-17-hashtags-3-5.sql
--- Hashtags 3-5 de nicho (revierte el set 12-13 de 2026-06-17-fix-hashtags-softcta.sql).
+-- Hashtags 3-5 temáticos globales sin geo-lock (revierte el set 12-13 de
+-- 2026-06-17-fix-hashtags-softcta.sql). Mercado pan-hispano LATAM+España.
 -- Idempotente: solo filas pending >= hoy.
 -- Ejecutar dentro del container postgres deploy-postgres-1.
 
@@ -131,7 +132,7 @@ BEGIN;
 
 -- core generico (educacion, behind_the_scenes) — post_type valor
 UPDATE content_plan SET hashtags =
-  '#PymesSV #AutomatizaciónPymes #TransformaciónDigital'
+  '#AutomatizaciónPymes #TransformaciónDigital #ProductividadPymes'
 WHERE vertical = 'jaagsolutions_core'
   AND pillar IN ('educacion','behind_the_scenes')
   AND post_type = 'valor'
@@ -139,7 +140,7 @@ WHERE vertical = 'jaagsolutions_core'
 
 -- casos_de_uso / prueba_social — post_type valor
 UPDATE content_plan SET hashtags =
-  '#AutomatizaciónPymes #CasosDeÉxito #PymesSV'
+  '#AutomatizaciónPymes #CasosDeÉxito #TransformaciónDigital'
 WHERE vertical = 'jaagsolutions_core'
   AND pillar IN ('casos_de_uso','prueba_social')
   AND post_type = 'valor'
@@ -147,7 +148,7 @@ WHERE vertical = 'jaagsolutions_core'
 
 -- cualquier conversion (independiente del pilar)
 UPDATE content_plan SET hashtags =
-  '#AutomatizaciónPymes #TransformaciónDigital #PymesSV #NegociosSV'
+  '#AutomatizaciónPymes #TransformaciónDigital #Emprendedores #Pymes'
 WHERE vertical = 'jaagsolutions_core'
   AND post_type = 'conversion'
   AND status = 'pending' AND scheduled_date >= CURRENT_DATE;

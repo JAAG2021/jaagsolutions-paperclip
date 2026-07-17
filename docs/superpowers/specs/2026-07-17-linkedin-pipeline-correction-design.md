@@ -51,14 +51,15 @@ link en primer comentario, `texto_largo` como texto puro sin imagen, separar INV
 ### W1 · Hashtags → 3-5
 
 Nuevo SQL idempotente `deploy/sql/2026-07-17-hashtags-3-5.sql` que sobrescribe `hashtags`
-en filas `status='pending' AND scheduled_date >= CURRENT_DATE`. Sets de nicho (dueños de
-PYME en El Salvador siguen estos tags):
+en filas `status='pending' AND scheduled_date >= CURRENT_DATE`. Sets **temáticos globales
+sin geo-lock** (mercado pan-hispano LATAM+España, no un país; y sin ultra-genéricos que
+ahogan entre millones de posts):
 
 | Segmento | Hashtags (3-5) |
 |---|---|
-| core genérico (`educacion`, `behind_the_scenes`) | `#PymesSV #AutomatizaciónPymes #TransformaciónDigital` |
-| `casos_de_uso` / `prueba_social` | `#AutomatizaciónPymes #CasosDeÉxito #PymesSV` |
-| `post_type='conversion'` | `#AutomatizaciónPymes #TransformaciónDigital #PymesSV #NegociosSV` |
+| core genérico (`educacion`, `behind_the_scenes`) | `#AutomatizaciónPymes #TransformaciónDigital #ProductividadPymes` |
+| `casos_de_uso` / `prueba_social` | `#AutomatizaciónPymes #CasosDeÉxito #TransformaciónDigital` |
+| `post_type='conversion'` | `#AutomatizaciónPymes #TransformaciónDigital #Emprendedores #Pymes` |
 
 - `compose-image.js` ya recorta a 4 (`shortenHashtags`) — no se toca ahí.
 - **No** se define set de seguros nuevo (el vertical se pausa; W4).
