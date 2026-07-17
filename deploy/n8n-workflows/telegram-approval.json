@@ -1151,6 +1151,195 @@
         "height": 220,
         "width": 320
       }
+    },
+    {
+      "id": "8cd9fcef-1b5b-4f41-83b4-005758c0f9d3",
+      "name": "¿LinkedIn Org configurado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3280,
+        380
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "check-org-urn",
+              "leftValue": "={{ $env.LINKEDIN_ORGANIZATION_URN }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "47a8415d-4688-4213-934d-ab22d546de56",
+      "name": "Detectar fallo LinkedIn",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4160,
+        380
+      ],
+      "parameters": {
+        "jsCode": "const post = $('Obtener datos del post').first().json;\nconst errors = [];\n\nconst personal = $('LinkedIn — publicar post').first().json;\nif (personal && personal.error) {\n  const e = personal.error;\n  errors.push('Personal: ' + (typeof e === 'string' ? e : (e.message || JSON.stringify(e))));\n}\n\nlet org = null;\ntry {\n  org = $('LinkedIn Org — publicar post').first().json;\n} catch (e) {\n  org = null; // rama Org no se ejecuto (LINKEDIN_ORGANIZATION_URN vacio) - no es un fallo\n}\nif (org && org.error) {\n  const e = org.error;\n  errors.push('Org: ' + (typeof e === 'string' ? e : (e.message || JSON.stringify(e))));\n}\n\nreturn [{\n  json: {\n    id: post.id,\n    scheduled_date: post.scheduled_date,\n    scheduled_time: post.scheduled_time,\n    pillar: post.pillar,\n    linkedin_ok: errors.length === 0,\n    error_detail: errors.join(' | '),\n  }\n}];"
+      }
+    },
+    {
+      "id": "ed67e239-b899-46c8-a841-b9640f122499",
+      "name": "¿LinkedIn OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4380,
+        380
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "check-linkedin-ok",
+              "leftValue": "={{ String($json.linkedin_ok) }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "a2d2d4f1-6987-4f8b-864d-caccd37dac69",
+      "name": "status = error (LinkedIn)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        4600,
+        460
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE content_plan SET status = 'error', error_log = $li${{ $json.error_detail }}$li$ WHERE id = '{{ $('Parsear callback').first().json.post_id }}' RETURNING id, scheduled_date, scheduled_time, platform, pillar, status, error_log",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "3WAwEY7SXDBTW16f",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "id": "c3404d34-bc08-49c7-8ef7-38b7384f85c3",
+      "name": "Telegram — 🚨 LinkedIn falló",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4820,
+        460
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $env.TELEGRAM_CHAT_ID, text: '🚨 LinkedIn NO publico (Meta OK)\\n' + 'Fecha: ' + ($json.scheduled_date || '') + ' ' + ($json.scheduled_time || '') + '\\n' + 'Pilar: ' + ($json.pillar || '') + '\\n' + 'ID: ' + ($json.id || '') + '\\n' + 'Detalle: ' + ($json.error_detail || '') + '\\n\\n' + 'Accion: revisar/renovar LINKEDIN_ACCESS_TOKEN y republicar manualmente en LinkedIn.' }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "¿LinkedIn Org configurado?",
+      "name": "Nota 29 - ¿LinkedIn Org configurado?",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3280,
+        620
+      ],
+      "parameters": {
+        "content": "## Paso 29\n\n**¿LinkedIn Org configurado?**\n\nSi LINKEDIN_ORGANIZATION_URN esta vacio, salta la rama Org (que fallaria con owner vacio) y va directo a Detectar fallo LinkedIn. Evita alertas falsas por una rama no configurada.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "Detectar fallo LinkedIn",
+      "name": "Nota 30 - Detectar fallo LinkedIn",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4160,
+        620
+      ],
+      "parameters": {
+        "content": "## Paso 30\n\n**Detectar fallo LinkedIn**\n\nInspecciona el resultado real de LinkedIn — publicar post (y LinkedIn Org — publicar post si corrio) buscando el campo error que dejan los nodos con continueOnFail. Antes de este nodo, un token expirado o cualquier fallo de LinkedIn se marcaba como published igual porque status = published corria sin condicion.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "¿LinkedIn OK?",
+      "name": "Nota 31 - ¿LinkedIn OK?",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4380,
+        620
+      ],
+      "parameters": {
+        "content": "## Paso 31\n\n**¿LinkedIn OK?**\n\nSi linkedin_ok es true continua al camino feliz (status = published). Si es false, el post ya salio en Meta pero LinkedIn fallo: se marca error en vez de published para que quede visible en las consultas de 'Estados atascados' y en el monitor 08:15.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "status = error (LinkedIn)",
+      "name": "Nota 32 - status = error (LinkedIn)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4600,
+        720
+      ],
+      "parameters": {
+        "content": "## Paso 32\n\n**status = error (LinkedIn)**\n\nMarca el post como error con el detalle del fallo de LinkedIn en error_log. No toca published_at: Meta ya publico, solo LinkedIn quedo pendiente de republicar.",
+        "height": 220,
+        "width": 320
+      }
+    },
+    {
+      "id": "Telegram — 🚨 LinkedIn falló",
+      "name": "Nota 33 - Telegram — 🚨 LinkedIn falló",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4820,
+        720
+      ],
+      "parameters": {
+        "content": "## Paso 33\n\n**Telegram: alerta LinkedIn fallo**\n\nAvisa de inmediato por Telegram cuando LinkedIn no publico, en vez de depender solo del monitor de las 08:15. Indica que Meta ya salio y que falta LinkedIn.",
+        "height": 220,
+        "width": 320
+      }
     }
   ],
   "connections": {
@@ -1356,7 +1545,7 @@
       "main": [
         [
           {
-            "node": "LinkedIn Org — register upload",
+            "node": "¿LinkedIn Org configurado?",
             "type": "main",
             "index": 0
           }
@@ -1400,7 +1589,7 @@
       "main": [
         [
           {
-            "node": "status = published",
+            "node": "Detectar fallo LinkedIn",
             "type": "main",
             "index": 0
           }
@@ -1450,14 +1639,73 @@
           }
         ]
       ]
+    },
+    "¿LinkedIn Org configurado?": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn Org — register upload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Detectar fallo LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detectar fallo LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "¿LinkedIn OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿LinkedIn OK?": {
+      "main": [
+        [
+          {
+            "node": "status = published",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "status = error (LinkedIn)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "status = error (LinkedIn)": {
+      "main": [
+        [
+          {
+            "node": "Telegram — 🚨 LinkedIn falló",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
   "meta": {
     "templateCredsSetupCompleted": false
   },
-  "tags": []
+  "tags": [],
+  "id": "KduOBXYi3tuDG3fZ"
 }

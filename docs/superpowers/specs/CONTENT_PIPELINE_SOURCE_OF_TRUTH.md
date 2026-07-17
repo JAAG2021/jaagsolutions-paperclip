@@ -40,8 +40,17 @@ Cada JSON oficial lleva un campo `id` fijo que coincide con el workflow en n8n p
 | Workflow | `id` n8n |
 |---|---|
 | Content Generator | `FjeJW9Qb8vNiDwz5` |
-| Telegram Approval → Publisher | `KkMSaxsZ2KFZopzU` |
+| Telegram Approval → Publisher | `KduOBXYi3tuDG3fZ` |
 | Formspree Lead → Paperclip Issue | `wGBj1gkmy1JoBfGP` |
+
+> ⚠️ **Corregido 2026-07-17:** el `id` de Telegram Approval → Publisher documentado antes
+> (`KkMSaxsZ2KFZopzU`) estaba **desactualizado** y ya no es el workflow activo. Auditoria
+> encontro 4 copias con el mismo nombre en la instancia (`KkMSaxsZ2KFZopzU`, `mu4Wqrrwk17hKbSk`,
+> `J4NE9LD2lOidvnKd`, `KduOBXYi3tuDG3fZ`); solo `KduOBXYi3tuDG3fZ` esta activo y tiene el
+> webhook `telegram-approval` (verificado en `webhook_entity`). Las otras 3 son duplicados
+> **Inactive** pendientes de archivar (ver "Elementos Obsoletos"). Si vas a editar este
+> workflow, verifica primero contra `webhook_entity`/`docker exec deploy-n8n-1 n8n list:workflow`
+> cual id esta realmente activo antes de asumir el de esta tabla.
 
 Con el `id` baked-in, `n8n import:workflow --input=<archivo>.json` **actualiza el workflow existente**, no crea copias.
 
@@ -299,6 +308,7 @@ publicado OK en LinkedIn + Instagram + Facebook):
 | Copy decía solo "LinkedIn" | Contenido de la fila (dato) | `Google y LinkedIn` → `Google y redes sociales` (SQL `2026-06-18-...`) |
 | La migración SQL no tocó el post del día | El post estaba en `status='review'`; toda la migración filtra `status='pending'` | Resetear a `pending` y **re-correr** la migración (idempotente) ANTES de regenerar |
 | Import de workflow creó duplicados en n8n | El `id` del JSON no coincidió con el workflow activo; los viejos quedaron `Inactive` | Dejar solo el nuevo `Active`; archivar los `Inactive`. Verificar `id` baked-in vs producción |
+| Post marcado `published` en `content_plan` pero NUNCA salió en LinkedIn (solo Meta) | `LINKEDIN_ACCESS_TOKEN` expiró (401 `EXPIRED_ACCESS_TOKEN`, token OAuth de ~60 días sin renovar desde 2026-05-17). Todos los nodos de publicación LinkedIn tienen `continueOnFail: true` (desde `594ecd9f7`) y `status = published` corría sin condición después de la cadena LinkedIn, sin verificar si esta había fallado | Fix 2026-07-17: nodos `¿LinkedIn Org configurado?` → `Detectar fallo LinkedIn` → `¿LinkedIn OK?` insertados antes de `status = published`. Si LinkedIn falla, el post pasa a `status='error'` con el detalle en `error_log` (así lo agarra el monitor 08:15) y se dispara `Telegram — 🚨 LinkedIn falló` de inmediato. Renovar el token en LinkedIn Developer Portal (OAuth 2.0) y actualizar `LINKEDIN_ACCESS_TOKEN` en `deploy/.env` del VPS; no hay renovación automática configurada |
 
 **Regenerar un post puntual:** `POST https://n8n.jaagsolutions.com/webhook/regenerate-single`
 con body `{"post_id":"<uuid>"}` (requiere Content Generator **activo**). Antes: poner el
@@ -332,6 +342,15 @@ flujo (reset → normalizar contenido → borrar jpg → disparar webhook).
   NO genera UTMs (genera dominio limpio).
 - Workflows n8n **Inactive** duplicados (Content Generator 16-jun, Telegram Approval
   17-jun): archivar para no confundir cuál es el vivo.
+- **Telegram Approval → Publisher tiene 3 copias `Inactive` adicionales** encontradas en
+  la auditoría 2026-07-17: `KkMSaxsZ2KFZopzU` (el que este doc daba por canónico, ya no
+  lo es), `mu4Wqrrwk17hKbSk`, `J4NE9LD2lOidvnKd`. El único `Active` con el webhook
+  `telegram-approval` real es `KduOBXYi3tuDG3fZ`. Pendiente: archivar las 3 inactivas.
+- `LINKEDIN_ORGANIZATION_URN` está **vacío** en `deploy/.env` de producción (2026-07-17):
+  la rama "LinkedIn Org — publicar post" no puede funcionar hasta que se cargue ese valor.
+  El nodo `¿LinkedIn Org configurado?` la salta cuando está vacío para no generar alertas
+  falsas, pero eso significa que hoy **no se publica en la página/organización de LinkedIn**,
+  solo en el perfil personal (`LINKEDIN_AUTHOR_URN`).
 - Ya eliminados (no recrear): `modo diagrama`, `build-content-generator.py`,
   `lib/auditor-system-prompt.md`, `lib/compose-image.js`.
 
