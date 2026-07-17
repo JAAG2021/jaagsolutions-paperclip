@@ -288,7 +288,7 @@ Tabla única de "quién genera qué" (para no recorrer archivos):
 |---|---|---|
 | Concepto/escena de la imagen | `lib/prep-auditor-prompt.js` → nodo `code-prep-auditor-prompt` | `_conceptMap` deriva el concepto del `copy_text`. `vertical='seguros_servicio'` fuerza escena de asesoría. Sincronizar al JSON con `lib/sync-node-code.py`. |
 | Generación imagen (Ideogram) + OCR | `lib/ideogram-ocr.js` → nodo `code-ideogram-ocr` | `magic_prompt: OFF`. `negative_prompt` prohíbe solo texto legible + anatomía/glamour. |
-| Texto horneado en la imagen (headline, logo, URL) | `deploy/n8n-scripts/compose-image.js` | Solo bloque 1 del copy. Reemplaza `—` por coma. Cambios requieren rebuild de la imagen n8n (`Dockerfile.n8n`). |
+| Texto horneado en la imagen (headline, logo, URL) | `deploy/n8n-scripts/compose-image.js` | Solo bloque 1 del copy. Reemplaza `—` por coma. **Si `format='texto_largo'`: se OMITE el headline + barra dorada + gradiente inferior; queda solo logo (arriba) + URL (abajo)** = imagen de marca limpia (el mensaje lo carga el caption, con gancho en línea 1). Cambios requieren rebuild de la imagen n8n (`Dockerfile.n8n`). |
 | Caption publicado (LinkedIn member/org, Meta FB/IG) | `telegram-approval.json` (4 builders idénticos) | `[copy, link, hashtags].join`. Limpia `—` y recorta el link a dominio pelado. **Link solo si `post_type='conversion'`** (split por funnel, 2026-07-17). |
 | Caption preview Telegram | `content-generator.json` (nodo "Telegram — enviar para aprobación") | Misma lógica que los publishers (link solo en conversion; la fila es `$json`). |
 | copy_text / hashtags / cta_url (datos) | Tabla Postgres `content_plan` | Insertados por `insert-content-plan.py` o SQL en `deploy/sql/`. |
