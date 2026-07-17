@@ -11,11 +11,17 @@
 BEGIN;
 
 -- (A) Cancelar el post de seguros en review (seguros pausado). Deja rastro en error_log.
+-- NOTA 2026-07-17: tras esto, la fila se BORRÓ del todo (DELETE) porque seguía teniendo
+-- un mensaje de Telegram con botón "Aprobar" vivo; con status='error' el webhook aún
+-- podía publicarla si se tocaba el botón. Borrarla hace que el webhook no la encuentre.
+-- Se deja el UPDATE por historia; en una DB recreada la fila no existirá.
 UPDATE content_plan
 SET status = 'error',
     error_log = 'Cancelado 2026-07-17: vertical seguros_servicio PAUSADO (no publicar pieza suelta de seguros).'
 WHERE id = '47996626-b239-4e4c-b0b9-f975c9a9c83b'
   AND status = 'review';
+
+DELETE FROM content_plan WHERE id = '47996626-b239-4e4c-b0b9-f975c9a9c83b';
 
 -- (B) Quitar el soft-CTA generico agregado ("...Cuéntanos en los comentarios.") del
 --     final del copy en los valor pendientes que ademas ya traen su pregunta original.
