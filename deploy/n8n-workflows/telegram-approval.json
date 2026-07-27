@@ -584,7 +584,7 @@
         "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/editMessageCaption",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ chat_id: $('Parsear callback').first().json.chat_id, message_id: $('Parsear callback').first().json.message_id, caption: '✅ Publicado en ' + $('Obtener datos del post').first().json.platform.toUpperCase() + '\\n📅 ' + new Date($('Obtener datos del post').first().json.scheduled_date + 'T12:00:00').toLocaleDateString('es-CO', {day:'2-digit', month:'long', year:'numeric'}) }) }}",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Parsear callback').first().json.chat_id, message_id: $('Parsear callback').first().json.message_id, caption: '✅ Publicado en ' + $('Obtener datos del post').first().json.platform.toUpperCase() + '\\n📅 ' + new Date(String($('Obtener datos del post').first().json.scheduled_date).slice(0,10) + 'T12:00:00').toLocaleDateString('es-CO', {day:'2-digit', month:'long', year:'numeric'}) }) }}",
         "options": {}
       }
     },
