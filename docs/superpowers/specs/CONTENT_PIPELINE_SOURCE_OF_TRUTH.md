@@ -318,7 +318,7 @@ publicado OK en LinkedIn + Instagram + Facebook):
 | Copy decía solo "LinkedIn" | Contenido de la fila (dato) | `Google y LinkedIn` → `Google y redes sociales` (SQL `2026-06-18-...`) |
 | La migración SQL no tocó el post del día | El post estaba en `status='review'`; toda la migración filtra `status='pending'` | Resetear a `pending` y **re-correr** la migración (idempotente) ANTES de regenerar |
 | Import de workflow creó duplicados en n8n | El `id` del JSON no coincidió con el workflow activo; los viejos quedaron `Inactive` | Dejar solo el nuevo `Active`; archivar los `Inactive`. Verificar `id` baked-in vs producción |
-| Content Generator llevaba ~10 días sin generar nada (última ejecución exitosa 2026-07-17; detectado 2026-07-27), 4 fechas de publicación perdidas | Existían 2 copias: `FjeJW9Qb8vNiDwz5` (creada 06-16, "oficial" según este doc) y `v9UQ8ubdYv6htihI` (creada 06-18, duplicado). En la práctica **la que corría en producción desde hacía más de un mes era la duplicada** (`FjeJW9` nunca tuvo ninguna ejecución). El 2026-07-24 alguien renombró la duplicada a `ZZ_OBSOLETE...` y la desactivó confiando en que la "oficial" ya estaba activa, sin verificarlo — dejó el pipeline sin ninguna copia corriendo | Auditoría 2026-07-27: además, `FjeJW9` (y por tanto este repo) tenía una **regresión real** en el nodo `Telegram — enviar para aprobación`: usaba `showCta = post_type === 'conversion' && ...` (la regla "valor sin link" que este mismo doc marca obsoleta desde 2026-06-18), mientras que la copia que sí corría había recibido el fix correcto directo en la UI de n8n sin sincronizarse nunca al repo. Se corrigió el nodo (repo + `FjeJW9Qb8vNiDwz5`) y se reactivó `FjeJW9Qb8vNiDwz5` como única copia activa. `v9UQ8ubdYv6htihI` queda inactiva, ya renombrada, pendiente de archivar |
+| Content Generator llevaba ~10 días sin generar nada (última ejecución exitosa 2026-07-17; detectado 2026-07-27), 4 fechas de publicación perdidas | `FjeJW9Qb8vNiDwz5` (el canónico, según "Content Generator — duplicado RESUELTO 2026-07-17" más abajo) había quedado `isArchived=1` en algún momento entre el 07-17 y el 07-24 — ver gotcha de `isArchived` en "Gotchas de operación". Un workflow archivado no puede quedar activo de forma estable: n8n lo activa al bootear pero minutos después lo fuerza a `active=0` | Se corrigió `isArchived=0` + `active=1` con el container detenido, y se reactivó `FjeJW9Qb8vNiDwz5`. **Corrección a una nota previa de esta misma auditoría:** en un primer paso se interpretó `showCta = post_type === 'conversion' && ...` en el nodo `Telegram — enviar para aprobación` como una regresión y se "corrigió" quitando esa condición — eso fue un ERROR, esa es la regla vigente desde 2026-07-17 ("split por funnel", ver "Link y CTA"). Se revirtió ese cambio; el nodo vuelve a filtrar por `post_type` como debe ser. Lección: verificar la sección "Link y CTA" completa (incluye la actualización 07-17) antes de asumir cuál regla es la vigente. |
 | Post marcado `published` en `content_plan` pero NUNCA salió en LinkedIn (solo Meta) | `LINKEDIN_ACCESS_TOKEN` expiró (401 `EXPIRED_ACCESS_TOKEN`, token OAuth de ~60 días sin renovar desde 2026-05-17). Todos los nodos de publicación LinkedIn tienen `continueOnFail: true` (desde `594ecd9f7`) y `status = published` corría sin condición después de la cadena LinkedIn, sin verificar si esta había fallado | Fix 2026-07-17: nodos `¿LinkedIn Org configurado?` → `Detectar fallo LinkedIn` → `¿LinkedIn OK?` insertados antes de `status = published`. Si LinkedIn falla, el post pasa a `status='error'` con el detalle en `error_log` (así lo agarra el monitor 08:15) y se dispara `Telegram — 🚨 LinkedIn falló` de inmediato. Renovar el token en LinkedIn Developer Portal (OAuth 2.0) y actualizar `LINKEDIN_ACCESS_TOKEN` en `deploy/.env` del VPS; no hay renovación automática configurada |
 
 **Regenerar un post puntual:** `POST https://n8n.jaagsolutions.com/webhook/regenerate-single`
@@ -348,6 +348,17 @@ flujo (reset → normalizar contenido → borrar jpg → disparar webhook).
   por API (`POST /workflows/<id>/activate`) y confirmar con `GET /workflows?limit=50`.
   El volumen sqlite persiste, así que los workflows/estados no se pierden salvo este
   quirk de re-activación.
+- **⚠️ `GET /workflows` (y la UI de n8n) ocultan los workflows con `isArchived=1` por
+  defecto.** Verificado 2026-07-27: `FjeJW9Qb8vNiDwz5` quedó `isArchived=1` (archivado
+  por error, probablemente durante alguna limpieza de duplicados) y por eso no aparecía
+  ni en la UI ni en el listado por API — parecía "no existir". Un workflow archivado
+  **no puede quedar activo de forma estable**: n8n lo activa al bootear (el log dice
+  "Activated workflow...") pero minutos después una pasada de reconciliación interna lo
+  fuerza a `active=0` otra vez ("Deregistered all crons for workflow" en el log, sin más
+  contexto). Si un workflow "se auto-desactiva solo" sin razón aparente, verificar
+  SIEMPRE `isArchived` además de `active` (columna en `workflow_entity`, o revisando si
+  aparece en la lista de la UI). Fix: `UPDATE workflow_entity SET isArchived=0, active=1
+  WHERE id=...` con el container detenido, luego arrancar.
 
 ---
 
@@ -368,6 +379,14 @@ flujo (reset → normalizar contenido → borrar jpg → disparar webhook).
   `FjeJW9Qb8vNiDwz5`.** Lección: `n8n import` matchea por `id` baked-in; si el activo no es
   ese `id`, el import actualiza el inactivo y el cambio no surte efecto. Verificar SIEMPRE
   el activo por API (`GET /workflows?limit=50`, campo `active`) antes de importar.
+  **Recurrencia 2026-07-27:** el pipeline llevaba ~10 días sin generar nada (última
+  ejecución 2026-07-17). Causa: `FjeJW9Qb8vNiDwz5` había quedado `isArchived=1` (ver
+  gotcha de `isArchived` más arriba) — no una reactivación fallida sino un archivado
+  silencioso. Se corrigió `isArchived=0` + `active=1` y se reactivó. (Nota: durante esta
+  misma auditoría se modificó por error el `showCta` de `Telegram — enviar para
+  aprobación` creyendo que la condición `post_type === 'conversion'` era una regla vieja
+  — es la regla vigente desde 2026-07-17, "split por funnel". Ya revertido, ver
+  "Problemas Conocidos".)
 - Workflows n8n **Inactive** duplicados (Telegram Approval 17-jun): archivar para no
   confundir cuál es el vivo.
 - **Telegram Approval → Publisher tiene 3 copias `Inactive` adicionales** encontradas en

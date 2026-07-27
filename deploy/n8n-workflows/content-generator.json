@@ -297,7 +297,7 @@
             },
             {
               "name": "caption",
-              "value": "={{ (() => { const cta = (($json.cta_url || 'https://jaagsolutions.com') + '').split('?')[0].split('#')[0].replace(/\\/+$/, '').trim(); const copy = ($json.copy_text || '').replace(/\\s*[—–]\\s*/g, ', '); const hashtags = ($json.hashtags || '').trim(); const showCta = cta && !copy.includes(cta); return '📅 ' + new Date(String($json.scheduled_date).slice(0,10) + 'T12:00:00').toLocaleDateString('es-CO', {day:'2-digit', month:'long', year:'numeric'}) + ' ' + ($json.scheduled_time || '') + '\\n📱 ' + ($json.platform || '').toUpperCase() + ' — ' + ($json.pillar || '') + '\\n\\n' + [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }}"
+              "value": "={{ (() => { const cta = (($json.cta_url || 'https://jaagsolutions.com') + '').split('?')[0].split('#')[0].replace(/\\/+$/, '').trim(); const copy = ($json.copy_text || '').replace(/\\s*[—–]\\s*/g, ', '); const hashtags = ($json.hashtags || '').trim(); const showCta = $json.post_type === 'conversion' && cta && !copy.includes(cta); return '📅 ' + new Date(String($json.scheduled_date).slice(0,10) + 'T12:00:00').toLocaleDateString('es-CO', {day:'2-digit', month:'long', year:'numeric'}) + ' ' + ($json.scheduled_time || '') + '\\n📱 ' + ($json.platform || '').toUpperCase() + ' — ' + ($json.pillar || '') + '\\n\\n' + [copy, showCta ? cta : '', hashtags].filter(Boolean).join('\\n\\n'); })() }}"
             },
             {
               "name": "reply_markup",
