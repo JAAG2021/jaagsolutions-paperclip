@@ -199,7 +199,22 @@ async function main() {
   fs.writeFileSync(filePath, composedBuffer);
 
   // URL pública para Meta/LinkedIn (necesitan descargar la imagen)
-  const publicUrlBase = process.env.CONTENT_PUBLIC_URL || 'https://content.jaagsolutions.com';
+  // IMPORTANTE: Debe coincidir con Caddyfile handle_path /static-content/*
+  // Si CONTENT_PUBLIC_URL no está definido, construir desde DOMAIN.
+  // NUNCA usar content.jaagsolutions.com: ese DNS no existe en Caddyfile.
+  let publicUrlBase = (process.env.CONTENT_PUBLIC_URL || '').trim();
+  if (!publicUrlBase) {
+    const domain = (process.env.DOMAIN || '').trim();
+    if (domain) {
+      publicUrlBase = `https://n8n.${domain}/static-content`;
+      process.stderr.write('WARN: CONTENT_PUBLIC_URL no definido. Usando fallback desde DOMAIN: ' + publicUrlBase + '\n');
+    } else {
+      // FALLO EXPLÍCITO: no podemos adivinar la URL pública.
+      // Si publicamos con una URL inválida Meta/IG devolverá error 400 sin que el usuario lo note.
+      // Mejor fallar aquí y que el compose muera, que generar una publicación rota.
+      throw new Error('FALTA VARIABLE CRÍTICA: CONTENT_PUBLIC_URL no está definida y DOMAIN tampoco. No se puede construir URL pública para las APIs sociales. Revisar docker-compose.yml servicio n8n environment.');
+    }
+  }
   const publicUrl = `${publicUrlBase.replace(/\/$/, '')}/${post_id}.jpg`;
 
   process.stdout.write(JSON.stringify({

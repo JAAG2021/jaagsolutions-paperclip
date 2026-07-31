@@ -111,15 +111,16 @@ async function checkOCR(imageUrl) {
     );
     const annotations = resp.responses?.[0]?.textAnnotations || [];
     const description = annotations[0]?.description || '';
-    return { hasText: description.length > 8, detectedText: description.slice(0, 200) };
+    return { hasText: description.length > 8, detectedText: description.slice(0, 200), warn_api_error: false, error_msg: null };
   } catch (err) {
-    console.log('[OCR] Vision API error - fail open: ' + err.message);
-    return { hasText: false, detectedText: '' };
+    const msg = 'Vision API error: ' + err.message;
+    console.log('[OCR] ' + msg + ' — fail open (no se pudo verificar texto). Se marca warning para trazabilidad.');
+    return { hasText: false, detectedText: '', warn_api_error: true, error_msg: msg.slice(0, 200) };
   }
 }
 
 async function checkAnatomy(imageUrl) {
-  if (!$env.OPENAI_API_KEY) return { bad: false, reason: 'no-key' };
+  if (!$env.OPENAI_API_KEY) return { bad: false, reason: 'no-key', warn_api_error: false, error_msg: null };
   try {
     const resp = await httpsPost('api.openai.com', '/v1/chat/completions', {
       model: 'gpt-4o-mini', max_tokens: 80, temperature: 0,
@@ -130,18 +131,20 @@ async function checkAnatomy(imageUrl) {
     }, { 'Authorization': 'Bearer ' + $env.OPENAI_API_KEY });
     const txt = resp.choices?.[0]?.message?.content || '';
     const m = txt.match(/\{[\s\S]*\}/);
-    if (!m) return { bad: false, reason: 'no-json' };
+    if (!m) return { bad: false, reason: 'no-json', warn_api_error: false, error_msg: null };
     const verdict = JSON.parse(m[0]);
-    return { bad: verdict.bad === true, reason: String(verdict.reason || '').slice(0, 120) };
+    return { bad: verdict.bad === true, reason: String(verdict.reason || '').slice(0, 120), warn_api_error: false, error_msg: null };
   } catch (err) {
-    console.log('[Anatomy] Vision API error - fail open: ' + err.message);
-    return { bad: false, reason: 'api-error' };
+    const msg = 'OpenAI Anatomy API error: ' + err.message;
+    console.log('[Anatomy] ' + msg + ' — fail open (no se pudo verificar anatomía). Se marca warning para trazabilidad.');
+    return { bad: false, reason: 'api-error', warn_api_error: true, error_msg: msg.slice(0, 200) };
   }
 }
 
 let cleanImageUrl = null;
 let lastError = '';
 let usedSafeFallback = false;
+const qaWarnings = [];
 
 for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
   const safeMode = attempt === MAX_ATTEMPTS;
@@ -152,6 +155,7 @@ for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
   const url = resp.data?.[0]?.url;
   if (!url) throw new Error('Ideogram sin URL en intento ' + attempt + ': ' + JSON.stringify(resp).slice(0, 300));
   const ocr = await checkOCR(url);
+  if (ocr.warn_api_error) qaWarnings.push('Att' + attempt + ' OCR:' + ocr.error_msg);
   if (ocr.hasText) {
     lastError = 'Intento ' + attempt + (safeMode ? ' fallback seguro' : '') + ': texto detectado - "' + ocr.detectedText.replace(/"/g, "'").slice(0, 100) + '"';
     console.log('[OCR] ' + lastError);
@@ -159,6 +163,7 @@ for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
   }
   if (HAS_PEOPLE) {
     const anatomy = await checkAnatomy(url);
+    if (anatomy.warn_api_error) qaWarnings.push('Att' + attempt + ' Anatomy:' + anatomy.error_msg);
     if (anatomy.bad) {
       lastError = 'Intento ' + attempt + (safeMode ? ' fallback seguro' : '') + ': anatomia deforme - "' + anatomy.reason.replace(/"/g, "'") + '"';
       console.log('[Anatomy] ' + lastError);
@@ -166,11 +171,11 @@ for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     }
   }
   cleanImageUrl = url;
-  console.log('[QA] Intento ' + attempt + (safeMode ? ' fallback seguro' : '') + ': imagen limpia (texto + anatomia OK)');
+  console.log('[QA] Intento ' + attempt + (safeMode ? ' fallback seguro' : '') + ': imagen limpia (texto + anatomia OK)' + (qaWarnings.length ? ' — WARNINGS QA degradado: ' + qaWarnings.length : ''));
   break;
 }
 
 if (cleanImageUrl) {
-  return [{ json: { ...prev, data: [{ url: cleanImageUrl }], used_safe_fallback: usedSafeFallback, diagram_type: null } }];
+  return [{ json: { ...prev, data: [{ url: cleanImageUrl }], used_safe_fallback: usedSafeFallback, diagram_type: null, qa_warnings: qaWarnings, qa_degraded: qaWarnings.length > 0 } }];
 }
-return [{ json: { ...prev, ocr_error: true, used_safe_fallback: usedSafeFallback, diagram_type: null, ocr_error_log: 'QA ' + MAX_ATTEMPTS + ' intentos fallidos (texto/anatomia). Ultimo: ' + lastError } }];
+return [{ json: { ...prev, ocr_error: true, used_safe_fallback: usedSafeFallback, diagram_type: null, ocr_error_log: 'QA ' + MAX_ATTEMPTS + ' intentos fallidos (texto/anatomia). Ultimo: ' + lastError + (qaWarnings.length ? ' | Warnings: ' + qaWarnings.join('; ') : '') } }];
