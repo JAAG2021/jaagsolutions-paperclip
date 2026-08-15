@@ -23,6 +23,7 @@ WORKFLOW = LIB.parent / "content-generator.json"
 NODE_CODE_MAP = {
     "code-ideogram-ocr": LIB / "ideogram-ocr.js",
     "code-prep-auditor-prompt": LIB / "prep-auditor-prompt.js",
+    "code-monitor-alert-text": LIB / "monitor-alert-text.js",
 }
 
 

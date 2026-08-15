@@ -118,6 +118,16 @@ deploy/sql/2026-05-25-seed-content-plan-operational-agenda.sql
 Ese archivo es idempotente y solo sirve para poblar `content_plan`. Despues de
 ejecutarlo, la fuente de verdad vuelve a ser exclusivamente la tabla.
 
+**Lote vigente (2026-08-14):** `deploy/sql/2026-08-14-seed-content-plan-ago-oct.sql`
+cubre del **2026-08-17 al 2026-10-30** (33 posts, L/X/V 10:00). Reemplaza al lote de
+mayo, que se agoto el 2026-07-31 y dejo el pipeline 14 dias sin publicar.
+
+> ⚠️ El seed de mayo **NO debe usarse como plantilla**: su CTE derivado quedo obsoleto
+> en cuatro puntos (genera UTMs en `cta_url`, usa el `image_prompt` generico por pilar,
+> pone `imagen_copy` tambien en `prueba_social`, y sus hashtags no son el set canonico).
+> Copiarlo obliga a parchear despues con 4 migraciones. El lote de agosto ya trae las
+> reglas vigentes horneadas en el CTE: usar ese como base.
+
 Cadencia vigente desde 2026-07-17 (core-only):
 
 ```text
@@ -153,10 +163,16 @@ El workflow `Content Generator` toma posts con esta logica:
 SELECT *
 FROM content_plan
 WHERE status = 'pending'
-AND scheduled_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 2
-ORDER BY scheduled_date, scheduled_time
+AND scheduled_date = CURRENT_DATE
+ORDER BY scheduled_time
 LIMIT 1;
 ```
+
+> ⚠️ **Corregido 2026-08-14:** esta seccion documentaba
+> `scheduled_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 2`. Eso es **falso desde el
+> 2026-06-01** (commit `f5a0c01e8`): el cron filtra por el dia exacto, sin ventana.
+> La diferencia importa al sembrar: **no existe margen de 2 dias** y una fecha vencida
+> no vuelve a entrar nunca. Sembrar siempre con fechas FUTURAS.
 
 Implicaciones:
 
@@ -164,6 +180,29 @@ Implicaciones:
 - La fila debe estar en `pending`.
 - Fechas vencidas no vuelven a entrar automaticamente.
 - Estados `review`, `generating`, `published` o `error` requieren intervencion operativa.
+
+### Alerta de agenda por agotarse (runway) — 2026-08-14
+
+El monitor de las 08:15 vigila ademas **cuanta agenda futura queda**, y avisa por
+Telegram cuando quedan **7 dias o menos** (o cero) de posts `pending`.
+
+Antes no lo hacia, y ese fue el punto ciego del incidente de agosto: el monitor solo
+miraba posts de HOY, asi que con la agenda agotada no habia filas que reportar y el
+nodo abria con `if (!rows.length) return []`. Resultado: 14 dias sin publicar, sin una
+sola alerta. **El modo de falla mas probable del sistema era justo el unico que no
+avisaba.**
+
+Como funciona:
+
+- `Monitor: posts atascados hoy` agrega un CTE `runway` (agregado sobre `content_plan`)
+  que devuelve **siempre exactamente 1 fila**, marcada `monitor_action='runway'`, con
+  `runway_posts`, `runway_days` y `runway_last_date`. Por eso el Code node ya nunca
+  recibe input vacio.
+- `Monitor: preparar alerta Telegram` separa esa fila de las de problemas y emite
+  alerta si **hay posts atascados O el runway esta bajo**. Con todo sano devuelve `[]`
+  (no manda Telegram diario inutil). Umbral en `RUNWAY_MIN_DIAS`.
+- Fuente del codigo: `lib/monitor-alert-text.js` (inyectado con `lib/sync-node-code.py`).
+  Tests: `node --test deploy/n8n-workflows/lib/monitor-alert-text.test.js`.
 
 ---
 
