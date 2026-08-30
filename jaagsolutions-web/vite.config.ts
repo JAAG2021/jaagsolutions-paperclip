@@ -20,7 +20,7 @@ function resolveOgUrl(env: Record<string, string>): string | undefined {
   if (explicit) return explicit;
   const site = env.VITE_SITE_URL?.trim().replace(/\/+$/, "");
   if (!site) return undefined;
-  return `${site}/og-share.png`;
+  return `${site}/og-share.jpg`;
 }
 
 export default defineConfig(({ mode }) => {
