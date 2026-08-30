@@ -20,7 +20,7 @@ export default function ScrollProgressBar() {
   }, []);
 
   return (
-    <div className="fixed inset-x-0 top-0 z-[60] h-0.5" aria-hidden="true">
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-0.5" aria-hidden="true">
       <div
         className="h-full bg-brand-500 motion-safe:transition-[width] motion-safe:duration-150 motion-safe:ease-out"
         style={{ width: `${progress}%` }}
