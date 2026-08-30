@@ -30,7 +30,7 @@ export default function HeroSection() {
     <section
       id="inicio"
       aria-labelledby="hero-heading"
-      className="relative bg-brand-900 text-white overflow-hidden lg:min-h-[calc(100svh-4rem)] lg:flex lg:items-center"
+      className="relative bg-brand-900 text-white overflow-hidden lg:flex lg:items-center"
     >
       {/* ── Decorative background ── */}
       <div className="absolute inset-0 bg-dot-pattern opacity-60" />
@@ -68,7 +68,7 @@ export default function HeroSection() {
                 </svg>
               </a>
               <a
-                href="#calculadora-roi"
+                href="#impacto"
                 className="inline-flex items-center justify-center gap-2 border border-white/35 text-white font-semibold px-8 py-4 rounded-xl text-base hover:bg-white/10 transition-colors backdrop-blur-sm"
               >
                 Descubre tu potencial de ahorro

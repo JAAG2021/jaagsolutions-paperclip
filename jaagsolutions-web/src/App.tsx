@@ -1,4 +1,7 @@
 import { lazy, Suspense } from "react";
+import AnnouncementBar from "./components/AnnouncementBar.tsx";
+import ScrollProgressBar from "./components/ScrollProgressBar.tsx";
+import BackToTopButton from "./components/BackToTopButton.tsx";
 import TopNav from "./sections/TopNav.tsx";
 import HeroSection from "./sections/HeroSection.tsx";
 import FooterSection from "./sections/FooterSection.tsx";
@@ -21,6 +24,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white">
+      <ScrollProgressBar />
+      <AnnouncementBar />
       <TopNav />
       <main>
         <HeroSection />
@@ -29,6 +34,8 @@ export default function App() {
         </Suspense>
       </main>
       <FooterSection />
+
+      <BackToTopButton />
 
       {/* WhatsApp floating CTA */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 items-end">

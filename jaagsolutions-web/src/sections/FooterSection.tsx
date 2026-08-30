@@ -2,10 +2,12 @@ import { useState } from "react";
 import LegalModal from "../components/LegalModal";
 import PrivacyPolicyContent from "../components/PrivacyPolicyContent";
 import TermsContent from "../components/TermsContent";
+import CaligraphaWordmark from "../components/CaligraphaWordmark";
 
 const navLinks = [
   { label: "Inicio", href: "#inicio" },
   { label: "Servicios", href: "#servicios" },
+  { label: "Caligrapha", href: "#caligrapha" },
   { label: "Proceso", href: "#proceso" },
   { label: "Casos de uso", href: "#casos" },
   { label: "Contacto", href: "#contacto" },
@@ -29,6 +31,18 @@ export default function FooterSection() {
             >
               contacto@jaagsolutions.com
             </a>
+            <p className="mt-3 text-sm">
+              Nuestro producto:{" "}
+              <a
+                href="https://www.caligrapha.com/?utm_source=jaagsolutions&utm_medium=footer&utm_campaign=caligrapha_launch"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-semibold text-gray-200 transition-colors hover:text-white"
+              >
+                <CaligraphaWordmark className="text-sm" />
+                <span aria-hidden="true">↗</span>
+              </a>
+            </p>
           </div>
 
           <nav className="flex flex-wrap gap-x-8 gap-y-2">

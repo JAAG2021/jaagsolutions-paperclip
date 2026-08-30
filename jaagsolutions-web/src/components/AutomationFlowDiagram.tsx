@@ -21,6 +21,8 @@ type Props = {
   /** Accessible name del diagrama completo */
   regionLabel?: string;
   className?: string;
+  /** En pantallas grandes reparte los pasos en 2 columnas (para acortar). */
+  twoColLg?: boolean;
 };
 
 /**
@@ -31,6 +33,7 @@ export default function AutomationFlowDiagram({
   diagramId,
   regionLabel = "Flujo del proceso automatizado",
   className = "",
+  twoColLg = false,
 }: Props) {
   if (!steps.length) return null;
 
@@ -47,7 +50,10 @@ export default function AutomationFlowDiagram({
         Secuencia: {linearDescription}
       </p>
 
-      <ol className="m-0 list-none space-y-0 p-0" aria-describedby={descId}>
+      <ol
+        className={`m-0 list-none space-y-0 p-0 ${twoColLg ? "lg:grid lg:grid-cols-2 lg:gap-x-6" : ""}`}
+        aria-describedby={descId}
+      >
         {steps.map((step, index) => {
           const isLast = index === steps.length - 1;
           return (
@@ -57,7 +63,11 @@ export default function AutomationFlowDiagram({
                   {index + 1}
                 </span>
                 {!isLast && (
-                  <span className="mt-1 w-0.5 flex-1 min-h-[1.25rem] rounded-full bg-gradient-to-b from-brand-400/80 to-brand-200/40" />
+                  <span
+                    className={`mt-1 w-0.5 flex-1 min-h-[1.25rem] rounded-full bg-gradient-to-b from-brand-400/80 to-brand-200/40 ${
+                      twoColLg ? "lg:hidden" : ""
+                    }`}
+                  />
                 )}
               </div>
 

@@ -1,4 +1,4 @@
-import CTAButton from "../components/CTAButton.tsx";
+import { useId, useRef, useState } from "react";
 import AutomationFlowDiagram, { type AutomationFlowStep } from "../components/AutomationFlowDiagram.tsx";
 
 type UseCase = {
@@ -10,11 +10,8 @@ type UseCase = {
   /** Historia concreta que ancla el caso (visible bajo el título). */
   scenario: string;
   flow: AutomationFlowStep[];
-  /** Cifra o resultado corto (chip). */
-  resultBadge: string;
-  /** Texto del impacto en contexto sectorial. */
+  /** Resultado esperado, en lenguaje cualitativo (sin cifras inventadas). */
   resultText: string;
-  resultIcon: string;
 };
 
 const useCases: UseCase[] = [
@@ -64,10 +61,8 @@ const useCases: UseCase[] = [
           "Origen del lead, puntuación, citas y notas quedan en el mismo sistema que ya usa ventas — no hay “otro CRM” paralelo.",
       },
     ],
-    resultBadge: "~+35% contacto efectivo",
     resultText:
-      "Sector marketing y servicios: caso tipo “firma boutique” — más conversaciones reales con la misma inversión en media al no perder leads en la bandeja.",
-    resultIcon: "📈",
+      "Más conversaciones reales con la misma inversión en medios, al no perder leads en la bandeja ni en el Excel.",
   },
   {
     title: "Cotización a Cierre",
@@ -115,10 +110,8 @@ const useCases: UseCase[] = [
           "Si tu stack lo permite, disparamos borrador de pedido/factura o actualizamos ERP con webhook; si no, al menos cerramos bien el CRM.",
       },
     ],
-    resultBadge: "~−50% tiempo al cierre",
     resultText:
-      "Distribución B2B: caso tipo “fabricante regional” — menos idas y venidas en correo y menos errores de versión de documento.",
-    resultIcon: "⚡",
+      "Menos idas y venidas por correo, menos errores de versión de documento y una propuesta que sale mientras la oportunidad sigue caliente.",
   },
   {
     title: "Cobranza Automatizada",
@@ -166,10 +159,8 @@ const useCases: UseCase[] = [
           "Webhook del pasarela confirma pago → marcamos factura como cobrada en hoja, CRM o herramienta contable ligera.",
       },
     ],
-    resultBadge: "~−40% cartera morosa",
     resultText:
-      "Retail y multisucursal: mismo ritmo de facturación, menos saldo viejo porque el seguimiento no depende solo de personas.",
-    resultIcon: "💹",
+      "Mismo ritmo de facturación, menos saldo viejo — porque el seguimiento deja de depender de que alguien se acuerde de escribir.",
   },
   {
     title: "Mesa de Ayuda",
@@ -217,18 +208,33 @@ const useCases: UseCase[] = [
           "Encuesta breve opcional tras el cierre; resultados pueden volcar a sheet o BI para ver tendencia de satisfacción.",
       },
     ],
-    resultBadge: "~−55% tiempo a 1ª respuesta",
     resultText:
-      "Salud y educación B2C: menos tickets “huérfanos” y primera respuesta más rápida en picos de inscripciones o citas.",
-    resultIcon: "🎯",
+      "Menos tickets “huérfanos” y una primera respuesta más rápida, incluso en los picos de inscripciones o citas.",
   },
 ];
 
 export default function UseCasesSection() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
+  const uid = useId();
+  const active = useCases[activeIdx];
+
+  function onTabKeyDown(e: React.KeyboardEvent) {
+    let next = activeIdx;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (activeIdx + 1) % useCases.length;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (activeIdx - 1 + useCases.length) % useCases.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = useCases.length - 1;
+    else return;
+    e.preventDefault();
+    setActiveIdx(next);
+    tabsRef.current[next]?.focus();
+  }
+
   return (
-    <section id="casos" className="py-24 bg-gray-50">
+    <section id="casos" className="py-14 sm:py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16 animate-fade-in-up">
+        <div className="text-center mb-8 sm:mb-10 animate-fade-in-up">
           <span className="inline-block mb-3 px-4 py-1 text-xs font-bold tracking-widest uppercase text-brand-600 bg-brand-50 rounded-full border border-brand-100">
             Casos de uso
           </span>
@@ -237,62 +243,84 @@ export default function UseCasesSection() {
             <span className="gradient-text">funcionan en PYMEs</span>
           </h2>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Lee el orden 1→4: en cada paso verás un <span className="font-semibold text-gray-700">ejemplo de negocio</span> y, debajo,{" "}
-            <span className="font-semibold text-gray-700">las piezas que solemos conectar</span> (Make, n8n, CRM, WhatsApp…). Lo adaptamos a lo que ya usas;
-            el desplegable solo amplía el detalle técnico si lo necesitas.
+            Elige un caso y recórrelo 1→4: cada paso trae un{" "}
+            <span className="font-semibold text-gray-700">ejemplo de negocio</span> y{" "}
+            <span className="font-semibold text-gray-700">las piezas que solemos conectar</span>. Lo adaptamos a lo que ya usas.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          {useCases.map((uc, i) => (
-            <div
-              key={uc.title}
-              className={`card-hover animate-fade-in-up-d${Math.min(i + 1, 4)} bg-white rounded-2xl border ${uc.borderClass} shadow-sm overflow-hidden flex flex-col`}
-            >
-              <div className={`${uc.bgClass} px-6 py-4 border-b ${uc.borderClass}`}>
-                <div className="flex items-start gap-3">
-                  <span className="text-3xl shrink-0 leading-none">{uc.emoji}</span>
-                  <div className="min-w-0">
-                    <h3 className={`text-lg font-bold ${uc.accentClass}`}>{uc.title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-gray-700">{uc.scenario}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="px-6 py-5 flex-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                  <span className="inline-flex h-1 w-8 rounded-full bg-brand-500/70" aria-hidden />
-                  Cómo se ve el flujo (4 pasos)
-                </p>
-                <AutomationFlowDiagram
-                  steps={uc.flow}
-                  diagramId={uc.title}
-                  regionLabel={`Flujo automatizado: ${uc.title}`}
-                />
-              </div>
-
-              <div className="mx-6 mb-5 bg-gray-900 rounded-xl px-4 py-3.5 flex gap-3">
-                <span className="text-2xl shrink-0">{uc.resultIcon}</span>
-                <div className="min-w-0">
-                  <p className="text-xs text-sky-300/90 uppercase tracking-wide font-semibold">
-                    Lo que vieron clientes tipo tú
-                  </p>
-                  <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-2">
-                    <span className="inline-flex shrink-0 items-center rounded-md bg-sky-400/25 px-2.5 py-1 text-xs font-extrabold tracking-tight text-sky-50 ring-1 ring-sky-300/35">
-                      {uc.resultBadge}
-                    </span>
-                    <span className="text-sm font-semibold leading-snug text-white">{uc.resultText}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
+        {/* Tabs */}
+        <div
+          role="tablist"
+          aria-label="Casos de uso"
+          className="mb-6 flex gap-2 overflow-x-auto pb-1 sm:justify-center sm:overflow-visible"
+        >
+          {useCases.map((uc, i) => {
+            const selected = i === activeIdx;
+            return (
+              <button
+                key={uc.title}
+                ref={(el) => { tabsRef.current[i] = el; }}
+                role="tab"
+                id={`${uid}-tab-${i}`}
+                aria-selected={selected}
+                aria-controls={`${uid}-panel-${i}`}
+                tabIndex={selected ? 0 : -1}
+                onClick={() => setActiveIdx(i)}
+                onKeyDown={onTabKeyDown}
+                className={`flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+                  selected
+                    ? "border-brand-200 bg-white text-brand-700 shadow-sm"
+                    : "border-transparent bg-gray-100 text-gray-500 hover:bg-gray-200/70 hover:text-gray-700"
+                }`}
+              >
+                <span className="text-base leading-none">{uc.emoji}</span>
+                {uc.title}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="text-center">
-          <CTAButton href="#contacto" variant="primary">
-            Quiero ese flujo en mi empresa →
-          </CTAButton>
+        {/* Panel del caso activo */}
+        <div
+          role="tabpanel"
+          id={`${uid}-panel-${activeIdx}`}
+          aria-labelledby={`${uid}-tab-${activeIdx}`}
+          tabIndex={0}
+          className={`animate-fade-in-up rounded-2xl border ${active.borderClass} bg-white shadow-sm overflow-hidden focus-visible:outline-none`}
+        >
+          <div className="grid gap-0 lg:grid-cols-[minmax(0,20rem)_1fr]">
+            {/* Contexto + resultado */}
+            <div className={`${active.bgClass} border-b ${active.borderClass} p-6 lg:border-b-0 lg:border-r`}>
+              <div className="flex items-start gap-3">
+                <span className="text-3xl leading-none shrink-0">{active.emoji}</span>
+                <h3 className={`text-lg font-bold ${active.accentClass}`}>{active.title}</h3>
+              </div>
+              <p className="mt-3 text-sm leading-relaxed text-gray-700">{active.scenario}</p>
+
+              <div className="mt-5 rounded-xl bg-gray-900 px-4 py-3.5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-sky-300/90">
+                  Resultado esperado
+                </p>
+                <p className="mt-2 text-sm font-semibold leading-snug text-white">{active.resultText}</p>
+              </div>
+            </div>
+
+            {/* Flujo */}
+            <div className="p-6">
+              <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gray-500">
+                <span className="inline-flex h-1 w-8 rounded-full bg-brand-500/70" aria-hidden />
+                Cómo se ve el flujo (4 pasos)
+              </p>
+              <AutomationFlowDiagram
+                key={active.title}
+                steps={active.flow}
+                diagramId={active.title}
+                regionLabel={`Flujo automatizado: ${active.title}`}
+                twoColLg
+              />
+            </div>
+          </div>
         </div>
       </div>
     </section>

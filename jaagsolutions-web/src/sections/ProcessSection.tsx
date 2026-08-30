@@ -1,6 +1,5 @@
 import { Search, Code2, Rocket } from "lucide-react";
 import { useScrollReveal } from "../hooks/useScrollReveal.ts";
-import CTAButton from "../components/CTAButton.tsx";
 
 const steps = [
   {
@@ -36,11 +35,11 @@ export default function ProcessSection() {
     <section
       id="proceso"
       ref={ref as React.RefObject<HTMLElement>}
-      className="py-24 bg-white"
+      className="py-14 sm:py-16 bg-white"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-16 animate-fade-in-up">
+        <div className="text-center mb-10 sm:mb-12 animate-fade-in-up">
           <span className="inline-block mb-3 px-4 py-1 text-xs font-bold tracking-widest uppercase text-brand-600 bg-brand-50 rounded-full border border-brand-100">
             Nuestro método
           </span>
@@ -54,7 +53,7 @@ export default function ProcessSection() {
         </div>
 
         {/* Steps */}
-        <div className="relative grid md:grid-cols-3 gap-8 mb-12">
+        <div className="relative grid md:grid-cols-3 gap-8">
           {/* Animated connector line (desktop) */}
           <div
             className={`hidden md:block absolute top-16 left-[calc(16.67%+1rem)] right-[calc(16.67%+1rem)] h-0.5 bg-gradient-to-r from-brand-200 via-violet-200 to-emerald-200 z-0 ${visible ? "animate-connector" : "scale-x-0"}`}
@@ -91,12 +90,6 @@ export default function ProcessSection() {
               </div>
             </div>
           ))}
-        </div>
-
-        <div className="text-center">
-          <CTAButton href="#contacto" variant="secondary">
-            Conocer nuestro método →
-          </CTAButton>
         </div>
       </div>
     </section>

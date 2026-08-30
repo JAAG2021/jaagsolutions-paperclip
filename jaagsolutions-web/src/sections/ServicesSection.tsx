@@ -1,5 +1,4 @@
 import { CheckCircle2, Zap, Monitor } from "lucide-react";
-import CTAButton from "../components/CTAButton.tsx";
 
 const pillarA = [
   "Captación, calificación y seguimiento de leads",
@@ -19,10 +18,10 @@ const pillarB = [
 
 export default function ServicesSection() {
   return (
-    <section id="servicios" className="py-24 bg-gray-50">
+    <section id="servicios" className="py-14 sm:py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-16 animate-fade-in-up">
+        <div className="text-center mb-10 sm:mb-12 animate-fade-in-up">
           <span className="inline-block mb-3 px-4 py-1 text-xs font-bold tracking-widest uppercase text-brand-600 bg-brand-50 rounded-full border border-brand-100">
             Servicios
           </span>
@@ -31,11 +30,13 @@ export default function ServicesSection() {
             <span className="gradient-text">dos líneas, un objetivo</span>
           </h2>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Se complementan según la etapa y madurez de tu empresa. Empezamos donde más duele y escalamos con control.
+            Se complementan según la etapa y madurez de tu empresa. No te vendemos
+            licencias sueltas: consultoría primero, implementación después — y una
+            arquitectura clara que tu equipo puede gestionar.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 mb-10">
+        <div className="grid md:grid-cols-2 gap-8">
           {/* Pilar A — Automatización */}
           <div className="card-hover animate-fade-in-up-d1 bg-brand-900 text-white rounded-2xl overflow-hidden shadow-lg">
             <div className="bg-dot-pattern px-8 pt-8 pb-6 border-b border-white/10">
@@ -83,13 +84,6 @@ export default function ServicesSection() {
               ))}
             </ul>
           </div>
-        </div>
-
-        {/* CTA */}
-        <div className="text-center">
-          <CTAButton href="#contacto" variant="primary">
-            Hablar con un especialista →
-          </CTAButton>
         </div>
       </div>
     </section>

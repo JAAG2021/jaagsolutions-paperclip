@@ -17,9 +17,19 @@ export default {
           900: "#1e3a8a",
           DEFAULT: "#2563eb",
         },
+        // Acento de marca de Caligrapha (nuestro producto SaaS). Se usa solo
+        // dentro de la sección/barra de Caligrapha para darle identidad propia
+        // sin romper el azul del resto del sitio.
+        caligrapha: {
+          ink:   "#0a0908",
+          gold:  "#d4a843",
+          "gold-light": "#e8c46a",
+        },
       },
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        // Cara display de Caligrapha; solo para el wordmark del producto.
+        caligrapha: ['"DM Serif Display"', "Georgia", "Cambria", "serif"],
       },
     },
   },
