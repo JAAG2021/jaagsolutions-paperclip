@@ -17,7 +17,7 @@ export default function FooterSection() {
   const [modal, setModal] = useState<"privacy" | "terms" | null>(null);
 
   return (
-    <footer className="bg-gray-900 text-gray-400 py-12">
+    <footer className="bg-gray-900 text-gray-400 pt-12 pb-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between gap-8 mb-8">
           <div>
@@ -43,9 +43,18 @@ export default function FooterSection() {
                 <span aria-hidden="true">↗</span>
               </a>
             </p>
+
+            {/* CTA en la columna izquierda: en la derecha lo tapaba el botón
+                flotante de WhatsApp (fixed, esquina inferior derecha). */}
+            <a
+              href="#contacto"
+              className="mt-5 inline-flex items-center gap-2 bg-brand-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-brand-700 transition-colors"
+            >
+              Solicitar diagnostico
+            </a>
           </div>
 
-          <nav className="flex flex-wrap gap-x-8 gap-y-2">
+          <nav className="flex flex-wrap gap-x-8 gap-y-2 md:justify-end md:text-right">
             {navLinks.map((link) => (
               <a
                 key={link.href}
@@ -56,15 +65,6 @@ export default function FooterSection() {
               </a>
             ))}
           </nav>
-
-          <div>
-            <a
-              href="#contacto"
-              className="inline-flex items-center gap-2 bg-brand-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-brand-700 transition-colors"
-            >
-              Solicitar diagnostico
-            </a>
-          </div>
         </div>
 
         <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row justify-between gap-4 text-sm">
