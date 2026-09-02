@@ -1,6 +1,6 @@
 # Bitácora de Infraestructura — JAAGSOLUTIONS
 
-**Última actualización:** 2026-06-16
+**Última actualización:** 2026-09-02
 **Estado del proyecto:** Fase A + Fase B completas — Content Pipeline n8n + Telegram Approval E2E validados en producción (FB + IG + LinkedIn publicando con imagen nativa)
 
 > **LEER ANTES DE CUALQUIER CAMBIO DE INFRAESTRUCTURA.**  
@@ -47,15 +47,20 @@ Usuario
 
 ```
 CF Function /api/lead.js
-  │  fire-and-forget (context.waitUntil)
-  ▼
+  │
+  ├─► Formspree  (await — ESTA responde al navegador)
+  │        └─► correo a jaagsolutions@gmail.com     ← el canal que realmente importa
+  │
+  └─► n8n  (context.waitUntil — fire-and-forget, errores tragados por .catch())
+           webhook: /webhook/formspree-lead
+           validación: x-paperclip-webhook-token (safeEqual XOR)
+             └─► [RETIRADO 2026-09-02] Paperclip creaba un issue → Growth Ops A3
+                 Workflow `wGBj1gkmy1JoBfGP` desactivado; el webhook devuelve 404
+                 y el .catch() lo traga. Los leads siguen llegando por correo.
+
 n8n (VPS Google Cloud — https://n8n.jaagsolutions.com)
-  │  webhook: /webhook/formspree-lead
-  │  validación: x-paperclip-webhook-token (safeEqual XOR)
-  ▼
-Paperclip (crea issue automáticamente → Growth Ops A3)
-  URL: https://paperclip.jaagsolutions.com
-  Company ID: 113d415c-9970-413f-b0d8-f7a6217caf67
+  ├─ Content Generator   `FjeJW9Qb8vNiDwz5`  (cron → Ideogram + OCR → Telegram)
+  └─ Telegram Approval   `KduOBXYi3tuDG3fZ`  (→ Meta + LinkedIn)
 ```
 
 ---
@@ -68,7 +73,7 @@ Paperclip (crea issue automáticamente → Growth Ops A3)
 | Formspree | `inverjaag@gmail.com` | Form ID `xpqbzolp` — notificaciones a `jaagsolutions@gmail.com` |
 | GitHub (repo landing) | `JAAG2021` | `JAAG2021/jaagsolutions-paperclip` (privado) — branch `feature/jaagsolutions` |
 | Hostinger (dominio) | cuenta propia | `jaagsolutions.com` — $10.46/año — nameservers apuntan a Cloudflare |
-| Google Cloud | cuenta propia | 90 días free trial (desde 2026-05-06) — VM `jaagsolutions-vps` e2-medium IP `34.41.171.138` |
+| Google Cloud | cuenta propia | ⚠️ Free trial VENCIDO (~2026-08-04). Cuenta de facturación `0120EA-995B6D-AAE394` con **pagos rechazados** desde 2026-09-01 — VM `jaagsolutions-vps` e2-medium IP `34.132.124.143` (efímera) |
 | Gmail notificaciones | `jaagsolutions@gmail.com` | Recibe leads de Formspree + emails de `contacto@jaagsolutions.com` |
 | Gmail admin | `inverjaag@gmail.com` | Cuenta maestra Cloudflare/Formspree |
 
@@ -82,7 +87,7 @@ Paperclip (crea issue automáticamente → Growth Ops A3)
 |-------------|------|--------|-----------|-------|
 | Apex | CNAME | `@` | `jaagsolutions-paperclip.pages.dev` | CF Pages Custom Domain |
 | WWW | CNAME | `www` | `jaagsolutions-paperclip.pages.dev` | CF Pages Custom Domain |
-| App / VPS | A | `app` | `34.41.171.138` | DNS only — Paperclip + n8n |
+| App / VPS | A | `app` | `34.132.124.143` | DNS only — Paperclip + n8n. **IP efímera: actualizar aquí tras cada reinicio de la VM** |
 | MX (email routing) | MX | `@` | `route1.mx.cloudflare.net` | Auto-creado por Email Routing |
 | TXT (email routing) | TXT | `@` | `v=spf1 include:_spf.mx.cloudflare.net ~all` | Auto-creado |
 
@@ -284,11 +289,11 @@ jaagsolutions@gmail.com  ← recibe el email
 
 | Componente | URL | Estado |
 |-----------|-----|--------|
-| VPS Google Cloud | IP `34.41.171.138` | e2-medium Ubuntu 22.04, Docker 29.4.2 |
-| Paperclip | `https://paperclip.jaagsolutions.com` | 5 agentes, 5 goals, 3 proyectos, 13 issues |
-| n8n | `https://n8n.jaagsolutions.com` | Workflow activo — Formspree Lead → Issue |
+| VPS Google Cloud | IP `34.132.124.143` (efímera) | e2-medium Ubuntu 22.04, Docker 29.4.2. Disco al **41%** tras la limpieza del 2026-09-02 |
+| n8n | `https://n8n.jaagsolutions.com` | 2 workflows activos: Content Generator + Telegram Approval |
 | Caddy | reverse proxy interno | SSL automático via Let's Encrypt |
-| PostgreSQL | interno (puerto no expuesto) | Datos Paperclip |
+| PostgreSQL | interno (puerto no expuesto) | Tabla `content_plan` + esquema histórico de Paperclip |
+| ~~Paperclip~~ | ~~`paperclip.jaagsolutions.com`~~ | ❌ **RETIRADO 2026-09-02** — nadie lo consumía |
 
 ### IDs Paperclip producción
 
@@ -1303,5 +1308,112 @@ Mapa `SVGICONS` agregado en `buildDiagramSVG()`: reemplaza abreviaciones de text
   - Params V_3: `prompt`, `aspect_ratio` (formato `3x4`/`9x16`, NO `ASPECT_3_4`), `rendering_speed` (FLASH/TURBO/DEFAULT/QUALITY — usamos TURBO), `magic_prompt=OFF`, `style_type`, `seed`, `negative_prompt`.
   - Respuesta `data[0].url` idéntica a V_2 → downstream sin cambios. OCR (Google Vision) y anatomy check (OpenAI) siguen con `httpsPost` JSON.
   - Validado en vivo: HTTP 200, 864x1152 (3:4). La API key existente tiene acceso a V_3.
+
+---
+
+### Sesión 2026-09-02 — Auditoría GCP, respaldo completo y arreglo de acceso SSH
+
+**Disparador:** correos de Google Cloud avisando de pagos rechazados en la cuenta
+de facturación `0120EA-995B6D-AAE394` (Mastercard ···3649, fondos insuficientes,
+1 sept 2026) y riesgo de suspensión del proyecto.
+
+**Auditoría — qué depende de GCP y qué no:**
+
+| Componente | Plataforma | ¿Afectado si GCP se cae? |
+|---|---|---|
+| `jaagsolutions.com` (landing) | Cloudflare Pages | **No** |
+| DNS, Email Routing | Cloudflare (Free) | **No** |
+| Formulario → Formspree → Gmail | Cloudflare Function | **No** — los leads siguen llegando por email |
+| GA4 `G-K92KJ1FRMH`, Google Fonts | Productos Google gratuitos | **No** — no se facturan por Cloud Billing |
+| VM `jaagsolutions-vps` (n8n, Postgres, Caddy, Paperclip) | **Google Cloud** | **SÍ — se cae todo** |
+| Google Vision OCR (`GOOGLE_VISION_API_KEY`) | **Google Cloud** | Sí, pero degrada solo (*fail open*) |
+
+**Respaldo completo (14 MB)** en `C:\Users\jalva\Documents\JAAG-BACKUP-2026-09-02\`
+— fuera de git, contiene credenciales vivas. Verificado, no solo copiado:
+`deploy.env` (41 claves, ninguna vacía), dump Postgres (`content_plan` con 85 filas
+hasta 2026-10-30), los **7 workflows tal como corren en producción**, credencial
+de n8n, clave de cifrado, `database.sqlite`, 54 imágenes. Ver `LEEME.md` ahí.
+
+**Hallazgos importantes:**
+
+- **El repo NO refleja producción.** `Content Generator` corre con **30 nodos**
+  mientras el repo tiene **61** — es el "importar workflows actualizados" pendiente
+  desde mayo. Al restaurar, la fuente de verdad es el export de producción.
+- **`Formspree Lead → Paperclip Issue` está ACTIVO** en producción (el JSON del repo
+  dice `active: false`). Hay que desactivarlo antes de retirar Paperclip o cada lead
+  dará error.
+- **Nadie consume Paperclip**, pero el contenedor corre y es el más pesado del stack.
+- Disco de la VM al **86%** (2.9 GB libres de 20 GB). Ya hubo `SQLITE_FULL` el 31-jul.
+- Hay **4 workflows archivados** acumulados (3 duplicados de Telegram Approval +
+  `linkedin-csv-pipeline`).
+
+**Arreglos aplicados:**
+
+- **Causa raíz del fallo recurrente de llave SSH encontrada:** `jaagsolutions_vps.pub`
+  estaba guardado en **UTF-16 con BOM** (`fffe`, 202 bytes para una llave de 99).
+  Volcarlo a `authorized_keys` con un redirect de PowerShell lo corrompía. Reescrito
+  en ASCII derivándolo de la privada con `ssh-keygen -y` (99 bytes, sin BOM, sin CRLF).
+- `~/.ssh/config` ahora apunta a **`app.jaagsolutions.com`** en vez de a una IP fija,
+  porque la IP externa es **efímera** y ya cambió una vez
+  (`34.41.171.138` → `34.132.124.143` en el reinicio del 31-jul). Con el nombre DNS,
+  tras un reinicio basta actualizar el registro A `app` en Cloudflare — que hay que
+  tocar igual para que n8n siga sirviendo.
+- `known_hosts`: verificado que la clave del host por nombre coincide con la ya
+  confiada por IP antes de añadirla. SSH validado end-to-end con `ssh jaagsolutions-vps`.
+- IP actualizada en RUNBOOK, esta bitácora y CHECKLIST-MAESTRO.
+
+**Limpieza de disco — de 86% a 41%:**
+
+| Acción | Liberado |
+|---|---|
+| `journalctl --vacuum-size=200M` | 1.7 GB |
+| syslogs rotados + `truncate` del activo | 1.1 GB |
+| Logs del `google-cloud-ops-agent` | 686 MB |
+| `docker builder prune -f` | 1.465 GB |
+| Imagen `deploy-paperclip:latest` + `paperclip-data` | ~4.1 GB |
+| **Total** | **de 2.8 GB libres a 12 GB** |
+
+**Causa del disco lleno identificada:** el `google-cloud-ops-agent` estaba en bucle de
+reintentos fallidos del colector OpenTelemetry (miles de stack traces). Es el mismo
+mecanismo que provocó el `SQLITE_FULL` del 31-jul. Desactivado con
+`systemctl disable --now google-cloud-ops-agent.service`; medido después: **+0 bytes
+en 10 s** de crecimiento en syslog. No usamos Cloud Monitoring.
+
+**Retiro de Paperclip (ejecutado):**
+
+1. Workflow `wGBj1gkmy1JoBfGP` desactivado vía API **antes** de tocar el contenedor
+   (si se hace al revés, cada lead genera una ejecución fallida, y los fallos **sí**
+   se guardan aunque `EXECUTIONS_DATA_SAVE_ON_SUCCESS=none`).
+2. Servicio `paperclip` eliminado de `docker-compose.yml`; el `depends_on` de n8n
+   reapuntado de `paperclip` a `postgres` (que es de lo que dependen sus workflows).
+3. Variables `PAPERCLIP_*` retiradas del entorno de n8n (verificado: 0 referencias en
+   los workflows activos).
+4. Vhost `paperclip.{$DOMAIN}` eliminado del `Caddyfile`. **Caddy no se recrea solo
+   al cambiar el archivo montado** — hay que `docker exec deploy-caddy-1 caddy reload
+   --config /etc/caddy/Caddyfile`.
+5. `docker compose up -d --remove-orphans` → `deploy-paperclip-1 Removed`.
+
+**Verificación E2E antes y después del retiro** (misma prueba, dos veces): ambas
+`{"ok":true}` HTTP 200 y correo recibido en `jaagsolutions@gmail.com`. La segunda fue
+más rápida (0.53 s vs 0.99 s — sin el ida y vuelta a Paperclip). Post-retiro:
+`paperclip.jaagsolutions.com` → sin respuesta, `n8n` y la landing → 200,
+**0 ejecuciones con error** en n8n.
+
+**Workflows: de 7 a 3.** Borrados por API 3 duplicados de Telegram Approval y
+`linkedin-csv-pipeline`. Quedan Content Generator y Telegram Approval activos, más
+Formspree Lead desactivado.
+
+**Bug preexistente detectado (NO corregido):** `LINKEDIN_ORGANIZATION_URN` **no existe**
+en `deploy/.env`, pero `docker-compose.yml` la referencia → llega vacía al contenedor.
+La publicación en la **página de empresa** de LinkedIn no puede estar funcionando; los
+posts al perfil personal (`LINKEDIN_AUTHOR_URN`) sí. Falta obtener el URN de la
+organización y añadirlo al `.env`.
+
+**Pendiente de decisión:** destino de la migración fuera de GCP. Opciones evaluadas:
+apagar y guardar ($0), Oracle Cloud Always Free (2 OCPU/12 GB ARM — viable ahora que
+Paperclip sale del stack y solo quedan imágenes arm64 oficiales), correr local con
+`cloudflared`, o VPS de precio fijo (Hetzner CX22 €3.79/mes, Hostinger). Railway es
+viable técnicamente (contenedores, no VMs) pero es facturación por uso. Vercel queda
+descartado: no corre procesos persistentes.
 
 

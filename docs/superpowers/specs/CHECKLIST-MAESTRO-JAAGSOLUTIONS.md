@@ -400,8 +400,8 @@ git pull origin feature/jaagsolutions
 
 | Item | Estado |
 |------|--------|
-| VPS Google Cloud (90 días free trial disponible) | ✅ Completo (2026-05-06) — VM `jaagsolutions-vps` e2-medium Ubuntu 22.04 LTS — IP externa `34.41.171.138` |
-| Subdominio `app.jaagsolutions.com` → IP VM (Cloudflare DNS) | ✅ Completo (2026-05-06) — registro A `app` → `34.41.171.138` DNS only |
+| VPS Google Cloud (90 días free trial disponible) | ⚠️ Creado 2026-05-06 — VM `jaagsolutions-vps` e2-medium Ubuntu 22.04 LTS — IP externa `34.132.124.143` (efímera, actualizada 2026-09-02). **Free trial vencido ~2026-08-04; facturación con pagos rechazados desde 2026-09-01** |
+| Subdominio `app.jaagsolutions.com` → IP VM (Cloudflare DNS) | ✅ Completo (2026-05-06) — registro A `app` → `34.132.124.143` DNS only. **Reapuntar tras cada reinicio de la VM (IP efímera)** |
 | Ejecutar `deploy/setup.sh` en VPS | ✅ Completo (2026-05-06) — Docker 29.4.2 + 4 contenedores healthy |
 | Variables en `deploy/.env` | ✅ Completo (2026-05-06) — secretos generados con openssl, FORMSPREE_FORM_HASHID=xpqbzolp |
 | Correr seed Paperclip en producción | ✅ Completo (2026-05-06) — 17 creados, 2 actualizados. Company ID: `113d415c-9970-413f-b0d8-f7a6217caf67` |

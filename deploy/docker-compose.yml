@@ -19,38 +19,14 @@ services:
     networks:
       - internal
 
-  paperclip:
-    build:
-      context: ..
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:3100:3100"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      NODE_ENV: production
-      HOST: 0.0.0.0
-      PORT: "3100"
-      SERVE_UI: "true"
-      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-      PAPERCLIP_HOME: /paperclip
-      PAPERCLIP_PUBLIC_URL: ${PAPERCLIP_PUBLIC_URL}
-      PAPERCLIP_DEPLOYMENT_MODE: ${PAPERCLIP_DEPLOYMENT_MODE}
-      PAPERCLIP_DEPLOYMENT_EXPOSURE: ${PAPERCLIP_DEPLOYMENT_EXPOSURE}
-    volumes:
-      - ${PAPERCLIP_DATA_DIR}:/paperclip
-    networks:
-      - internal
-      - web
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:3100/api/health || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
+  # ─── Paperclip: RETIRADO 2026-09-02 ──────────────────────────────────────────
+  # Auditoría del 2026-09-02: ningún workflow activo lo consumía. El único que le
+  # hacía POST (`Formspree Lead → Paperclip Issue`, id wGBj1gkmy1JoBfGP) quedó
+  # desactivado. Los leads siguen llegando por correo vía Formspree, que es una
+  # rama independiente de la Cloudflare Function (ver jaagsolutions-web/functions/api/lead.js).
+  # Además su `depends_on` impedía arrancar n8n si Paperclip fallaba el healthcheck.
+  # Para restaurarlo: recuperar este bloque del historial de git + el registro DNS
+  # `paperclip` en Cloudflare + el vhost en el Caddyfile.
 
   n8n:
     build:
@@ -61,7 +37,7 @@ services:
     ports:
       - "127.0.0.1:5678:5678"
     depends_on:
-      paperclip:
+      postgres:
         condition: service_healthy
     environment:
       N8N_HOST: n8n.${DOMAIN}
@@ -82,12 +58,9 @@ services:
       NODE_PATH: "/opt/n8n-modules/node_modules"
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       # Expuestas al workflow (Code / expresiones vía process.env)
-      PAPERCLIP_URL: http://paperclip:3100
-      PAPERCLIP_COMPANY_ID: ${PAPERCLIP_COMPANY_ID}
-      PAPERCLIP_A3_AGENT_ID: ${PAPERCLIP_A3_AGENT_ID}
-      PAPERCLIP_P2_PROJECT_ID: ${PAPERCLIP_P2_PROJECT_ID}
-      PAPERCLIP_G2_GOAL_ID: ${PAPERCLIP_G2_GOAL_ID}
-      PAPERCLIP_API_KEY: ${PAPERCLIP_API_KEY}
+      # Las PAPERCLIP_* se retiraron el 2026-09-02 junto con el servicio: se
+      # verificó que ni content-generator.json ni telegram-approval.json las
+      # referencian (0 coincidencias de "paperclip" en sus parámetros).
       FORMSPREE_WEBHOOK_SECRET: ${FORMSPREE_WEBHOOK_SECRET}
       FORMSPREE_FORM_HASHID: ${FORMSPREE_FORM_HASHID:-}
       # ── Content Pipeline ──────────────────────────────────
@@ -104,7 +77,6 @@ services:
       LINKEDIN_AUTHOR_URN: ${LINKEDIN_AUTHOR_URN}
       # URN de la página de empresa que también recibe las publicaciones aprobadas con imagen.
       LINKEDIN_ORGANIZATION_URN: ${LINKEDIN_ORGANIZATION_URN}
-      PAPERCLIP_JAAG5_ISSUE_ID: ${PAPERCLIP_JAAG5_ISSUE_ID}
       # URL pública de las imágenes (Caddy las sirve bajo /static-content/* en el subdominio n8n)
       CONTENT_PUBLIC_URL: https://n8n.${DOMAIN}/static-content
       # ── Variables de retención (evitar SQLITE_FULL) ────────────────────────────
@@ -142,7 +114,6 @@ services:
     networks:
       - web
     depends_on:
-      - paperclip
       - n8n
 
 volumes:

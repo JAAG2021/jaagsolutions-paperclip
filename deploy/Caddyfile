@@ -1,16 +1,11 @@
-# SSL automático (Let's Encrypt). Los registros DNS de paperclip.* y n8n.* deben apuntar al VPS antes del primer arranque.
+# SSL automático (Let's Encrypt). El registro DNS de n8n.* debe apuntar al VPS antes del primer arranque.
 
 {
 	email {$LETSENCRYPT_EMAIL}
 }
 
-paperclip.{$DOMAIN} {
-	reverse_proxy paperclip:3100
-	encode gzip
-	log {
-		output stderr
-	}
-}
+# El vhost paperclip.{$DOMAIN} se retiró el 2026-09-02 junto con el servicio.
+# Recordar borrar también el registro DNS `paperclip` en Cloudflare.
 
 n8n.{$DOMAIN} {
 	# Imágenes generadas por el Content Generator — públicas bajo /static-content/*

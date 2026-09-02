@@ -6,24 +6,48 @@
 
 ---
 
-## ESTADO ACTUAL (2026-05-20)
+## ESTADO ACTUAL (2026-09-02)
 
 | Servicio | URL | Estado |
 |---------|-----|--------|
 | Landing web | `https://jaagsolutions.com` | ✅ Live — Cloudflare Pages |
-| Paperclip | `https://paperclip.jaagsolutions.com` | ✅ Live — VPS Docker |
 | n8n | `https://n8n.jaagsolutions.com` | ✅ Live — VPS Docker |
-| Workflow leads | Formspree Lead → Paperclip Issue | ✅ Activo |
-| Workflow content gen | Content Generator (Cron → Ideogram + OCR → Telegram) | ⚠️ Activo — hardening 2026-05-20 pendiente de importar |
-| Workflow telegram approval | Telegram Approval → Meta + LinkedIn | ⚠️ Activo — CTA/link captions + LinkedIn Org pendientes de importar |
+| PostgreSQL | interno | ✅ Live — tabla `content_plan` |
+| Caddy | reverse proxy | ✅ Live — SSL Let's Encrypt |
+| ~~Paperclip~~ | ~~`paperclip.jaagsolutions.com`~~ | ❌ **RETIRADO 2026-09-02** — ver sección 9 |
+| Workflow content gen | Content Generator (Cron → Ideogram + OCR → Telegram) | ✅ Activo (`FjeJW9Qb8vNiDwz5`) |
+| Workflow telegram approval | Telegram Approval → Meta + LinkedIn | ✅ Activo (`KduOBXYi3tuDG3fZ`) |
+| Workflow leads | Formspree Lead → Paperclip Issue | ⏸️ **Desactivado** (`wGBj1gkmy1JoBfGP`) — su destino ya no existe |
 
-**⚠️ ACCIÓN REQUERIDA:** importar workflows actualizados después del próximo push: `content-generator.json` y `telegram-approval.json`.
+**Los leads NO se perdieron al retirar Paperclip.** La Cloudflare Function hace dos
+llamadas independientes: a Formspree (`await`, es la que responde al navegador y
+dispara el correo a `jaagsolutions@gmail.com`) y a n8n (`context.waitUntil()`,
+fire-and-forget con `.catch()`). Verificado E2E el 2026-09-02 antes y después del
+retiro: ambas pruebas devolvieron `{"ok":true}` HTTP 200 y el correo llegó.
 
-**Actualizacion 2026-05-25:** Paperclip debe sincronizarse con `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json` v2. Ese seed reconoce la operacion real: 5 agentes, 6 goals, 4 proyectos y 21 issues, incluyendo `P4 - Content Automation Production Ops`. El agente A4 tiene mandato explicito de respetar el workflow `content_plan -> Content Generator -> Telegram Approval -> Meta + LinkedIn Publisher`.
+**⚠️ ACCIÓN REQUERIDA (pendiente desde mayo):** producción corre un `Content Generator`
+de **30 nodos** mientras el repo tiene uno de **61**. El repo NO refleja producción.
+Antes de importar nada, exportar primero desde producción para no perder cambios vivos.
 
-**VPS:** Google Cloud `jaagsolutions-vps` — e2-medium Ubuntu 22.04 — IP `34.41.171.138`  
-**SSH:** `ssh jaagsolutions-vps` (atajo configurado en `~/.ssh/config`) o `ssh -i C:\Users\jalva\.ssh\jaagsolutions_vps jaagsolutions@34.41.171.138`
+**⚠️ `LINKEDIN_ORGANIZATION_URN` no existe en `deploy/.env`** (detectado 2026-09-02 por
+el warning de `docker compose config`). El `docker-compose.yml` la referencia, así que
+llega vacía al contenedor: la publicación en la **página de empresa** de LinkedIn no
+puede estar funcionando. Los posts al perfil personal (`LINKEDIN_AUTHOR_URN`) sí.
+
+**VPS:** Google Cloud `jaagsolutions-vps` — e2-medium Ubuntu 22.04 — IP `34.132.124.143` (actualizado 2026-09-02)  
+**SSH:** `ssh jaagsolutions-vps` (atajo en `~/.ssh/config`, apunta a `app.jaagsolutions.com`) o `ssh -i C:\Users\jalva\.ssh\jaagsolutions_vps jaagsolutions@app.jaagsolutions.com`
 **Clave SSH local:** `C:\Users\jalva\.ssh\jaagsolutions_vps` — exclusiva para este proyecto, fingerprint `SHA256:tbhHTHiJB+hazSUuVL4DiEAY+kjjz3d5HrWLq6oJxU4`
+
+> ⚠️ **LA IP EXTERNA ES EFÍMERA.** Cambia sola cada vez que la VM se detiene o
+> reinicia (era `34.41.171.138`; pasó a `34.132.124.143` en el reinicio del
+> 2026-07-31 por disco lleno). **Nunca uses la IP a pelo en configuración
+> permanente.** Tras cualquier reinicio: actualizar el registro A `app` en
+> Cloudflare (DNS only) y todo lo demás — SSH incluido — sigue funcionando,
+> porque apunta al nombre `app.jaagsolutions.com`, no a la IP.
+>
+> Para reservar la IP y que deje de cambiar: Compute Engine → Direcciones IP
+> externas → cambiar `Efímera` a `Estática` (ojo: una IP estática *sin* VM
+> asociada sí se factura).
 **Repo en VPS:** `/opt/jaagsolutions/repo` — branch `feature/jaagsolutions` — remote `origin` = `JAAG2021/jaagsolutions-paperclip`
 
 ---
@@ -37,28 +61,48 @@
   # Verificar con:
   grep VARIABLE /ruta/al/.env
   ```
-- ❌ La **n8n REST API devuelve 401** aunque el API key sea válido — incompatibilidad con `N8N_BASIC_AUTH_ACTIVE=true`. Usar siempre el CLI de Docker para importar workflows (ver sección 2).
+- ✅ **CORREGIDO 2026-09-02: la n8n REST API SÍ funciona.** El gotcha anterior
+  ("devuelve 401 aunque el API key sea válido") es **falso**. Verificado en vivo:
+  `GET /api/v1/workflows` con la cabecera `X-N8N-API-KEY` responde **HTTP 200**.
+  La clave está en `N8N_API_KEY` dentro de `deploy/.env`. Hay que llamarla desde
+  el propio VPS a `http://127.0.0.1:5678` (el puerto está publicado solo en
+  loopback), no a través de Caddy. Ejemplo:
+  ```bash
+  K=$(sudo grep -oP '(?<=^N8N_API_KEY=).*' /opt/jaagsolutions/repo/deploy/.env)
+  curl -s -H "X-N8N-API-KEY: $K" http://127.0.0.1:5678/api/v1/workflows?limit=50
+  curl -s -X DELETE -H "X-N8N-API-KEY: $K" http://127.0.0.1:5678/api/v1/workflows/<ID>
+  ```
+  Esto habilita automatizar altas/bajas de workflows sin el proceso manual.
 - ❌ El `.env` está en `/opt/jaagsolutions/repo/deploy/.env`, NO en `/opt/jaagsolutions/deploy/.env`.
 
 ### En git
 - El branch `feature/jaagsolutions` hace tracking a `JAAG2021/jaagsolutions-paperclip` (remote `origin` en el VPS).
 - Para enviar cambios locales al VPS: hacer push desde la máquina local con `git push jaag2021 feature/jaagsolutions`, luego `git pull` en el VPS.
 
-### En Paperclip
-- Si Paperclip falla con `EACCES permission denied`:
-  ```bash
-  sudo chown -R 1000:1000 /opt/jaagsolutions/paperclip-data
-  sudo docker restart deploy-paperclip-1
-  ```
-- La fuente de verdad de agentes/goals/proyectos/issues es `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json`.
-- Despues de modificar el seed, aplicar la seccion 2 de este runbook y verificar en `https://paperclip.jaagsolutions.com`.
-- No volver al seed historico de 4 agentes: la operacion actual usa A4 `Social & Content Lead` y P4 `Content Automation Production Ops`.
-- Mantener `adapterConfig.command` en los agentes. Si queda vacio, `Run Heartbeat` falla con `Process adapter missing command` y puede marcar issues como `blocked`.
+### En Paperclip — RETIRADO 2026-09-02
+
+❌ **Paperclip ya no corre en este VPS.** No busques `deploy-paperclip-1`, ni
+`/opt/jaagsolutions/paperclip-data`, ni `paperclip.jaagsolutions.com`: no existen.
+La **sección 2** de este runbook (seed) quedó obsoleta.
+
+Motivo del retiro: la auditoría del 2026-09-02 verificó que ningún workflow activo
+lo consumía. Además su `depends_on: paperclip: service_healthy` impedía arrancar n8n
+si Paperclip fallaba el healthcheck — riesgo puro sobre el servicio que sí importa.
+Liberó ~4 GB de disco (el VPS pasó de 63% a 41%).
+
+Lo que se conserva: el esquema y los datos de Paperclip siguen dentro de la BD
+`paperclip` de Postgres (no se borró nada de la BD), y hay respaldo completo en
+`C:\Users\jalva\Documents\JAAG-BACKUP-2026-09-02\` (`paperclip-data.tar.gz` +
+`postgres-full.sql.gz`).
+
+Para restaurarlo: recuperar el bloque `paperclip:` del historial de git en
+`deploy/docker-compose.yml`, el vhost en `deploy/Caddyfile`, el registro DNS
+`paperclip` en Cloudflare, y reactivar el workflow `wGBj1gkmy1JoBfGP`.
 
 ### En automatizacion de contenido
 - A4 no debe publicar ni regenerar contenido por fuera del pipeline aprobado.
 - A2 es el dueno tecnico de workflows n8n, credenciales, webhooks, OCR y alertas.
-- A1 sincroniza Paperclip semanalmente con publicaciones reales.
+- A1 sincronizaba Paperclip semanalmente con publicaciones reales (sin efecto desde el retiro del 2026-09-02).
 - A3 traduce resultados de contenido a demanda comercial.
 - Todo cambio productivo debe quedar reflejado en `CHECKLIST-MAESTRO-JAAGSOLUTIONS.md`.
 
@@ -111,7 +155,15 @@ Ir a `https://n8n.jaagsolutions.com` → confirmar que el workflow **"Formspree 
 
 ### ¿Por qué no se puede automatizar via REST API?
 
-n8n tiene `N8N_BASIC_AUTH_ACTIVE=true` que bloquea el endpoint `/api/v1/` con 401 en todas las combinaciones de auth probadas (API key solo, basic auth solo, ambas juntas). El GitHub Action `sync-n8n.yml` existe en el repo pero está pendiente de solución. Mientras tanto, el proceso manual de 4 pasos es el camino validado.
+> **OBSOLETO — corregido 2026-09-02.** Esta sección afirmaba que
+> `N8N_BASIC_AUTH_ACTIVE=true` bloqueaba `/api/v1/` con 401 en toda combinación de
+> auth. **Es falso.** La API responde 200 con la cabecera `X-N8N-API-KEY` llamando
+> a `http://127.0.0.1:5678` desde el propio VPS (el 401 original probablemente
+> venía de llamar a través de Caddy, donde sí aplica el basic auth).
+>
+> El proceso manual de 4 pasos sigue siendo válido y es el más probado para
+> **importar** workflows, pero ya no es el único camino: listar, borrar y activar
+> se pueden automatizar. El GitHub Action `sync-n8n.yml` es viable de retomar.
 
 ### 1.bis CÓMO ACTUALIZAR UN WORKFLOW QUE USA CREDENCIALES (Postgres, OAuth, etc.)
 
@@ -259,7 +311,11 @@ rm -f /opt/jaagsolutions/content/9dd90ed3-ea31-4f0d-a9dc-cdb77a1202b1.jpg
 
 ---
 
-## 2. CÓMO ACTUALIZAR EL SEED DE PAPERCLIP
+## 2. CÓMO ACTUALIZAR EL SEED DE PAPERCLIP — ⛔ OBSOLETO (2026-09-02)
+
+> **NO EJECUTAR.** Paperclip fue retirado del VPS el 2026-09-02. Los comandos de
+> esta sección fallarán (`No such container: deploy-paperclip-1`). Se conserva
+> solo como referencia por si algún día se restaura el servicio.
 
 **Usar cuando:** se agrega o modifica un agente, goal, proyecto o issue en `Proyect_JAAGSOLUTIONS/jaagsolutions-seed.json`.
 
@@ -348,7 +404,7 @@ grep NUEVA_VARIABLE /opt/jaagsolutions/repo/deploy/.env
 # Aplicar reiniciando el servicio afectado:
 cd /opt/jaagsolutions/repo/deploy
 docker compose --env-file .env restart <servicio>
-# Servicios: paperclip | n8n | caddy | postgres
+# Servicios: n8n | caddy | postgres   (paperclip retirado 2026-09-02)
 ```
 
 ---
@@ -409,12 +465,31 @@ docker compose --env-file .env down && docker compose --env-file .env up -d
 
 ## 7. PRUEBA E2E — VERIFICAR QUE EL FLUJO FUNCIONA
 
-Ejecutar cada vez que se cambie el workflow de n8n o la CF Function:
+Ejecutar cada vez que se cambie la CF Function o el flujo de leads.
 
-1. Llenar el formulario en `https://jaagsolutions.com` con datos de prueba
-2. Verificar email en `jaagsolutions@gmail.com` — debe llegar notificación de Formspree
-3. En n8n UI → **Executions** — debe aparecer una ejecución exitosa reciente
-4. En Paperclip → **Issues** — debe aparecer un nuevo issue asignado a Growth Ops (A3)
+**Sin abrir el navegador** (así se validó el 2026-09-02):
+
+```bash
+curl -s -w "\n>>> HTTP %{http_code}\n" -X POST https://jaagsolutions.com/api/lead \
+  -H "Content-Type: application/json" -H "Accept: application/json" \
+  -d '{"nombre":"PRUEBA E2E","email":"inverjaag@gmail.com",
+       "empresa":"PRUEBA - IGNORAR","sitio_web":"https://jaagsolutions.com",
+       "tamano_equipo":"1-5","dolor_proceso":"prueba tecnica",
+       "herramientas_actual":"","presupuesto":"","timeline":"","whatsapp":"",
+       "recurso_pdf":"No solicitado","diagnostico_express":"prueba, no responder",
+       "tipo_solicitud":"diagnostico_multipaso"}'
+```
+
+**Resultado esperado:** `{"next":"/thanks","ok":true}` con **HTTP 200**, y correo de
+Formspree en `jaagsolutions@gmail.com` en menos de un minuto.
+
+Ese 200 viene de Formspree, no de n8n: es la única rama que el navegador espera.
+La rama a n8n es `context.waitUntil()` fire-and-forget con `.catch()` — puede fallar
+entera sin que el visitante ni el correo se enteren. Por eso, desde el retiro de
+Paperclip (workflow `wGBj1gkmy1JoBfGP` desactivado) el webhook de n8n devuelve 404 y
+**no pasa nada**: 0 ejecuciones con error, verificado.
+
+> ⚠️ Cada prueba envía un correo real y consume una entrada de la cuota de Formspree.
 
 ---
 
@@ -435,7 +510,7 @@ Ejecutar cada vez que se cambie el workflow de n8n o la CF Function:
 | `Cannot find module 'fs'` en Code node | n8n bloquea built-ins de Node por defecto | Agregar `NODE_FUNCTION_ALLOW_BUILTIN: "fs,path"` al `environment:` de n8n en docker-compose.yml |
 | `Your local changes would be overwritten by merge` (docker-compose.yml) | VPS tiene cambios locales sin commitear | `git stash push <file>` → `git pull` → `git stash pop` → resolver duplicados con `sed -i '<LINE>d' <file>` |
 | `Ctrl+W` en SSH del navegador cierra la pestaña | Atajo del navegador tiene prioridad sobre nano | Navegar con flechas/Page Down; usar `grep -n` antes para saber a qué línea ir |
-| No aparece opción Delete en menú de workflow n8n | n8n moderno reemplazó Delete por Archive (soft-delete) | Usar Archive (libera el webhook path); alternativa CLI: `docker exec deploy-n8n-1 n8n delete:workflow --id=<ID>` |
+| No aparece opción Delete en menú de workflow n8n | n8n moderno reemplazó Delete por Archive (soft-delete) | Usar Archive (libera el webhook path). **El CLI NO tiene `delete:workflow`** (verificado 2026-09-02: `Error: Command "delete:workflow" not found`) — para borrado permanente usar la REST API: `curl -X DELETE -H "X-N8N-API-KEY: $K" http://127.0.0.1:5678/api/v1/workflows/<ID>` |
 | `callback_data inválido` en Telegram callback parser | Separador `_` vs `:` mismatch entre nodo emisor y receptor | Usar `data.split('_')` + `parts.slice(1).join('_')` porque UUIDs contienen `-` pero no `_` |
 | Imagen guardada como `image_path` pero schema usa `image_url` | Inconsistencia entre plan y schema | El schema es la fuente de verdad; renombrar todas las referencias para coincidir |
 | `SplitInBatches v3` ejecuta "Node executed successfully" pero sin output — pipeline mudo | Output index 0 = "done" (post-loop), index 1 = "loop" (per-batch). Si conectas al 0, el pipeline solo corre cuando ya no hay items | Conectar nodos de proceso al output **index 1**. Los nodos terminales hacen loopback al input 0 de SplitInBatches |
