@@ -14,6 +14,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import JSZip from "jszip";
 
+/** Marca de tiempo constante para que la salida sea reproducible byte a byte. */
+const FIXED_DATE = new Date("2026-01-01T00:00:00Z");
+
 const TARGETS = [
   {
     src: "public/lottie/hover-interaction.lottie",
@@ -54,6 +57,12 @@ for (const { src, out, hide } of TARGETS) {
     zipOut.file(
       path,
       path === animPath ? JSON.stringify(anim) : await zipIn.file(path).async("nodebuffer"),
+      // Fecha fija y sin entradas de directorio: ambas cosas hacen falta para que
+      // la salida sea reproducible. Sin ellas cada corrida escribe timestamps
+      // nuevos y git ve los `.lottie` como modificados con contenido idéntico
+      // (las carpetas implícitas se sellan con la hora actual). El `.lottie`
+      // original tampoco trae entradas de directorio.
+      { date: FIXED_DATE, createFolders: false },
     );
   }
 
