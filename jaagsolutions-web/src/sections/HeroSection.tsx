@@ -1,5 +1,4 @@
-import { useState } from "react";
-import HeroAutomationHubIllustration from "../components/HeroAutomationHubIllustration.tsx";
+import LottieAnimation from "../components/LottieAnimation.tsx";
 
 const TECH_BADGES = [
   "Make",
@@ -10,22 +9,33 @@ const TECH_BADGES = [
   "WhatsApp API",
 ];
 
-const HERO_VIDEO_FILENAME = "hero-automation-hub.mp4";
-
-/** Descripción del vídeo / arte del hero (accesibilidad y respaldo SVG). Marco 448×600 (56:75); exporta en esa proporción p. ej. 896×1200. object-cover evita huecos si el mp4 es 9:16. */
+/** Descripción de la animación del hero (accesibilidad y respaldo SVG). */
 const HERO_VISUAL_ALT =
-  "Dashboard digital isométrico en 3D: hub luminoso tipo CPU, líneas tipo circuito en cian hasta iconos WhatsApp, correo Gmail, Google y centro estilo IA OpenAI; paneles cristal con gráficas y datos en tiempo real. Estilo B2B azul tecnológico.";
+  "Animación de flujos automatizados: tareas que viajan entre aplicaciones conectadas y se resuelven solas.";
 
-function heroVideoSrc(): string {
-  const base = import.meta.env.BASE_URL.endsWith("/")
-    ? import.meta.env.BASE_URL
-    : `${import.meta.env.BASE_URL}/`;
-  return `${base}${HERO_VIDEO_FILENAME}`;
-}
+/**
+ * La animación dura 125 frames, pero su contenido baja de opacidad 100 → 0
+ * entre el frame 100 y el 112, y del 112 al 125 el lienzo queda vacío. El bucle
+ * corta en 100 —justo antes del fundido— para que el flujo nunca se despinte.
+ * Sólo afecta a la duración: ni el tamaño ni el encuadre cambian.
+ */
+const HERO_FLOW_SEGMENT: [number, number] = [0, 100];
+
+/** Descripción de los nodos interactivos que acompañan al disco. */
+const WORKFLOW_NODES_ALT =
+  "Nodos de un flujo automatizado: correo, webhook, disparador y plantilla.";
+
+/**
+ * Los nombres son los que espera la state machine del `.lottie` (input `Hover`).
+ * Sin este recorrido la fila se ve congelada hasta que alguien pasa el cursor
+ * —y en móvil, donde no hay hover, no se movería nunca.
+ */
+const WORKFLOW_NODE_CYCLE = {
+  inputName: "Hover",
+  values: ["Email", "Webhook", "Trigger", "Templates"],
+};
 
 export default function HeroSection() {
-  const [hubVideoFailed, setHubVideoFailed] = useState(false);
-
   return (
     <section
       id="inicio"
@@ -121,29 +131,42 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {/* ── Right: marco original 448×600 (más ancho que 360×640); 56:75 = export vídeo 896×1200 etc. ── */}
-          <div className="hidden lg:flex animate-fade-in-up-d2 w-full justify-center xl:justify-end min-h-0">
-            <div className="relative w-[448px] h-[600px] shrink-0 overflow-hidden rounded-2xl border border-white/12 bg-black shadow-2xl ring-1 ring-white/10">
-              {!hubVideoFailed ? (
-                <video
-                  src={heroVideoSrc()}
-                  className="absolute inset-0 h-full w-full object-cover object-center"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="auto"
-                  aria-label={HERO_VISUAL_ALT}
-                  onError={() => setHubVideoFailed(true)}
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center min-h-0 bg-brand-950/50 p-2">
-                  <HeroAutomationHubIllustration
-                    aria-hidden
-                    className="max-h-full max-w-full w-auto h-auto text-white"
-                  />
-                </div>
-              )}
+          {/* ── Right: dos animaciones dotLottie como un solo bloque — el disco
+              del flujo arriba y, debajo, los nodos interactivos. Reemplazan al
+              vídeo de 3,2 MB y, a diferencia de él, también se ven en móvil. ── */}
+          <div className="animate-fade-in-up-d2 flex w-full flex-col items-center gap-3 sm:gap-4 xl:items-end min-h-0">
+            {/* Variante `-nobg`: sin el disco blanco que traía el original, el
+                flujo queda directamente sobre el degradado. Se amplía al 132 %
+                con el anclaje corrido (61 %/57 % en vez de 50 %/50 %) porque el
+                flujo no está centrado en su propio lienzo. */}
+            <div className="relative aspect-square w-full max-w-[400px] sm:max-w-[480px] lg:max-w-[560px] xl:max-w-[600px] overflow-hidden">
+              <LottieAnimation
+                src="lottie/automated-workflows-nobg.lottie"
+                segment={HERO_FLOW_SEGMENT}
+                ariaLabel={HERO_VISUAL_ALT}
+                className="absolute left-[61%] top-[57%] h-[132%] w-[132%] -translate-x-1/2 -translate-y-1/2"
+                fallback={
+                  // Placeholder neutro a propósito: antes iba acá la ilustración
+                  // del hub, y alcanzaba a asomar mientras cargaba el player —
+                  // se veía como un resto del arte anterior.
+                  <div className="h-full w-full" aria-hidden />
+                }
+              />
+            </div>
+
+            {/* Nodos interactivos: la state machine del `.lottie` reacciona al
+                hover sobre cada uno. Se usa la variante `-nobg`, sin la placa
+                negra del original, para que floten sobre el degradado. El
+                recorte vertical elimina el aire sobrante del lienzo. */}
+            <div className="relative aspect-[1080/210] w-full max-w-[400px] sm:max-w-[480px] lg:max-w-[560px] xl:max-w-[600px] overflow-hidden">
+              <LottieAnimation
+                src="lottie/hover-interaction-nobg.lottie"
+                stateMachineId="StateMachine1"
+                autoCycle={WORKFLOW_NODE_CYCLE}
+                ariaLabel={WORKFLOW_NODES_ALT}
+                className="absolute left-0 top-1/2 h-[328%] w-full -translate-y-1/2"
+                fallback={<div className="h-full w-full" aria-hidden />}
+              />
             </div>
           </div>
         </div>
