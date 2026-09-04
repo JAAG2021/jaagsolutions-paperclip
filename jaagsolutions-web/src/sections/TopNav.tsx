@@ -33,8 +33,9 @@ export default function TopNav() {
     <nav aria-label="Navegación principal" className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <a href="#inicio" className="font-bold text-xl text-brand-700 tracking-tight">
+          {/* Logo. Debajo de 360 px baja un escalón: a tamaño completo, junto al
+              CTA y la hamburguesa, no entraba y ensanchaba la página. */}
+          <a href="#inicio" className="font-bold text-sm min-[360px]:text-xl text-brand-700 tracking-tight">
             JAAG<span className="text-gray-900">SOLUTIONS</span>
           </a>
 

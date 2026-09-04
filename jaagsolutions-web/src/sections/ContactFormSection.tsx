@@ -180,7 +180,10 @@ export default function ContactFormSection() {
             </ul>
           </div>
 
-          <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-inner">
+          {/* `min-w-0`: como item de grid, por defecto lleva `min-width: auto` y
+              no puede encogerse por debajo del ancho intrínseco del formulario —
+              en móvil eso ensanchaba la página entera (scroll horizontal). */}
+          <div className="min-w-0 bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-inner">
             {submitted ? (
               <div className="text-center py-6">
                 <div className="text-5xl mb-4" aria-hidden>✅</div>

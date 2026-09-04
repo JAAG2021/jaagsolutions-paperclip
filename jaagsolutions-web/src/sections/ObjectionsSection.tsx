@@ -88,8 +88,12 @@ export default function ObjectionsSection() {
         </div>
 
         <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
-        {/* Columna izquierda: comparativa */}
-        <div>
+        {/* Columna izquierda: comparativa.
+            `min-w-0` es necesario: los items de un grid tienen `min-width: auto`,
+            así que sin esto la columna no puede encogerse por debajo del ancho de
+            la tabla (`min-w-[30rem]`) y en móvil desbordaba la página entera en
+            vez de dejar que la tabla scrollee dentro de su caja. */}
+        <div className="min-w-0">
         {/* Tabla comparativa */}
         <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm">
           <table className="w-full border-collapse min-w-[30rem]">

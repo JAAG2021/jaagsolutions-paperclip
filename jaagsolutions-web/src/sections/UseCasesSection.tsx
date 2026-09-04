@@ -249,11 +249,13 @@ export default function UseCasesSection() {
           </p>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs. Suman ~810 px, así que recién entran centrados a partir de `lg`:
+            con `sm` el scroll horizontal se desactivaba antes de que cupieran y
+            en tablet desbordaban la página. */}
         <div
           role="tablist"
           aria-label="Casos de uso"
-          className="mb-6 flex gap-2 overflow-x-auto pb-1 sm:justify-center sm:overflow-visible"
+          className="mb-6 flex gap-2 overflow-x-auto pb-1 lg:justify-center lg:overflow-visible"
         >
           {useCases.map((uc, i) => {
             const selected = i === activeIdx;
