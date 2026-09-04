@@ -43,7 +43,6 @@ export default function App() {
           cada enlace recupera los clics con `pointer-events-auto`. */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 items-end pointer-events-none">
         {[
-          { label: "🇻🇪 Venezuela", number: "584143151406" },
           { label: "🇨🇱 Chile", number: "56964862862" },
         ].map(({ label, number }) => (
           <a
