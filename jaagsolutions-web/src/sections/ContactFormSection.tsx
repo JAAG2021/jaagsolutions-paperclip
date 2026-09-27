@@ -218,7 +218,7 @@ export default function ContactFormSection() {
                   {STEPS_COPY.map((label, idx) => (
                     <div key={label} className="flex flex-1 flex-col min-w-0">
                       <span
-                        className={`text-[0.6rem] font-bold uppercase tracking-wide truncate ${idx === stepIndex ? "text-brand-600" : "text-gray-400"}`}
+                        className={`text-[0.6rem] font-bold uppercase tracking-wide truncate ${idx === stepIndex ? "text-brand-600" : "text-gray-500"}`}
                         title={idx === 3 ? `${label} (opcional)` : label}
                       >
                         {idx === 3 ? "Diag. express" : label}
@@ -255,7 +255,7 @@ export default function ContactFormSection() {
                         className={inputClass}
                       />
                       {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
-                      <p className="mt-1 text-[0.7rem] text-gray-400">
+                      <p className="mt-1 text-[0.7rem] text-gray-500">
                         Los dominios públicos están bien; el corporativo acelera la priorización cuando hay alta demanda.
                       </p>
                     </div>
@@ -401,7 +401,7 @@ export default function ContactFormSection() {
                 <div role="group" aria-labelledby="step-diag-heading" hidden={stepIndex !== 3}>
                   <h3 id="step-diag-heading" className="font-semibold text-gray-800 mb-1">
                     Diagnóstico express{" "}
-                    <span className="text-xs font-normal text-gray-400 normal-case">(opcional · 2 min)</span>
+                    <span className="text-xs font-normal text-gray-500 normal-case">(opcional · 2 min)</span>
                   </h3>
                   <p className="text-sm text-gray-500 mb-3">
                     Describí en tus palabras el proceso que más querés automatizar: ¿qué pasos hace tu equipo hoy de forma manual?, ¿qué lo dispara?, ¿qué resultado esperás? Esta información nos permite preparar una propuesta de flujo específica antes de la sesión.
@@ -414,7 +414,7 @@ export default function ContactFormSection() {
                       aria-label="Descripción libre del proceso a automatizar (opcional)"
                       className={`${inputClass} resize-none`}
                     />
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-500">
                       Sin presión — si preferís contarlo en la sesión podés omitir este paso y enviar igual.
                     </p>
                   </div>

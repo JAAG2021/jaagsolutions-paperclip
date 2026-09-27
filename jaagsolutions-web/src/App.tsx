@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import AnnouncementBar from "./components/AnnouncementBar.tsx";
 import ScrollProgressBar from "./components/ScrollProgressBar.tsx";
 import BackToTopButton from "./components/BackToTopButton.tsx";
@@ -7,7 +7,13 @@ import HeroSection from "./sections/HeroSection.tsx";
 import FooterSection from "./sections/FooterSection.tsx";
 import { useScrollDepth } from "./hooks/useScrollDepth.ts";
 
-const AppBelowFold = lazy(() => import("./AppBelowFold.tsx"));
+/**
+ * Se dispara una sola vez, al cargar el módulo — `import()` cachea la
+ * promesa, así que tanto `AppBelowFold` (vía `lazy`) como el `useEffect` de
+ * abajo esperan exactamente el mismo evento sin descargar el chunk dos veces.
+ */
+const belowFoldModule = import("./AppBelowFold.tsx");
+const AppBelowFold = lazy(() => belowFoldModule);
 
 function BelowFoldFallback() {
   return (
@@ -21,6 +27,23 @@ function BelowFoldFallback() {
 
 export default function App() {
   useScrollDepth();
+  // El footer se renderizaba de inmediato, justo debajo del Hero (el
+  // contenido de `AppBelowFold` — 7 secciones completas — todavía no
+  // existía). Cuando ese chunk llegaba, insertar todo ese contenido de una
+  // sola vez empujaba el footer muchísimo más abajo: Lighthouse medía ese
+  // salto como CLS (Cumulative Layout Shift) y bajaba "Agentic Browsing" de
+  // 100 a 80. Al esperar el mismo evento que `AppBelowFold`, el footer nunca
+  // llega a ocupar esa posición temporal — aparece directo en su lugar final.
+  const [belowFoldReady, setBelowFoldReady] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    belowFoldModule.then(() => {
+      if (alive) setBelowFoldReady(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -33,7 +56,7 @@ export default function App() {
           <AppBelowFold />
         </Suspense>
       </main>
-      <FooterSection />
+      {belowFoldReady && <FooterSection />}
 
       <BackToTopButton />
 

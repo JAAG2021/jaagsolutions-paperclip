@@ -1,4 +1,6 @@
 import { ChevronRight } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import { motionTokens, springs } from "../lib/motion-tokens.ts";
 
 export type AutomationFlowStep = {
   icon: string;
@@ -39,6 +41,7 @@ export default function AutomationFlowDiagram({
 
   const linearDescription = steps.map((s) => s.label).join(" → ");
   const descId = `flow-desc-${slugId(diagramId)}`;
+  const reduce = useReducedMotion();
 
   return (
     <div
@@ -57,7 +60,13 @@ export default function AutomationFlowDiagram({
         {steps.map((step, index) => {
           const isLast = index === steps.length - 1;
           return (
-            <li key={`${step.label}-${index}`} className="relative flex gap-3 sm:gap-4">
+            <motion.li
+              key={`${step.label}-${index}`}
+              className="relative flex gap-3 sm:gap-4"
+              initial={{ opacity: 0, y: reduce ? 0 : motionTokens.distance.sm, filter: reduce ? "blur(0px)" : "blur(4px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ ...springs.gentle, delay: reduce ? 0 : index * 0.09 }}
+            >
               <div className="flex w-9 shrink-0 flex-col items-center sm:w-10" aria-hidden>
                 <span className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-brand-600 text-[0.6875rem] font-extrabold text-white shadow-sm ring-2 ring-brand-500/25 sm:size-9 sm:text-xs">
                   {index + 1}
@@ -124,7 +133,7 @@ export default function AutomationFlowDiagram({
                   )}
                 </div>
               </div>
-            </li>
+            </motion.li>
           );
         })}
       </ol>

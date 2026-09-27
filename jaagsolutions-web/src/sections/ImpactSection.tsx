@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
 import { Zap, Bot, Blocks, Users, ArrowRight, Calculator } from "lucide-react";
+import { useReducedMotion } from "motion/react";
+import Reveal from "../components/Reveal.tsx";
+import { springs } from "../lib/motion-tokens.ts";
 
 /**
  * Sección "El impacto real": fusiona lo que antes eran tres bandas separadas
@@ -60,13 +63,14 @@ function StaticStat({
       <Icon className={`w-6 h-6 flex-shrink-0 ${iconColor}`} />
       <div>
         <div className="text-2xl font-extrabold text-white leading-none">{value}</div>
-        <div className="text-xs text-blue-300/70 mt-1 leading-tight">{label}</div>
+        <div className="text-xs text-blue-100/85 mt-1 leading-tight">{label}</div>
       </div>
     </div>
   );
 }
 
 function SliderField({
+  id,
   label,
   min,
   max,
@@ -76,6 +80,7 @@ function SliderField({
   prefix = "",
   suffix = "",
 }: {
+  id: string;
   label: string;
   min: number;
   max: number;
@@ -88,7 +93,7 @@ function SliderField({
   return (
     <div>
       <div className="flex justify-between items-baseline mb-2">
-        <label className="text-sm font-semibold text-gray-800">{label}</label>
+        <label htmlFor={id} className="text-sm font-semibold text-gray-800">{label}</label>
         <span className="text-sm font-bold text-brand-600 tabular-nums">
           {prefix}
           {value}
@@ -96,13 +101,13 @@ function SliderField({
         </span>
       </div>
       <input
+        id={id}
         type="range"
         min={min}
         max={max}
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        aria-label={label}
         className="w-full h-2 rounded-full appearance-none bg-gray-200 accent-brand-600 cursor-pointer"
       />
     </div>
@@ -110,6 +115,7 @@ function SliderField({
 }
 
 export default function ImpactSection() {
+  const reduce = useReducedMotion();
   const [employees, setEmployees] = useState(5);
   const [hoursWeek, setHoursWeek] = useState(5);
   const [hourlyRate, setHourlyRate] = useState(25);
@@ -124,7 +130,7 @@ export default function ImpactSection() {
     <section id="impacto" className="py-14 sm:py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-8 sm:mb-10 animate-fade-in-up">
+        <Reveal className="text-center mb-8 sm:mb-10">
           <span className="inline-block mb-3 px-4 py-1 text-xs font-bold tracking-widest uppercase text-brand-600 bg-white rounded-full border border-brand-100 shadow-sm">
             El impacto real
           </span>
@@ -135,12 +141,17 @@ export default function ImpactSection() {
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             El dueño no busca “automatizar” por tecnología — busca horas recuperables y márgenes sanos.
           </p>
-        </div>
+        </Reveal>
 
         {/* Antes → Después */}
         <div className="grid gap-5 md:grid-cols-3">
-          {benefits.map((b) => (
-            <div key={b.tag} className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          {benefits.map((b, i) => (
+            <Reveal
+              key={b.tag}
+              delay={i * 0.08}
+              className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+              whileHover={reduce ? undefined : { y: -6, transition: springs.snappy }}
+            >
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className={`text-[0.6875rem] font-bold uppercase tracking-widest ${b.accent}`}>{b.eyebrow}</p>
@@ -149,7 +160,7 @@ export default function ImpactSection() {
                 <span className="text-2xl leading-none" aria-hidden>{b.icon}</span>
               </div>
 
-              <p className="mt-4 text-sm leading-snug text-gray-400 line-through decoration-gray-300">
+              <p className="mt-4 text-sm leading-snug text-gray-500 line-through decoration-gray-300">
                 {b.before}
               </p>
               <div className="my-2 flex items-center gap-2 text-brand-600">
@@ -157,12 +168,15 @@ export default function ImpactSection() {
                 <span className="h-px flex-1 bg-gray-200" />
               </div>
               <p className="text-sm font-medium leading-snug text-gray-800">{b.after}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
 
         {/* Calculadora — compacta y siempre visible */}
-        <div className="mt-6 grid overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm lg:grid-cols-[1fr_20rem]">
+        <Reveal
+          delay={0.3}
+          className="mt-6 grid overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm lg:grid-cols-[1fr_20rem]"
+        >
           {/* Controles */}
           <div className="p-5 sm:p-6">
             <div className="mb-4 flex items-center gap-2.5">
@@ -172,11 +186,11 @@ export default function ImpactSection() {
               </h3>
             </div>
             <div className="space-y-5">
-              <SliderField label="Empleados en tareas repetitivas" min={1} max={20} value={employees} onChange={setEmployees} />
-              <SliderField label="Horas perdidas por empleado / semana" min={2} max={40} value={hoursWeek} onChange={setHoursWeek} suffix=" h" />
-              <SliderField label="Costo hora cargado (USD)" min={15} max={50} value={hourlyRate} onChange={setHourlyRate} prefix="$" />
+              <SliderField id="roi-empleados" label="Empleados en tareas repetitivas" min={1} max={20} value={employees} onChange={setEmployees} />
+              <SliderField id="roi-horas" label="Horas perdidas por empleado / semana" min={2} max={40} value={hoursWeek} onChange={setHoursWeek} suffix=" h" />
+              <SliderField id="roi-costo-hora" label="Costo hora cargado (USD)" min={15} max={50} value={hourlyRate} onChange={setHourlyRate} prefix="$" />
             </div>
-            <p className="mt-4 text-xs leading-relaxed text-gray-400">
+            <p className="mt-4 text-xs leading-relaxed text-gray-500">
               Empleados × horas × costo/hora × 52 semanas. No incluye errores, reprocesos ni oportunidad perdida.
             </p>
           </div>
@@ -206,7 +220,7 @@ export default function ImpactSection() {
               Pide el PDF <span className="font-medium text-blue-100">«5 flujos que toda PYME debe automatizar»</span> al solicitarlo.
             </p>
           </div>
-        </div>
+        </Reveal>
 
         {/* Tira de hechos — cómo trabajamos, no resultados de clientes */}
         <div className="mt-6 rounded-2xl bg-brand-900 overflow-hidden">

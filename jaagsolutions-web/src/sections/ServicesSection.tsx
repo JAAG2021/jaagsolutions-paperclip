@@ -1,4 +1,8 @@
 import { CheckCircle2, Zap, Monitor } from "lucide-react";
+import { useReducedMotion } from "motion/react";
+import Reveal from "../components/Reveal.tsx";
+import IsoIcon from "../components/IsoIcon.tsx";
+import { springs } from "../lib/motion-tokens.ts";
 
 const pillarA = [
   "Captación, calificación y seguimiento de leads",
@@ -17,11 +21,13 @@ const pillarB = [
 ];
 
 export default function ServicesSection() {
+  const reduce = useReducedMotion();
+
   return (
     <section id="servicios" className="py-14 sm:py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-10 sm:mb-12 animate-fade-in-up">
+        <Reveal className="text-center mb-10 sm:mb-12">
           <span className="inline-block mb-3 px-4 py-1 text-xs font-bold tracking-widest uppercase text-brand-600 bg-brand-50 rounded-full border border-brand-100">
             Servicios
           </span>
@@ -34,16 +40,18 @@ export default function ServicesSection() {
             licencias sueltas: consultoría primero, implementación después — y una
             arquitectura clara que tu equipo puede gestionar.
           </p>
-        </div>
+        </Reveal>
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* Pilar A — Automatización */}
-          <div className="card-hover animate-fade-in-up-d1 bg-brand-900 text-white rounded-2xl overflow-hidden shadow-lg">
+          <Reveal
+            delay={0}
+            className="bg-brand-900 text-white rounded-2xl overflow-hidden shadow-lg"
+            whileHover={reduce ? undefined : { y: -6, transition: springs.snappy }}
+          >
             <div className="bg-dot-pattern px-8 pt-8 pb-6 border-b border-white/10">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-brand-600 flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-white" />
-                </div>
+                <IsoIcon icon={Zap} tint="#3b82f6" className="h-10 w-10" />
                 <span className="text-sm font-bold text-brand-200 uppercase tracking-widest">Línea A</span>
               </div>
               <h3 className="text-2xl font-extrabold mb-2">Automatización de Procesos</h3>
@@ -59,15 +67,17 @@ export default function ServicesSection() {
                 </li>
               ))}
             </ul>
-          </div>
+          </Reveal>
 
           {/* Pilar B — SaaS */}
-          <div className="card-hover animate-fade-in-up-d2 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <Reveal
+            delay={0.08}
+            className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden"
+            whileHover={reduce ? undefined : { y: -6, transition: springs.snappy }}
+          >
             <div className="px-8 pt-8 pb-6 border-b border-gray-100 bg-gradient-to-br from-gray-50 to-white">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center">
-                  <Monitor className="w-5 h-5 text-white" />
-                </div>
+                <IsoIcon icon={Monitor} tint="#374151" className="h-10 w-10" />
                 <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">Línea B</span>
               </div>
               <h3 className="text-2xl font-extrabold text-gray-900 mb-2">Desarrollo SaaS para PYMEs</h3>
@@ -83,7 +93,7 @@ export default function ServicesSection() {
                 </li>
               ))}
             </ul>
-          </div>
+          </Reveal>
         </div>
       </div>
     </section>

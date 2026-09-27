@@ -1,6 +1,12 @@
-import { CheckCircle2, X, Minus } from "lucide-react";
-import { useScrollReveal } from "../hooks/useScrollReveal.ts";
+import { CheckCircle2, X, Minus, MessageCircle } from "lucide-react";
+import Reveal from "../components/Reveal.tsx";
 import FaqItem from "../components/FaqItem.tsx";
+import CTAButton from "../components/CTAButton.tsx";
+
+/** Mismo número que el flotante de `App.tsx`; el mensaje sí cambia por contexto. */
+const WHATSAPP_NUMBER = "56964862862";
+const WHATSAPP_DOUBT_TEXT =
+  "Hola, antes de agendar el diagnóstico tengo una duda puntual sobre mi caso: ";
 
 /**
  * "Antes de decidir": fusiona la Comparativa y las Preguntas frecuentes —
@@ -64,17 +70,11 @@ function Cell({ value }: { value: CellValue }) {
 }
 
 export default function ObjectionsSection() {
-  const { ref, visible } = useScrollReveal();
-
   return (
-    <section
-      id="preguntas"
-      ref={ref as React.RefObject<HTMLElement>}
-      className="py-14 sm:py-16 bg-gray-50 border-t border-gray-200"
-    >
+    <section id="preguntas" className="py-14 sm:py-16 bg-gray-50 border-t border-gray-200">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className={`text-center mb-10 transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+        <Reveal className="text-center mb-10">
           <span className="inline-block mb-3 px-4 py-1 text-xs font-bold tracking-widest uppercase text-brand-600 bg-brand-50 rounded-full border border-brand-100">
             Antes de decidir
           </span>
@@ -85,7 +85,7 @@ export default function ObjectionsSection() {
           <p className="text-gray-500 max-w-xl mx-auto">
             Cómo se compara JAAGSOLUTIONS con las alternativas — y las preguntas que más nos hacen.
           </p>
-        </div>
+        </Reveal>
 
         <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
         {/* Columna izquierda: comparativa.
@@ -118,7 +118,7 @@ export default function ObjectionsSection() {
           </table>
         </div>
 
-        <div className="flex items-center justify-center gap-6 mt-4 text-xs text-gray-400">
+        <div className="flex items-center justify-center gap-6 mt-4 text-xs text-gray-600">
           <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> Incluido</span>
           <span className="flex items-center gap-1.5"><Minus className="w-3.5 h-3.5 text-yellow-500" /> Parcial</span>
           <span className="flex items-center gap-1.5"><X className="w-3.5 h-3.5 text-red-400/60" /> No disponible</span>
@@ -145,6 +145,24 @@ export default function ObjectionsSection() {
             ))}
           </div>
         </div>
+        </div>
+
+        {/* Contextual, no un CTA de sección más: la página ya sacó esos hace
+            tiempo por redundantes con el nav sticky. Este vive solo aquí,
+            donde de verdad puede quedar una duda que la tabla no cubre. */}
+        <div className="mt-10 flex flex-col items-center gap-3 border-t border-gray-200 pt-8 text-center sm:flex-row sm:justify-center sm:text-left">
+          <MessageCircle className="h-5 w-5 shrink-0 text-brand-600" aria-hidden />
+          <p className="text-sm text-gray-600">
+            ¿Tu caso no calza en ninguna fila de arriba? Contanos tu situación puntual.
+          </p>
+          <CTAButton
+            variant="secondary"
+            className="px-5 py-2.5 text-sm"
+            gaLabel="whatsapp_duda_objeciones"
+            href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_DOUBT_TEXT)}`}
+          >
+            Escribir por WhatsApp
+          </CTAButton>
         </div>
       </div>
     </section>

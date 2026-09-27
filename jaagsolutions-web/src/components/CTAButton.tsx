@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { trackEvent } from "../hooks/analytics.ts";
+import { motionTokens, springs } from "../lib/motion-tokens.ts";
 
 type CTAButtonProps = {
   children: ReactNode;
@@ -31,6 +33,7 @@ export default function CTAButton({
   const classes = `${base} ${variants[variant]} ${className}`;
 
   const label = gaLabel ?? (typeof children === "string" ? children : undefined);
+  const reduce = useReducedMotion();
 
   function handleClick() {
     trackEvent("cta_click", { event_label: label ?? "cta", variant });
@@ -39,20 +42,30 @@ export default function CTAButton({
 
   if (href) {
     return (
-      <a href={href} className={classes} onClick={handleClick}>
+      <motion.a
+        href={href}
+        className={classes}
+        onClick={handleClick}
+        whileHover={reduce ? undefined : { scale: motionTokens.scale.pop }}
+        whileTap={reduce ? undefined : { scale: motionTokens.scale.press }}
+        transition={springs.snappy}
+      >
         {children}
-      </a>
+      </motion.a>
     );
   }
   return (
-    <button
+    <motion.button
       type={type}
       onClick={handleClick}
       disabled={disabled}
       aria-disabled={disabled ? true : undefined}
       className={`${classes} disabled:opacity-60 disabled:cursor-not-allowed`}
+      whileHover={disabled || reduce ? undefined : { scale: motionTokens.scale.pop }}
+      whileTap={disabled || reduce ? undefined : { scale: motionTokens.scale.press }}
+      transition={springs.snappy}
     >
       {children}
-    </button>
+    </motion.button>
   );
 }

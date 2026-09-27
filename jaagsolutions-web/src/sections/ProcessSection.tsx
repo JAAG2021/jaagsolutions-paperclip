@@ -1,5 +1,7 @@
 import { Search, Code2, Rocket } from "lucide-react";
-import { useScrollReveal } from "../hooks/useScrollReveal.ts";
+import { motion, useReducedMotion } from "motion/react";
+import Reveal from "../components/Reveal.tsx";
+import { motionTokens, springs } from "../lib/motion-tokens.ts";
 
 const steps = [
   {
@@ -29,17 +31,13 @@ const steps = [
 ];
 
 export default function ProcessSection() {
-  const { ref, visible } = useScrollReveal();
+  const reduce = useReducedMotion();
 
   return (
-    <section
-      id="proceso"
-      ref={ref as React.RefObject<HTMLElement>}
-      className="py-14 sm:py-16 bg-white"
-    >
+    <section id="proceso" className="py-14 sm:py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-10 sm:mb-12 animate-fade-in-up">
+        <Reveal className="text-center mb-10 sm:mb-12">
           <span className="inline-block mb-3 px-4 py-1 text-xs font-bold tracking-widest uppercase text-brand-600 bg-brand-50 rounded-full border border-brand-100">
             Nuestro método
           </span>
@@ -50,20 +48,26 @@ export default function ProcessSection() {
           <p className="text-lg text-gray-500 max-w-xl mx-auto">
             Tres pasos que llevamos a la práctica en cada proyecto, sin importar el tamaño de tu empresa.
           </p>
-        </div>
+        </Reveal>
 
         {/* Steps */}
         <div className="relative grid md:grid-cols-3 gap-8">
           {/* Animated connector line (desktop) */}
-          <div
-            className={`hidden md:block absolute top-16 left-[calc(16.67%+1rem)] right-[calc(16.67%+1rem)] h-0.5 bg-gradient-to-r from-brand-200 via-violet-200 to-emerald-200 z-0 ${visible ? "animate-connector" : "scale-x-0"}`}
+          <motion.div
+            className="hidden md:block absolute top-16 left-[calc(16.67%+1rem)] right-[calc(16.67%+1rem)] h-0.5 bg-gradient-to-r from-brand-200 via-violet-200 to-emerald-200 z-0"
+            style={{ transformOrigin: "left center" }}
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: reduce ? 0 : motionTokens.duration.crawl, ease: motionTokens.easing.smooth, delay: reduce ? 0 : 0.3 }}
           />
 
           {steps.map((step, i) => (
-            <div
+            <Reveal
               key={step.number}
-              style={{ transitionDelay: `${i * 120}ms` }}
-              className={`card-hover transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"} relative z-10 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden`}
+              delay={i * 0.08}
+              className="relative z-10 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+              whileHover={reduce ? undefined : { y: -6, transition: springs.snappy }}
             >
               {/* Colored top bar */}
               <div className={`h-1.5 bg-gradient-to-r ${step.color}`} />
@@ -88,7 +92,7 @@ export default function ProcessSection() {
                   ))}
                 </div>
               </div>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>

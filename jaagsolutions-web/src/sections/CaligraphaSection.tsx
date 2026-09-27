@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useScrollReveal } from "../hooks/useScrollReveal.ts";
+import Reveal from "../components/Reveal.tsx";
 import { trackEvent } from "../hooks/analytics.ts";
 import CaligraphaWordmark from "../components/CaligraphaWordmark.tsx";
 
@@ -30,7 +30,6 @@ const ArrowRight = () => (
 );
 
 export default function CaligraphaSection() {
-  const { ref, visible } = useScrollReveal();
   const [imagesFailed, setImagesFailed] = useState(false);
 
   return (
@@ -48,7 +47,7 @@ export default function CaligraphaSection() {
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           {/* ── Copy ── */}
-          <div className="animate-fade-in-up">
+          <Reveal>
             <span className="inline-flex items-center gap-2 rounded-full border border-caligrapha-gold/30 bg-caligrapha-gold/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-caligrapha-gold-light">
               <CaligraphaWordmark markOnly className="text-[0.8rem]" />
               Nuevo · Nuestro primer producto SaaS
@@ -142,15 +141,10 @@ export default function CaligraphaSection() {
               </a>{" "}
               — SaaS real, en producción, para PYMEs.
             </p>
-          </div>
+          </Reveal>
 
           {/* ── Visual: ventana de producto con un pack real ── */}
-          <div
-            ref={ref as React.RefObject<HTMLDivElement>}
-            className={`transition-all duration-700 ${
-              visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            }`}
-          >
+          <Reveal delay={0.1}>
             <div className="overflow-hidden rounded-2xl border border-caligrapha-gold/20 bg-caligrapha-ink shadow-2xl ring-1 ring-white/10">
               {/* Chrome */}
               <div className="flex h-9 items-center gap-1.5 border-b border-white/10 bg-black/40 px-4">
@@ -223,7 +217,7 @@ export default function CaligraphaSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </Reveal>
         </div>
       </div>
     </section>

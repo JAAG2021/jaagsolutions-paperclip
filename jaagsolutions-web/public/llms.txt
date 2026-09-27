@@ -1,0 +1,23 @@
+# JAAGSOLUTIONS
+
+> Automatización de procesos y desarrollo de SaaS a medida para PYMEs. Recuperamos el tiempo operativo de tu equipo y reducimos costos sin cambiar tus herramientas por un "software genérico".
+
+JAAGSOLUTIONS trabaja en dos líneas: automatización de procesos con las herramientas que la empresa ya usa (Make, n8n, OpenAI, Google Workspace, Zapier, WhatsApp API) y desarrollo de SaaS a medida cuando un proceso justifica software propio. El primer engagement es un diagnóstico gratuito; no hay tarifas fijas publicadas porque el alcance real depende del diagnóstico.
+
+## Secciones
+
+- [Casos de uso](https://jaagsolutions.com/#casos): ejemplos de flujos que ya funcionan en PYMEs (captación de leads, cotización y cierre, onboarding de cliente).
+- [Proceso](https://jaagsolutions.com/#proceso): cómo se trabaja un proyecto, de diagnóstico a entrega.
+- [Servicios](https://jaagsolutions.com/#servicios): Automatización de Procesos (Línea A) y Desarrollo de SaaS para PYMEs (Línea B).
+- [Impacto](https://jaagsolutions.com/#impacto): calculadora de costo real de las tareas repetitivas, a partir de los datos que ingresa el visitante.
+- [Antes de decidir](https://jaagsolutions.com/#preguntas): preguntas frecuentes sobre precio, plazos y alcance.
+- [Contacto](https://jaagsolutions.com/#contacto): formulario de diagnóstico gratuito.
+
+## Producto propio
+
+- [Caligrapha](https://jaagsolutions.com/#caligrapha): el primer SaaS público de JAAGSOLUTIONS. Genera packs de 6 imágenes de contenido de marca con IA, listos para publicar. Primer pack gratis, sin tarjeta de crédito. Sitio propio: https://www.caligrapha.com/
+
+## Contacto
+
+- Correo: contacto@jaagsolutions.com
+- WhatsApp: enlace flotante disponible en todas las páginas del sitio

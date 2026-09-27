@@ -1,9 +1,15 @@
 import { useId, useRef, useState } from "react";
+import { Target, Briefcase, Coins, Wrench, type LucideIcon } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import AutomationFlowDiagram, { type AutomationFlowStep } from "../components/AutomationFlowDiagram.tsx";
+import Reveal from "../components/Reveal.tsx";
+import IsoIcon from "../components/IsoIcon.tsx";
+import { motionTokens, springs } from "../lib/motion-tokens.ts";
 
 type UseCase = {
   title: string;
-  emoji: string;
+  icon: LucideIcon;
+  tint: string;
   accentClass: string;
   borderClass: string;
   bgClass: string;
@@ -17,7 +23,8 @@ type UseCase = {
 const useCases: UseCase[] = [
   {
     title: "Captación de Leads",
-    emoji: "🎯",
+    icon: Target,
+    tint: "#2563eb",
     accentClass: "text-blue-600",
     borderClass: "border-blue-200",
     bgClass: "bg-blue-50",
@@ -66,7 +73,8 @@ const useCases: UseCase[] = [
   },
   {
     title: "Cotización a Cierre",
-    emoji: "💼",
+    icon: Briefcase,
+    tint: "#059669",
     accentClass: "text-emerald-600",
     borderClass: "border-emerald-200",
     bgClass: "bg-emerald-50",
@@ -115,7 +123,8 @@ const useCases: UseCase[] = [
   },
   {
     title: "Cobranza Automatizada",
-    emoji: "💰",
+    icon: Coins,
+    tint: "#ea580c",
     accentClass: "text-orange-600",
     borderClass: "border-orange-200",
     bgClass: "bg-orange-50",
@@ -164,7 +173,8 @@ const useCases: UseCase[] = [
   },
   {
     title: "Mesa de Ayuda",
-    emoji: "🛠️",
+    icon: Wrench,
+    tint: "#9333ea",
     accentClass: "text-purple-600",
     borderClass: "border-purple-200",
     bgClass: "bg-purple-50",
@@ -214,6 +224,7 @@ const useCases: UseCase[] = [
 ];
 
 export default function UseCasesSection() {
+  const reduce = useReducedMotion();
   const [activeIdx, setActiveIdx] = useState(0);
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
   const uid = useId();
@@ -234,7 +245,7 @@ export default function UseCasesSection() {
   return (
     <section id="casos" className="py-14 sm:py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8 sm:mb-10 animate-fade-in-up">
+        <Reveal className="text-center mb-8 sm:mb-10">
           <span className="inline-block mb-3 px-4 py-1 text-xs font-bold tracking-widest uppercase text-brand-600 bg-brand-50 rounded-full border border-brand-100">
             Casos de uso
           </span>
@@ -247,7 +258,7 @@ export default function UseCasesSection() {
             <span className="font-semibold text-gray-700">ejemplo de negocio</span> y{" "}
             <span className="font-semibold text-gray-700">las piezas que solemos conectar</span>. Lo adaptamos a lo que ya usas.
           </p>
-        </div>
+        </Reveal>
 
         {/* Tabs. Suman ~810 px, así que recién entran centrados a partir de `lg`:
             con `sm` el scroll horizontal se desactivaba antes de que cupieran y
@@ -273,29 +284,36 @@ export default function UseCasesSection() {
                 className={`flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
                   selected
                     ? "border-brand-200 bg-white text-brand-700 shadow-sm"
-                    : "border-transparent bg-gray-100 text-gray-500 hover:bg-gray-200/70 hover:text-gray-700"
+                    : "border-transparent bg-gray-100 text-gray-600 hover:bg-gray-200/70 hover:text-gray-700"
                 }`}
               >
-                <span className="text-base leading-none">{uc.emoji}</span>
+                <IsoIcon icon={uc.icon} tint={uc.tint} className="h-5 w-5" />
                 {uc.title}
               </button>
             );
           })}
         </div>
 
-        {/* Panel del caso activo */}
-        <div
+        {/* Panel del caso activo — el `key` en `active.title` hace que React
+            desmonte y vuelva a montar el panel en cada cambio de pestaña, así
+            el reacomodo (fade + leve subida) se reproduce solo, sin estado de
+            transición aparte. */}
+        <motion.div
+          key={active.title}
           role="tabpanel"
           id={`${uid}-panel-${activeIdx}`}
           aria-labelledby={`${uid}-tab-${activeIdx}`}
           tabIndex={0}
-          className={`animate-fade-in-up rounded-2xl border ${active.borderClass} bg-white shadow-sm overflow-hidden focus-visible:outline-none`}
+          className={`rounded-2xl border ${active.borderClass} bg-white shadow-sm overflow-hidden focus-visible:outline-none`}
+          initial={{ opacity: 0, y: reduce ? 0 : motionTokens.distance.sm }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={springs.gentle}
         >
           <div className="grid gap-0 lg:grid-cols-[minmax(0,20rem)_1fr]">
             {/* Contexto + resultado */}
             <div className={`${active.bgClass} border-b ${active.borderClass} p-6 lg:border-b-0 lg:border-r`}>
               <div className="flex items-start gap-3">
-                <span className="text-3xl leading-none shrink-0">{active.emoji}</span>
+                <IsoIcon icon={active.icon} tint={active.tint} className="h-11 w-11 shrink-0" />
                 <h3 className={`text-lg font-bold ${active.accentClass}`}>{active.title}</h3>
               </div>
               <p className="mt-3 text-sm leading-relaxed text-gray-700">{active.scenario}</p>
@@ -323,7 +341,7 @@ export default function UseCasesSection() {
               />
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
